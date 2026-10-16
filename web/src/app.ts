@@ -14,6 +14,13 @@ const ui = { draft: "", busy: false, error: "", violations: [] as Violation[] };
 function esc(s: string): string {
   return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] as string);
 }
+/** Wordle-style tiles: one box per character, green when right character in right position. */
+function tiles(text: string, positions: boolean[] = []): string {
+  const chars = Array.from(text.replace(/[\s\p{P}\p{S}]/gu, ""));
+  return `<span class="tiles" aria-label="${esc(text)}">${chars
+    .map((c, i) => `<span class="tile ${positions[i] ? "hit" : ""}">${esc(c)}</span>`)
+    .join("")}</span>`;
+}
 function stars(d: number): string {
   return "★".repeat(d) + "☆".repeat(3 - d);
 }
@@ -109,9 +116,10 @@ function renderPlay(game: Game) {
     body += `<div class="history">${qs.turns
       .map((t, i) => game.mode === "forward"
         ? `<div class="turn ${t.correct ? "hit" : "miss"}"><div class="you small muted">#${i + 1} 你說：${esc(t.you)}</div>
-             <div class="ai">AI 猜：<b>${esc(t.guess ?? "")}</b><span class="tag ${t.correct ? "hit" : "miss"}">${t.correct ? "猜中" : "猜錯"}</span><div class="small muted">${esc(t.reason ?? "")}</div></div></div>`
-        : `<div class="turn ${t.correct ? "hit" : "miss"}"><div>#${i + 1} 你猜：<b>${esc(t.you)}</b><span class="tag ${t.correct ? "hit" : "miss"}">${t.correct ? "答對" : "不是這個"}</span></div></div>`)
-      .join("")}</div>`;
+             <div class="ai">AI 猜：${tiles(t.guess ?? "", t.positions)}<span class="tag ${t.correct ? "hit" : "miss"}">${t.correct ? "猜中" : "猜錯"}</span><div class="small muted">${esc(t.reason ?? "")}</div></div></div>`
+        : `<div class="turn ${t.correct ? "hit" : "miss"}"><div>#${i + 1} 你猜：${tiles(t.you, t.positions)}<span class="tag ${t.correct ? "hit" : "miss"}">${t.correct ? "答對" : "不是這個"}</span></div></div>`)
+      .join("")}</div>
+      ${qs.turns.some((t) => !t.correct) ? `<div class="small muted" style="margin-top:6px"><span class="tile hit mini">字</span> 綠色 = 這個字對、位置也對</div>` : ""}`;
   }
 
   if (!qs.done) {
@@ -285,11 +293,12 @@ async function submit(game: Game) {
     render();
     const descriptions = [...qs.turns.map((t) => t.you), text];
     try {
-      const r = await api.guess(qs.q.id, descriptions);
+      const previousGuesses = qs.turns.map((t) => t.guess ?? "").filter(Boolean);
+      const r = await api.guess(qs.q.id, descriptions, previousGuesses);
       if (!r.ok) {
         ui.violations = r.violations;
       } else {
-        qs.turns.push({ you: text, guess: r.guess, reason: r.reason, correct: r.correct });
+        qs.turns.push({ you: text, guess: r.guess, reason: r.reason, correct: r.correct, positions: r.positions });
         ui.draft = "";
         if (r.correct || qs.turns.length >= game.maxGuesses) {
           qs.done = true;
@@ -313,7 +322,7 @@ async function submit(game: Game) {
     try {
       const attempt = qs.turns.length + 1;
       const r = await api.reverseGuess(qs.q.id, text, attempt);
-      qs.turns.push({ you: text, correct: r.correct });
+      qs.turns.push({ you: text, correct: r.correct, positions: r.positions });
       ui.draft = "";
       if (r.correct || attempt >= game.maxGuesses) {
         qs.done = true;

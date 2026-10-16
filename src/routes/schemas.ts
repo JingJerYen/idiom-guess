@@ -13,6 +13,8 @@ export const DescriptionsSchema = z
 export const GuessBodySchema = z.object({
   idiomId: z.string().min(1).max(64),
   descriptions: DescriptionsSchema,
+  /** The AI's earlier guesses for this question (client-held state, re-scored server-side). */
+  previousGuesses: z.array(z.string().max(20)).max(Math.max(0, config.maxGuesses - 1)).default([]),
 });
 
 export const FeedbackBodySchema = z.object({

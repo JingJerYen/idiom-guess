@@ -74,10 +74,14 @@ docker run -p 3000:3000 -e GAME_ANTHROPIC_KEY=sk-ant-... -e TRUST_PROXY=1 idiom-
 | --- | --- |
 | `GET /api/health` | 模式（mock/live）與模型名稱 |
 | `GET /api/round?mode=forward\|reverse` | 10 題：`id`、`difficulty`、`tabooWords`，forward 模式另含 `idiom`。不含拼音與參考說法 |
-| `POST /api/guess` | `{ idiomId, descriptions[] }` → 程式檢查違規回 422 `{ violations }`；通過則回 `{ guess, reason, correct, attempt, remaining }` |
+| `POST /api/guess` | `{ idiomId, descriptions[], previousGuesses[] }` → 程式檢查違規回 422 `{ violations }`；通過則回 `{ guess, reason, correct, positions[], attempt, remaining }` |
 | `POST /api/feedback` | `{ idiomId, descriptions[], guessedCorrectly, attempts }` → `{ better_phrases, issues, tip, reference_english }` |
 | `POST /api/describe` | 反向模式：`{ idiomId, attempt, previousClues[] }` → `{ description }` |
-| `POST /api/reverse-guess` | 反向模式：`{ idiomId, guess, attempt }` → `{ correct, remaining, answer? }`（答案只在猜中或用完次數時揭露） |
+| `POST /api/reverse-guess` | 反向模式：`{ idiomId, guess, attempt }` → `{ correct, positions[], remaining, answer? }`（答案只在猜中或用完次數時揭露） |
+
+`positions` 是 Wordle 式的逐字結果：每個字一個布林值，`true` 代表「字對、位置也對」，前端顯示為綠格。
+正向模式下，前端把 AI 先前的猜測一併送回（`previousGuesses`），伺服器重新比對後，
+只把「已確認位置的字」告訴模型，要求新猜測保留這些字；完整答案仍然不會進入 prompt。
 
 API 無狀態：前端持有這一輪的題目與每題的描述歷史，伺服器每次重新驗證所有描述。
 錯誤格式統一為 `{ ok:false, error:{ code, message } }`，code 包含

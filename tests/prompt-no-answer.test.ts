@@ -20,6 +20,21 @@ test("guess prompt contains no idiom, alias, pinyin or taboo list from the bank"
   assert.deepEqual(han, []);
 });
 
+test("with earlier guesses, the prompt reveals only confirmed characters, never the whole answer", () => {
+  const target = idioms.find((i) => i.idiom === "亡羊補牢")!;
+  const user = buildGuessUserMessage({
+    descriptions: ["first try", "second try"],
+    previousGuesses: [{ guess: "亡羊之歎", confirmed: ["亡", "羊", null, null] }],
+  });
+  assert.ok(user.includes('<previous_guess n="1">亡羊之歎</previous_guess>'));
+  assert.ok(user.includes("1st = 亡, 2nd = 羊"));
+  assert.equal(user.includes(target.idiom), false, "full answer must not appear");
+  assert.equal(user.includes("補"), false);
+  assert.equal(user.includes("牢"), false);
+  const han = Array.from(new Set(user.match(/\p{Script=Han}/gu) ?? [])).sort();
+  assert.deepEqual(han, ["之", "亡", "歎", "羊"]);
+});
+
 test("guess prompt wraps player text as data and includes every prior description", () => {
   const descs = ["first attempt here", "second attempt with more detail"];
   const user = buildGuessUserMessage({ descriptions: descs });
@@ -36,5 +51,6 @@ test("guess prompt module never imports the question bank", () => {
 
 test("guess route handler passes only descriptions to the guesser", () => {
   const src = readFileSync(new URL("../src/routes/api.ts", import.meta.url), "utf8");
-  assert.ok(/guessIdiom\(body\.descriptions\)/.test(src), "guessIdiom must be called with descriptions only");
+  assert.ok(/guessIdiom\(body\.descriptions, previousGuesses\)/.test(src), "guessIdiom must be called with descriptions and the AI's own earlier guesses only");
+  assert.equal(/guessIdiom\([^)]*idiom\b/.test(src), false, "the idiom object must never be passed to the guesser");
 });

@@ -29,8 +29,9 @@ function hash(s: string): number {
  * sentence. It only sees descriptions, like the real model, so wrong guesses are common,
  * which is useful for exercising the retry flow.
  */
-export function mockGuess(descriptions: string[]): GuessResult {
-  const all = loadIdioms();
+export function mockGuess(descriptions: string[], previousGuesses: string[] = []): GuessResult {
+  // Like the real model, never repeat an earlier wrong guess.
+  const all = loadIdioms().filter((it) => !previousGuesses.includes(it.idiom));
   const words = keywords(descriptions.join(" "));
   let best: Idiom | null = null;
   let bestScore = 0;

@@ -24,7 +24,7 @@ export type Violation =
   | { type: "empty" };
 
 export type GuessResponse =
-  | { ok: true; guess: string; reason: string; correct: boolean; attempt: number; remaining: number }
+  | { ok: true; guess: string; reason: string; correct: boolean; positions: boolean[]; attempt: number; remaining: number }
   | { ok: false; violations: Violation[] };
 
 export interface FeedbackResponse {
@@ -40,6 +40,7 @@ export interface DescribeResponse { ok: true; description: string; attempt: numb
 export interface ReverseGuessResponse {
   ok: true;
   correct: boolean;
+  positions: boolean[];
   attempt: number;
   remaining: number;
   answer?: string;
@@ -67,8 +68,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const api = {
   round: (mode: Mode) => request<RoundResponse>(`/api/round?mode=${mode}`),
-  guess: (idiomId: string, descriptions: string[]) =>
-    request<GuessResponse>("/api/guess", { method: "POST", body: JSON.stringify({ idiomId, descriptions }) }),
+  guess: (idiomId: string, descriptions: string[], previousGuesses: string[]) =>
+    request<GuessResponse>("/api/guess", { method: "POST", body: JSON.stringify({ idiomId, descriptions, previousGuesses }) }),
   feedback: (idiomId: string, descriptions: string[], guessedCorrectly: boolean, attempts: number) =>
     request<FeedbackResponse>("/api/feedback", {
       method: "POST",

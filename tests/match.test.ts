@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { isCorrectGuess, normalizeIdiom } from "../src/game/match.js";
+import { isCorrectGuess, normalizeIdiom, positionMatches } from "../src/game/match.js";
 import { loadIdioms, pickRound, toPublic } from "../src/game/idioms.js";
 import type { Idiom } from "../src/game/idioms.js";
 
@@ -66,4 +66,19 @@ test("public question never leaks pinyin or reference; reverse hides the idiom",
   assert.equal("reference_english" in fwd, false);
   const rev = toPublic(it, "reverse") as Record<string, unknown>;
   assert.equal("idiom" in rev, false);
+});
+
+test("positionMatches reports right-character-right-position only", () => {
+  // 守株待兔 vs 揠苗助長: nothing matches
+  assert.deepEqual(positionMatches("守株待兔", yaMiao), [false, false, false, false]);
+  // 揠苗X長: positions 1, 2, 4 match
+  assert.deepEqual(positionMatches("揠苗X長", yaMiao), [true, true, false, true]);
+  // alias 拔苗助長 is used when it matches better
+  assert.deepEqual(positionMatches("拔苗助X", yaMiao), [true, true, true, false]);
+  // simplified input is normalized before comparing
+  assert.deepEqual(positionMatches("揠苗助长", yaMiao), [true, true, true, true]);
+  // guess length differs from the answer
+  assert.deepEqual(positionMatches("揠苗", yaMiao), [true, true]);
+  assert.deepEqual(positionMatches("揠苗助長多", yaMiao), [true, true, true, true, false]);
+  assert.deepEqual(positionMatches("", yaMiao), []);
 });

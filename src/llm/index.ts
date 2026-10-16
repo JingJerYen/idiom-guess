@@ -2,7 +2,7 @@ import { config } from "../config.js";
 import type { Idiom } from "../game/idioms.js";
 import { callJson } from "./callJson.js";
 import { mockDescribe, mockFeedback, mockGuess } from "./mock.js";
-import { GUESS_SYSTEM_PROMPT, buildGuessUserMessage } from "../prompts/guess.js";
+import { GUESS_SYSTEM_PROMPT, buildGuessUserMessage, type PreviousGuess } from "../prompts/guess.js";
 import { FEEDBACK_SYSTEM_PROMPT, buildFeedbackUserMessage } from "../prompts/feedback.js";
 import { DESCRIBE_SYSTEM_PROMPT, buildDescribeUserMessage } from "../prompts/describe.js";
 import {
@@ -14,13 +14,13 @@ import {
   type GuessResult,
 } from "./types.js";
 
-/** The guesser never receives the idiom; only the player's descriptions. */
-export async function guessIdiom(descriptions: string[]): Promise<GuessResult> {
-  if (config.mockMode) return mockGuess(descriptions);
+/** The guesser never receives the idiom; only the player's descriptions and its own earlier guesses. */
+export async function guessIdiom(descriptions: string[], previousGuesses: PreviousGuess[] = []): Promise<GuessResult> {
+  if (config.mockMode) return mockGuess(descriptions, previousGuesses.map((p) => p.guess));
   return callJson({
     kind: "guess",
     system: GUESS_SYSTEM_PROMPT,
-    user: buildGuessUserMessage({ descriptions }),
+    user: buildGuessUserMessage({ descriptions, previousGuesses }),
     maxTokens: config.maxTokens.guess,
     schema: GuessResultSchema,
   });

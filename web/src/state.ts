@@ -7,6 +7,8 @@ export interface Turn {
   guess?: string;
   reason?: string;
   correct: boolean;
+  /** Per-character result for the guess shown in this turn (true = right character, right position). */
+  positions?: boolean[];
 }
 
 export interface QuestionState {

@@ -3,7 +3,7 @@ import type { z } from "zod";
 import { config } from "../config.js";
 import { AppError } from "../errors.js";
 import { getIdiomById, loadIdioms, pickRound, toPublic, type Idiom } from "../game/idioms.js";
-import { isCorrectGuess } from "../game/match.js";
+import { isCorrectGuess, normalizeIdiom, positionMatches } from "../game/match.js";
 import { validateDescription } from "../game/validate.js";
 import { describeIdiom, getFeedback, guessIdiom } from "../llm/index.js";
 import { lightLimiter, modelLimiter } from "../middleware/rateLimit.js";
@@ -62,8 +62,16 @@ api.post("/guess", modelLimiter, async (req, res) => {
     return;
   }
 
-  // The guesser gets descriptions only; the answer never leaves this handler.
-  const result = await guessIdiom(body.descriptions);
+  // Re-score the AI's earlier guesses here so the hint reflects the real answer, not client data.
+  const previousGuesses = body.previousGuesses.map((g) => {
+    if (isCorrectGuess(g, idiom)) throw new AppError("BAD_REQUEST", "這題已經結束了。");
+    const chars = Array.from(normalizeIdiom(g));
+    const hits = positionMatches(g, idiom);
+    return { guess: g, confirmed: chars.map((ch, i) => (hits[i] ? ch : null)) };
+  });
+
+  // The guesser gets descriptions plus its own earlier guesses; the full answer never leaves this handler.
+  const result = await guessIdiom(body.descriptions, previousGuesses);
   const correct = isCorrectGuess(result.guess, idiom);
   const attempt = body.descriptions.length;
   res.json({
@@ -71,6 +79,7 @@ api.post("/guess", modelLimiter, async (req, res) => {
     guess: result.guess,
     reason: result.reason,
     correct,
+    positions: positionMatches(result.guess, idiom),
     attempt,
     remaining: Math.max(0, config.maxGuesses - attempt),
   });
@@ -100,6 +109,7 @@ api.post("/reverse-guess", modelLimiter, (req, res) => {
   res.json({
     ok: true,
     correct,
+    positions: positionMatches(body.guess, idiom),
     attempt: body.attempt,
     remaining: Math.max(0, config.maxGuesses - body.attempt),
     // Reveal the answer only when the question is over.
