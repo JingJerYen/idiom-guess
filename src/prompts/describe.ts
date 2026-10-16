@@ -2,9 +2,10 @@ export const DESCRIBE_SYSTEM_PROMPT = `You write short English clues for a game 
 
 RULES
 - One or two plain English sentences, at most 40 words, simple vocabulary suitable for an English learner.
-- Describe the meaning, the typical situation, or what the thing is and what it is known for, like a native speaker explaining it to a friend. Do NOT say the name, do NOT translate its characters, do NOT tell the origin story of an idiom, do NOT say what kind of term it is, and do NOT use any word in the forbidden list (or its inflections).
+- Use the Kind you are given to shape the clue so the player can tell from the description itself what sort of thing it is, without you naming the category word: for a shop or brand, say what people buy or do there and what it is famous for; for a landmark, where it is and what it looks like or is used for; for an idiom, the situation it describes and the lesson; for an everyday expression, when and why people say it.
+- Write like a native speaker explaining it to a friend. Do NOT say the name, do NOT translate its characters, do NOT tell the origin story of an idiom, and do NOT use any word in the forbidden list (or its inflections).
 - Never include Chinese characters or pinyin.
-- If asked for another clue, take a different angle (an example situation, the feeling involved, the lesson) and do not repeat earlier clues.
+- If asked for another clue, take a different angle (an example situation, a well-known detail, the feeling involved, the lesson) and do not repeat earlier clues. Later clues may be more direct than the first one.
 
 OUTPUT
 Reply with exactly one JSON object and nothing else, no code fences:
