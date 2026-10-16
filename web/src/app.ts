@@ -1,15 +1,13 @@
 import { api, ApiError, type Mode, type Violation } from "./api.js";
-import { MAX_CHARS, MIN_WORDS, countWords, type Game, type QuestionState, type Screen } from "./state.js";
+import { MAX_ATTEMPTS, MAX_CHARS, MAX_SCORE, MIN_WORDS, SCORES, countWords, scoreFor, type Game, type QuestionState, type Screen } from "./state.js";
 
 const root = document.getElementById("app") as HTMLElement;
 const badge = document.getElementById("mode-badge") as HTMLElement;
 
 let screen: Screen = { name: "start" };
 let chosenMode: Mode = "forward";
-let chosenGuesses = 3;
-let serverMaxGuesses = 5;
 /** Transient per-question UI state. */
-const ui = { draft: "", busy: false, error: "", violations: [] as Violation[] };
+const ui = { draft: "", busy: false, error: "", violations: [] as Violation[], confirmGiveUp: false };
 
 const MODE_LABEL: Record<Mode, string> = { forward: "口說", reverse: "聽力" };
 
@@ -41,8 +39,9 @@ function slots(length: number, confirmed: (string | null)[], draft: string): str
   }
   return `<div class="tiles lg center" aria-label="${length} 個字">${cells.join("")}</div>`;
 }
-function hearts(used: number, max: number): string {
-  return `<span class="hearts" aria-label="剩餘 ${max - used} 次">${Array.from({ length: max }, (_, i) => `<i class="${i < max - used ? "" : "off"}"></i>`).join("")}</span>`;
+/** Score ladder: 5 · 3 · 1, dimming the points already lost; the next attempt's value is highlighted. */
+function ladder(used: number, done: boolean): string {
+  return `<span class="ladder" aria-label="這題可得 ${done ? 0 : SCORES[used] ?? 0} 分">${SCORES.map((s, i) => `<i class="${i < used || done ? "lost" : i === used ? "now" : ""}">${s}</i>`).join("")}</span>`;
 }
 // ---------- speech (browser TTS, no API cost) ----------
 
@@ -87,9 +86,6 @@ function render() {
 }
 
 function renderStart() {
-  const pills = Array.from({ length: serverMaxGuesses }, (_, i) => i + 1)
-    .map((n) => `<button class="pill" data-n="${n}" aria-pressed="${n === chosenGuesses}">${n}</button>`)
-    .join("");
   root.innerHTML = `
     <section class="hero">
       <h1>用英文<em>繞著說</em></h1>
@@ -103,17 +99,15 @@ function renderStart() {
         <span class="icon">👂</span><b>聽力</b><span class="small muted">AI 描述，你猜</span>
       </button>
     </section>
-    <section class="card row between">
-      <span class="muted">❤️ 每題</span>
-      <span class="pills">${pills}</span>
+    <section class="card row between scorehint">
+      <span class="muted">每題</span>
+      <span class="ladder big"><i class="now">5</i><i>3</i><i>1</i></span>
+      <span class="muted">分</span>
     </section>
     ${ui.error ? `<div class="alert error">${esc(ui.error)}</div>` : ""}
     <button id="start" class="btn lg block">開始</button>`;
   root.querySelectorAll<HTMLButtonElement>(".mode").forEach((b) =>
     b.addEventListener("click", () => { chosenMode = b.dataset.mode as Mode; render(); }),
-  );
-  root.querySelectorAll<HTMLButtonElement>(".pill").forEach((b) =>
-    b.addEventListener("click", () => { chosenGuesses = Number(b.dataset.n); render(); }),
   );
   (root.querySelector("#start") as HTMLButtonElement).addEventListener("click", () => void startGame());
 }
@@ -127,7 +121,7 @@ function renderTop(game: Game): string {
       <span class="dots">${game.questions.map((q, i) => `<i class="${i < game.index ? (q.solved ? "ok" : "no") : i === game.index ? "now" : ""}"></i>`).join("")}</span>
       <span class="muted">${n}/${total}</span>
     </div>
-    <div class="row between" style="margin-top:8px">${hearts(qs.turns.length, game.maxGuesses)}${stars(qs.q.difficulty)}</div>`;
+    <div class="row between" style="margin-top:8px">${ladder(qs.turns.length, qs.done)}<span class="muted small">${game.questions.reduce((n, q) => n + q.score, 0)} 分</span>${stars(qs.q.difficulty)}</div>`;
 }
 
 function violationText(v: Violation): string {
@@ -194,7 +188,8 @@ function renderPlay(game: Game) {
     body += `<div class="actions">
       <button id="submit" class="btn" ${ui.busy ? "disabled" : ""}>${ui.busy ? '<span class="spinner"></span>' : "➤"}</button>
       ${forward ? `<button class="mic" disabled title="語音輸入即將推出" aria-label="語音輸入（即將推出）">🎤</button>` : ""}
-    </div>`;
+    </div>
+    <button id="giveup" class="giveup ${ui.confirmGiveUp ? "confirm" : ""}" ${ui.busy ? "disabled" : ""}>${ui.confirmGiveUp ? "確定放棄？0 分" : "放棄"}</button>`;
   }
 
   root.innerHTML = `<section class="card">${renderTop(game)}</section><section class="card">${body}</section>${qs.done ? renderResult(game, qs) : ""}`;
@@ -232,6 +227,10 @@ function renderPlay(game: Game) {
   );
   root.querySelector("#submit")?.addEventListener("click", () => void submit(game));
   root.querySelector("#next")?.addEventListener("click", () => void nextQuestion(game));
+  root.querySelector("#giveup")?.addEventListener("click", () => {
+    if (!ui.confirmGiveUp) { ui.confirmGiveUp = true; render(); return; }
+    void giveUp(game);
+  });
   root.querySelector("#retry-fb")?.addEventListener("click", () => void loadFeedback(game, qs));
 }
 
@@ -242,10 +241,9 @@ function fragment(html: string): Node {
 }
 
 function renderResult(game: Game, qs: QuestionState): string {
-  const attempts = qs.turns.length;
   const head = qs.solved
-    ? `<div class="big-emoji">🎉</div><h2>${attempts} 次</h2>`
-    : `<div class="big-emoji">😅</div>`;
+    ? `<div class="big-emoji">🎉</div><h2 class="points">+${qs.score}</h2>`
+    : `<div class="big-emoji">${qs.gaveUp ? "🏳️" : "😅"}</div><h2 class="points zero">+0</h2>`;
   const answer = game.mode === "reverse"
     ? `<div class="answer">${tiles(qs.answer ?? "", chars(qs.answer ?? "").map(() => qs.solved), "lg")}<div class="tagrow">${(qs.answerTags ?? []).map((t) => `<span class="kind">${esc(t)}</span>`).join("")}</div></div>`
     : "";
@@ -258,8 +256,8 @@ function renderResult(game: Game, qs: QuestionState): string {
   let fb = "";
   if (game.mode === "forward") {
     if (qs.feedback === undefined) fb = `<div class="muted center" style="margin-top:12px"><span class="spinner"></span></div>`;
-    else if (qs.feedback === null) fb = `<div class="alert warn">${esc(qs.feedbackError ?? "回饋載入失敗")} <button id="retry-fb" class="btn ghost sm">重試</button></div>`;
-    else {
+    else if (qs.feedback === null && qs.feedbackError) fb = `<div class="alert warn">${esc(qs.feedbackError)} <button id="retry-fb" class="btn ghost sm">重試</button></div>`;
+    else if (qs.feedback) {
       const f = qs.feedback;
       const section = (icon: string, items: string[]) => items.length ? `<ul class="fb">${items.map((p, i) => `<li>${i === 0 ? `<span class="fi">${icon}</span>` : `<span class="fi"></span>`}<span>${esc(p)}</span></li>`).join("")}</ul>` : "";
       fb = section("✨", f.better_phrases) + section("✏️", f.issues) + section("💡", [f.tip]);
@@ -272,15 +270,14 @@ function renderResult(game: Game, qs: QuestionState): string {
 
 function renderSummary(game: Game) {
   const qs = game.questions;
+  const total = qs.reduce((n, q) => n + q.score, 0);
   const solved = qs.filter((q) => q.solved).length;
-  const solvedList = qs.filter((q) => q.solved);
-  const avgSolved = solvedList.length ? solvedList.reduce((n, q) => n + q.turns.length, 0) / solvedList.length : 0;
   const rows = qs
-    .map((q) => `<li class="${q.solved ? "ok" : "no"}"><span>${esc(q.q.idiom ?? q.answer ?? "？")}</span><span class="small">${q.solved ? "❤️".repeat(q.turns.length) : "✖"}</span></li>`)
+    .map((q) => `<li class="${q.solved ? "ok" : "no"}"><span>${esc(q.q.idiom ?? q.answer ?? "？")}</span><span class="pts ${q.score ? "" : "zero"}">${q.gaveUp ? "🏳️ " : ""}+${q.score}</span></li>`)
     .join("");
   root.innerHTML = `<section class="card summary center">
-      <div class="big">${solved}<span class="muted">/${qs.length}</span></div>
-      <div class="muted">${solvedList.length ? `平均 ${avgSolved.toFixed(1)} 次` : ""}</div>
+      <div class="big">${total}<span class="muted">/${qs.length * MAX_SCORE}</span></div>
+      <div class="muted">${solved}/${qs.length} 題猜中</div>
       <ul class="list">${rows}</ul>
       <button id="again" class="btn lg block" style="margin-top:16px">再玩</button>
     </section>`;
@@ -294,12 +291,11 @@ async function startGame() {
   setScreen({ name: "loading", text: "" });
   try {
     const r = await api.round(chosenMode);
-    serverMaxGuesses = r.maxGuesses;
     const game: Game = {
       mode: r.mode,
-      maxGuesses: Math.min(chosenGuesses, r.maxGuesses),
+      maxGuesses: Math.min(MAX_ATTEMPTS, r.maxGuesses),
       mock: r.mock,
-      questions: r.questions.map((q) => ({ q, turns: [], clues: [], done: false, solved: false })),
+      questions: r.questions.map((q) => ({ q, turns: [], clues: [], done: false, solved: false, gaveUp: false, score: 0 })),
       index: 0,
     };
     badge.hidden = false;
@@ -319,6 +315,44 @@ function resetUi() {
   ui.busy = false;
   ui.error = "";
   ui.violations = [];
+  ui.confirmGiveUp = false;
+}
+
+async function giveUp(game: Game) {
+  const qs = game.questions[game.index];
+  if (qs.done || ui.busy) return;
+  ui.busy = true;
+  ui.confirmGiveUp = false;
+  render();
+  try {
+    if (game.mode === "reverse") {
+      const r = await api.giveUp(qs.q.id);
+      qs.answer = r.answer;
+      qs.answerTags = r.tags;
+      qs.referenceEnglish = r.reference_english;
+    }
+    qs.done = true;
+    qs.solved = false;
+    qs.gaveUp = true;
+    qs.score = 0;
+    ui.busy = false;
+    render();
+    if (game.mode === "forward") {
+      if (qs.turns.length) void loadFeedback(game, qs);
+      else {
+        // Nothing to review; fetch the reference phrasing via the give-up endpoint.
+        const r = await api.giveUp(qs.q.id);
+        qs.referenceEnglish = r.reference_english;
+        qs.feedback = null;
+        qs.feedbackError = "";
+        render();
+      }
+    }
+  } catch (e) {
+    ui.busy = false;
+    ui.error = e instanceof ApiError ? e.message : "操作失敗，請再試一次。";
+    render();
+  }
 }
 
 async function loadClue(game: Game, qs: QuestionState) {
@@ -371,6 +405,7 @@ async function submit(game: Game) {
         if (r.correct || qs.turns.length >= game.maxGuesses) {
           qs.done = true;
           qs.solved = r.correct;
+          qs.score = scoreFor(r.correct, qs.turns.length);
           qs.feedback = undefined;
           ui.busy = false;
           render();
@@ -395,6 +430,7 @@ async function submit(game: Game) {
       if (r.correct || attempt >= game.maxGuesses) {
         qs.done = true;
         qs.solved = r.correct;
+        qs.score = scoreFor(r.correct, attempt);
         qs.answer = r.answer;
         qs.answerTags = r.tags;
         qs.referenceEnglish = r.reference_english;

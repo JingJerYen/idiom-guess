@@ -30,6 +30,10 @@ export const DescribeBodySchema = z.object({
   previousClues: z.array(z.string().max(500)).max(config.maxGuesses).default([]),
 });
 
+export const GiveUpBodySchema = z.object({
+  idiomId: z.string().min(1).max(64),
+});
+
 export const ReverseGuessBodySchema = z.object({
   idiomId: z.string().min(1).max(64),
   guess: z.string().min(1).max(40),

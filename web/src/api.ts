@@ -39,6 +39,8 @@ export interface FeedbackResponse {
 
 export interface DescribeResponse { ok: true; description: string; attempt: number }
 
+export interface GiveUpResponse { ok: true; answer: string; tags: string[]; reference_english: string }
+
 export interface ReverseGuessResponse {
   ok: true;
   correct: boolean;
@@ -80,6 +82,7 @@ export const api = {
     }),
   describe: (idiomId: string, attempt: number, previousClues: string[]) =>
     request<DescribeResponse>("/api/describe", { method: "POST", body: JSON.stringify({ idiomId, attempt, previousClues }) }),
+  giveUp: (idiomId: string) => request<GiveUpResponse>("/api/give-up", { method: "POST", body: JSON.stringify({ idiomId }) }),
   reverseGuess: (idiomId: string, guess: string, attempt: number) =>
     request<ReverseGuessResponse>("/api/reverse-guess", { method: "POST", body: JSON.stringify({ idiomId, guess, attempt }) }),
 };

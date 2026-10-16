@@ -4,7 +4,7 @@
 看到一個中文詞（成語、日常用語、店家名、地標……），用簡單的英文把意思說清楚，讓 AI 猜出是哪個詞；
 也有反向模式：AI 用英文描述，你猜中文。介面上兩種模式分別叫「口說」(forward) 與「聽力」(reverse)。
 
-- 一輪 10 題，由易到難；每題最多 N 次猜測（預設 3）。
+- 一輪 10 題，由易到難；每題最多 3 次猜測，第 1、2、3 次猜中分別得 5、3、1 分，沒猜中 0 分，可按「放棄」直接 0 分看答案。一輪滿分 50。
 - 描述中不能出現中文字、該成語的拼音、畫面上列出的禁用詞（直譯關鍵字）。
   違規由伺服器端程式檢查，不呼叫 AI、不扣次數。
 - 每題結束給你英文說法的回饋（更自然的說法、文法／用字、小技巧，繁體中文說明）。
@@ -45,7 +45,7 @@ npm run build && npm start  # 正式版建置與啟動（dist/ 與 public/）
 | `PORT` | 3000 | 監聽埠（Render/Fly/Docker 會自動提供） |
 | `GAME_ANTHROPIC_KEY` | 無 | 遊戲專用金鑰；留空則 MOCK |
 | `MOCK_MODE` | 無 | 設 `1` 強制 MOCK |
-| `MAX_GUESSES` | 3 | 每題最多猜測次數（1~10） |
+| `MAX_GUESSES` | 3 | 伺服器接受的每題最多描述數（1~10）。前端固定 3 次並以 5/3/1 計分，調低此值會限制前端 |
 | `TRUST_PROXY` | 無 | 在反向代理後設 `1`，限流才能看到真實 IP |
 | `RATE_LIMIT_MODEL_PER_MIN` | 30 | 會呼叫模型的端點每 IP 每分鐘上限 |
 | `RATE_LIMIT_LIGHT_PER_MIN` | 120 | 其他端點每 IP 每分鐘上限 |
@@ -76,6 +76,7 @@ docker run -p 3000:3000 -e GAME_ANTHROPIC_KEY=sk-ant-... -e TRUST_PROXY=1 idiom-
 | `GET /api/round?mode=forward\|reverse` | 10 題：`id`、`difficulty`、`tabooWords`，forward 模式另含 `idiom`。不含拼音與參考說法 |
 | `POST /api/guess` | `{ idiomId, descriptions[], previousGuesses[] }` → 程式檢查違規回 422 `{ violations }`；通過則回 `{ guess, reason, correct, positions[], attempt, remaining }` |
 | `POST /api/feedback` | `{ idiomId, descriptions[], guessedCorrectly, attempts }` → `{ better_phrases, issues, tip, reference_english }` |
+| `POST /api/give-up` | `{ idiomId }` → `{ answer, tags, reference_english }`（放棄：0 分並揭露答案） |
 | `POST /api/describe` | 反向模式：`{ idiomId, attempt, previousClues[] }` → `{ description }` |
 | `POST /api/reverse-guess` | 反向模式：`{ idiomId, guess, attempt }` → `{ correct, positions[], remaining, answer? }`（答案只在猜中或用完次數時揭露） |
 

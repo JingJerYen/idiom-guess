@@ -20,6 +20,9 @@ export interface QuestionState {
   shownClue?: number;
   done: boolean;
   solved: boolean;
+  gaveUp: boolean;
+  /** Points earned: SCORES[attempt - 1] when solved, else 0. */
+  score: number;
   feedback?: FeedbackResponse | null;
   feedbackError?: string;
   /** Reverse mode: revealed when the question ends. */
@@ -41,6 +44,15 @@ export type Screen =
   | { name: "loading"; text: string }
   | { name: "play"; game: Game }
   | { name: "summary"; game: Game };
+
+/** Points by the attempt on which the answer was found; 0 after that or on give-up. */
+export const SCORES = [5, 3, 1] as const;
+export const MAX_ATTEMPTS = SCORES.length;
+export const MAX_SCORE = SCORES[0];
+
+export function scoreFor(solved: boolean, attempts: number): number {
+  return solved ? (SCORES[attempts - 1] ?? 0) : 0;
+}
 
 export const MIN_WORDS = 5;
 export const MAX_CHARS = 300;

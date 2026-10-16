@@ -10,6 +10,7 @@ import { lightLimiter, modelLimiter } from "../middleware/rateLimit.js";
 import {
   DescribeBodySchema,
   FeedbackBodySchema,
+  GiveUpBodySchema,
   GuessBodySchema,
   ModeSchema,
   ReverseGuessBodySchema,
@@ -90,6 +91,13 @@ api.post("/feedback", modelLimiter, async (req, res) => {
   const idiom = requireIdiom(body.idiomId);
   const fb = await getFeedback(idiom, body.descriptions, body.guessedCorrectly, body.attempts);
   res.json({ ok: true, ...fb, reference_english: idiom.reference_english });
+});
+
+/** Player gives up: zero points, reveal the answer. */
+api.post("/give-up", lightLimiter, (req, res) => {
+  const body = parseBody(req, GiveUpBodySchema);
+  const idiom = requireIdiom(body.idiomId);
+  res.json({ ok: true, answer: idiom.idiom, tags: idiom.tags, reference_english: idiom.reference_english });
 });
 
 // ---- Reverse mode: AI describes, player guesses the idiom ----
