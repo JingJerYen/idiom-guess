@@ -170,5 +170,7 @@ AI 的描述用瀏覽器內建的 Web Speech API（`speechSynthesis`）朗讀，
 
 🎤 用瀏覽器內建的 Web Speech API（`SpeechRecognition`）把英文語音即時轉成文字填進描述框，
 辨識中的字會先以暫定文字出現，玩家可以修改後再送出。不經過伺服器、不花 API 費用。
+實作上刻意不用 `continuous` 模式（Android Chrome 會重複送出結果導致字重複），改成一次辨識一句、
+講到停頓自動結束並接上下一段，直到玩家按停止。
 Chrome、Edge、Safari 支援；Firefox 不支援時按鈕會顯示為停用。需要 https 與麥克風權限。
 若日後辨識品質不夠，可把 🎤 背後換成錄音上傳到後端再呼叫第三方語音辨識服務，前端介面不需改動。

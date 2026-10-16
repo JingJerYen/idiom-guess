@@ -1,5 +1,5 @@
 import { api, ApiError, type Level, type Mode, type Violation } from "./api.js";
-import { canListen, joinOverlap, startListening, type Listener } from "./speech.js";
+import { canListen, startListening, type Listener } from "./speech.js";
 import { MAX_ATTEMPTS, MAX_CHARS, MIN_WORDS, SCORES, SENTENCE_BONUS, countWords, maxScore, scoreFor, type Game, type QuestionState, type Screen } from "./state.js";
 
 const root = document.getElementById("app") as HTMLElement;
@@ -370,9 +370,13 @@ async function startGame() {
   }
 }
 
+function joinText(a: string, b: string): string {
+  return [a.trim(), b.trim()].filter(Boolean).join(" ");
+}
+
 function stopMic() {
   // Keep whatever was still interim when the player stops: it is usually the last word or two.
-  if (listener && micInterim) ui.draft = joinOverlap(ui.draft.trim(), micInterim);
+  if (listener && micInterim) ui.draft = joinText(ui.draft, micInterim);
   if (listener) listener.stop();
   listener = null;
   micInterim = "";
@@ -384,8 +388,8 @@ function toggleMic(game: Game) {
   micInterim = "";
   ui.error = "";
   const l = startListening({
-    onText(finalText, interim) {
-      const joined = joinOverlap(micPrefix, finalText);
+    onText(committedText, interim) {
+      const joined = joinText(micPrefix, committedText);
       ui.draft = joined;
       micInterim = interim;
       const ta = root.querySelector<HTMLTextAreaElement>("#draft");
@@ -396,7 +400,7 @@ function toggleMic(game: Game) {
       }
     },
     onEnd() {
-      // Browser ended the session (silence timeout) or we stopped it.
+      // Dictation finished (player pressed stop).
       listener = null;
       micInterim = "";
       if (screen.name === "play" && screen.game === game) render();

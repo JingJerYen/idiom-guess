@@ -1,6 +1,11 @@
 /**
  * Speech-to-text via the browser's Web Speech API (SpeechRecognition).
  * No server round-trip and no API cost; Chrome, Edge and Safari support it, Firefox does not.
+ *
+ * Design: we deliberately avoid `continuous` mode. On Android Chrome it re-reports earlier
+ * results and duplicates words. Instead each recognition session handles one utterance (it
+ * ends at a pause and yields exactly one final transcript); we commit that text and start a
+ * new session right away, until the player presses stop. Interim words are still shown live.
  */
 
 type RecognitionCtor = new () => SpeechRecognitionLike;
@@ -30,8 +35,8 @@ const Ctor: RecognitionCtor | undefined =
 export const canListen = typeof Ctor === "function";
 
 export interface ListenHandlers {
-  /** Called with the text recognised so far: finalised part + interim part. */
-  onText(finalText: string, interimText: string): void;
+  /** Called with everything committed so far plus the interim text of the current utterance. */
+  onText(committedText: string, interimText: string): void;
   onEnd(): void;
   onError(message: string): void;
 }
@@ -40,90 +45,80 @@ export interface Listener {
   stop(): void;
 }
 
-const ERROR_TEXT: Record<string, string> = {
+/** Errors that end the whole dictation; anything else (no-speech, aborted) just starts a new session. */
+const FATAL: Record<string, string> = {
   "not-allowed": "麥克風權限被拒絕，請在瀏覽器網址列允許麥克風。",
   "service-not-allowed": "這個瀏覽器不允許語音辨識。",
-  "no-speech": "沒有聽到聲音，再試一次。",
   "audio-capture": "找不到麥克風。",
   network: "語音辨識需要網路連線。",
-  aborted: "",
 };
 
-/**
- * Join two transcript pieces, dropping the words at the start of `next` that repeat the end of
- * `prev`. Engines (Android Chrome in particular) often finalise "play" and then send an interim
- * "play piano" for the same utterance; naive concatenation yields "play play piano".
- */
-export function joinOverlap(prev: string, next: string): string {
-  const a = prev.trim().split(/\s+/).filter(Boolean);
-  const b = next.trim().split(/\s+/).filter(Boolean);
-  if (!a.length) return b.join(" ");
-  if (!b.length) return a.join(" ");
-  const norm = (w: string) => w.toLowerCase().replace(/[^\p{L}\p{N}']/gu, "");
-  const max = Math.min(a.length, b.length);
-  for (let k = max; k > 0; k--) {
-    let match = true;
-    for (let i = 0; i < k; i++) {
-      if (norm(a[a.length - k + i]) !== norm(b[i])) { match = false; break; }
-    }
-    if (match) return [...a, ...b.slice(k)].join(" ");
-  }
-  return [...a, ...b].join(" ");
+function join(a: string, b: string): string {
+  return [a.trim(), b.trim()].filter(Boolean).join(" ");
 }
 
-/** Some engines emit the same segment twice in a row; keep one copy. */
-function dedupeAdjacent(parts: string[]): string[] {
-  return parts.filter((p, i) => i === 0 || p.toLowerCase() !== parts[i - 1].toLowerCase());
-}
-
-/** Start recognising English speech; keeps listening until stop() or the browser ends the session. */
+/** Start recognising English speech; runs one utterance per session until stop(). */
 export function startListening(h: ListenHandlers): Listener | null {
   if (!Ctor) return null;
-  const rec = new Ctor();
-  rec.lang = "en-US";
-  rec.continuous = true;
-  rec.interimResults = true;
-  rec.maxAlternatives = 1;
-
-  let finalText = "";
+  let committed = "";
   let stopped = false;
+  let current: SpeechRecognitionLike | null = null;
+  let fatal = false;
 
-  rec.onresult = (ev) => {
-    // Rebuild from the full result list every time instead of accumulating: Chrome (notably on
-    // Android) re-reports earlier results and resultIndex is unreliable, which duplicates words.
-    const finals: string[] = [];
-    const interims: string[] = [];
-    for (let i = 0; i < ev.results.length; i++) {
-      const r = ev.results[i];
-      const t = (r[0]?.transcript ?? "").trim();
-      if (!t) continue;
-      (r.isFinal ? finals : interims).push(t);
+  const runSession = () => {
+    const rec = new Ctor();
+    current = rec;
+    rec.lang = "en-US";
+    rec.continuous = false;
+    rec.interimResults = true;
+    rec.maxAlternatives = 1;
+
+    let sessionFinal = "";
+    rec.onresult = (ev) => {
+      // One session = one utterance, so the final transcript is the whole thing. Some engines
+      // list the same final entry more than once: take the last one, never concatenate.
+      let fin = "";
+      let interim = "";
+      for (let i = 0; i < ev.results.length; i++) {
+        const r = ev.results[i];
+        const t = r[0]?.transcript ?? "";
+        if (r.isFinal) fin = t;
+        else interim = t;
+      }
+      if (fin.trim()) sessionFinal = fin.trim();
+      h.onText(join(committed, sessionFinal), sessionFinal ? "" : interim.trim());
+    };
+    rec.onerror = (ev) => {
+      const msg = FATAL[ev.error];
+      if (msg) {
+        fatal = true;
+        stopped = true;
+        h.onError(msg);
+      }
+      // no-speech / aborted: the session ends and onend decides whether to continue.
+    };
+    rec.onend = () => {
+      if (sessionFinal) committed = join(committed, sessionFinal);
+      if (stopped) {
+        if (!fatal) h.onEnd();
+        return;
+      }
+      runSession(); // keep listening until the player stops
+    };
+    try {
+      rec.start();
+    } catch {
+      stopped = true;
+      h.onError("無法啟動語音輸入。");
     }
-    finalText = dedupeAdjacent(finals).reduce((acc, p) => joinOverlap(acc, p), "");
-    const interim = dedupeAdjacent(interims).reduce((acc, p) => joinOverlap(acc, p), "");
-    // Hand back only the part of the interim text that is not already in finalText.
-    const merged = joinOverlap(finalText, interim);
-    h.onText(finalText, merged.slice(finalText.length).trim());
   };
-  rec.onerror = (ev) => {
-    const msg = ERROR_TEXT[ev.error] ?? `語音辨識錯誤（${ev.error}）`;
-    if (msg) h.onError(msg);
-  };
-  rec.onend = () => {
-    if (!stopped) h.onEnd();
-    stopped = true;
-  };
-  try {
-    rec.start();
-  } catch {
-    return null;
-  }
+
+  runSession();
   return {
     stop() {
       if (stopped) return;
       stopped = true;
-      try { rec.stop(); } catch { /* already stopped */ }
-      h.onEnd();
+      try { current?.stop(); } catch { /* already stopped */ }
     },
   };
 }
