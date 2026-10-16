@@ -19,5 +19,5 @@ export const config = {
   trustProxy: process.env.TRUST_PROXY === "1",
   model: "claude-haiku-5-5",
   /** Output caps per call type (thinking is disabled, so these are pure answer budgets). */
-  maxTokens: { guess: 160, feedback: 500, describe: 200 },
+  maxTokens: { guess: 400, feedback: 800, describe: 300 },
 } as const;

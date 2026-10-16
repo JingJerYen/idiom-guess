@@ -90,7 +90,16 @@ export async function callJson<S extends z.ZodTypeAny>(opts: JsonCallOptions<S>)
       return parseWithSchema(r.text, opts.schema);
     } catch (err) {
       lastParseError = err instanceof Error ? err.message : String(err);
-      log.warn("model output invalid", { kind: opts.kind, attempt, error: lastParseError, stop_reason: r.response.stop_reason, sample: r.text.slice(0, 200) });
+      const truncated = r.response.stop_reason === "max_tokens";
+      log.warn(truncated ? "model output truncated by max_tokens" : "model output invalid", {
+        kind: opts.kind,
+        attempt,
+        error: lastParseError,
+        stop_reason: r.response.stop_reason,
+        max_tokens: opts.maxTokens,
+        output_tokens: u.output_tokens,
+        sample: r.text.slice(0, 300),
+      });
     }
   }
   throw new AppError("MODEL_OUTPUT_INVALID", "AI 回覆的格式不正確，請再試一次。", 502, { error: lastParseError });

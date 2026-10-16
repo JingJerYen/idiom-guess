@@ -104,7 +104,7 @@ API 無狀態：前端持有這一輪的題目與每題的描述歷史，伺服�
 
 - 模型 `claude-haiku-5-5`，`thinking: { type: "disabled" }`、`output_config.effort: "low"`；
   不傳 temperature 等取樣參數，不用 assistant prefill。
-- `max_tokens`：猜測 160、回饋 500、反向描述 200（thinking 關閉，所以是純輸出預算）。
+- `max_tokens`：猜測 400、回饋 800、反向描述 300（thinking 關閉，所以是純輸出預算；上限只是保險，實際輸出通常遠低於此）。
 - 每次呼叫把 `input_tokens`／`output_tokens`、`stop_reason`、耗時寫到伺服器日誌（JSON 一行）。
 - 價格（≤100K 輸入）：輸入 US$0.10 / 百萬 token，輸出 US$0.50 / 百萬 token。
   一輪 10 題約 20 次猜測加 10 次回饋，估計 **約 US$0.003～0.005**。
