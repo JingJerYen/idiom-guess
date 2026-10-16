@@ -181,7 +181,7 @@ function renderPlay(game: Game) {
       .map((t, i) => {
         if (!forward) return `<div class="turn ${t.correct ? "hit" : "miss"}">${tiles(t.you, t.positions)}</div>`;
         const open = qs.shownTurn === i;
-        const badge = t.perfect === undefined ? "" : t.perfect ? `<span class="gbadge ok" title="完整正確的句子">✅</span>` : `<span class="gbadge" title="句子有問題">✏️</span>`;
+        const badge = t.fallback ? `<span class="gbadge" title="AI 回覆無法解析，這是盲猜">🎲</span>` : t.perfect === undefined ? "" : t.perfect ? `<span class="gbadge ok" title="完整正確的句子">✅</span>` : `<span class="gbadge" title="句子有問題">✏️</span>`;
         return `<div class="turn ${t.correct ? "hit" : "miss"}">
           <div class="ai">${tiles(t.guess ?? "", t.positions)}${badge}
             <span class="turnbtns">
@@ -449,7 +449,7 @@ async function submit(game: Game) {
       if (!r.ok) {
         ui.violations = r.violations;
       } else {
-        qs.turns.push({ you: text, guess: r.guess, reason: r.reason, correct: r.correct, positions: r.positions, perfect: r.perfectSentence, grammarNote: r.grammarNote });
+        qs.turns.push({ you: text, guess: r.guess, reason: r.reason, correct: r.correct, positions: r.positions, perfect: r.perfectSentence, grammarNote: r.grammarNote, fallback: r.fallback });
         ui.draft = "";
         if (r.correct || qs.turns.length >= game.maxGuesses) {
           qs.done = true;

@@ -29,7 +29,7 @@ export type Violation =
   | { type: "empty" };
 
 export type GuessResponse =
-  | { ok: true; guess: string; reason: string; correct: boolean; positions: boolean[]; perfectSentence: boolean; grammarNote: string; attempt: number; remaining: number }
+  | { ok: true; guess: string; reason: string; correct: boolean; positions: boolean[]; perfectSentence: boolean; grammarNote: string; fallback: boolean; attempt: number; remaining: number }
   | { ok: false; violations: Violation[] };
 
 export interface FeedbackResponse {

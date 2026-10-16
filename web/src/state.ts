@@ -12,6 +12,8 @@ export interface Turn {
   /** Forward mode: the model judged this description a complete, error-free sentence. */
   perfect?: boolean;
   grammarNote?: string;
+  /** The AI reply was unreadable; this guess is a rule-based stand-in. */
+  fallback?: boolean;
 }
 
 export interface QuestionState {

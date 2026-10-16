@@ -1,4 +1,6 @@
 import { config } from "../config.js";
+import { AppError } from "../errors.js";
+import { log } from "../logger.js";
 import { allTags, type Idiom } from "../game/idioms.js";
 import { callJson, salvageGuess } from "./callJson.js";
 import { mockDescribe, mockFeedback, mockGuess } from "./mock.js";
@@ -14,18 +16,41 @@ import {
   type GuessResult,
 } from "./types.js";
 
+export type GuessOutcome = GuessResult & {
+  /** True when the model's reply was unusable and a rule-based blind guess was substituted. */
+  fallback?: boolean;
+};
+
 /** The guesser never receives the idiom; only the player's descriptions and its own earlier guesses. */
-export async function guessIdiom(descriptions: string[], previousGuesses: PreviousGuess[] = []): Promise<GuessResult> {
-  if (config.mockMode) return mockGuess(descriptions, previousGuesses.map((p) => p.guess));
-  return callJson({
-    kind: "guess",
-    // The guesser learns which kinds of terms exist in the bank, never which kind this item is.
-    system: buildGuessSystemPrompt(allTags()),
-    user: buildGuessUserMessage({ descriptions, previousGuesses }),
-    maxTokens: config.maxTokens.guess,
-    schema: GuessResultSchema,
-    salvage: salvageGuess,
-  });
+export async function guessIdiom(descriptions: string[], previousGuesses: PreviousGuess[] = []): Promise<GuessOutcome> {
+  const prior = previousGuesses.map((p) => p.guess);
+  if (config.mockMode) return mockGuess(descriptions, prior);
+  try {
+    return await callJson({
+      kind: "guess",
+      // The guesser learns which kinds of terms exist in the bank, never which kind this item is.
+      system: buildGuessSystemPrompt(allTags()),
+      user: buildGuessUserMessage({ descriptions, previousGuesses }),
+      maxTokens: config.maxTokens.guess,
+      schema: GuessResultSchema,
+      salvage: salvageGuess,
+    });
+  } catch (err) {
+    // Unreadable output (after salvage and one retry): keep the game moving with a blind guess.
+    // API/network failures still surface as errors, because then nothing is working.
+    if (err instanceof AppError && err.code === "MODEL_OUTPUT_INVALID") {
+      log.error("guess fell back to blind mock guess", { details: err.details });
+      const blind = mockGuess(descriptions, prior);
+      return {
+        guess: blind.guess,
+        reason: "The AI's reply could not be read, so this is a blind guess.",
+        perfect_sentence: false,
+        grammar_note: "",
+        fallback: true,
+      };
+    }
+    throw err;
+  }
 }
 
 export async function getFeedback(

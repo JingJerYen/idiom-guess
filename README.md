@@ -96,7 +96,9 @@ API 無狀態：前端持有這一輪的題目與每題的描述歷史，伺服�
 - 玩家描述包在 `<description>` 標籤內，prompt 明示為資料而非指令。
 - 只有 `/api/feedback` 與 `/api/describe`（該題結束後或反向模式）才把答案交給模型。
 - 猜測呼叫同時做文法判斷：`perfect_sentence` 只看最新一句描述，需為完整句子、無拼字／文法錯誤、大寫開頭、句號結尾，有疑慮即 false 並在 `grammar_note` 指出第一個問題。
-- 模型輸出固定 JSON，zod 驗證；解析失敗重試一次，再失敗回 `MODEL_OUTPUT_INVALID`。
+- 模型輸出固定 JSON，zod 驗證；解析失敗先嘗試從原文救回 `guess`，不行就重試一次，
+  猜測端點仍失敗時改用規則式盲猜（回應帶 `fallback: true`，畫面顯示 🎲，不給文法加分，日誌記錄錯誤）；
+  回饋與聽力描述端點仍回 `MODEL_OUTPUT_INVALID`。API 連線或認證失敗一律回 `UPSTREAM_ERROR`，不會默默退回 MOCK。
 - 猜謎 prompt 集中在 `src/prompts/guess.ts`，想調整 AI 的「猜題強度」改這一個檔案即可。
 - `tests/prompt-no-answer.test.ts` 會檢查 prompt 不含任何題庫成語、別名、拼音與參考說法。
 
