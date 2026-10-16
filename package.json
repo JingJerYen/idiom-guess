@@ -6,7 +6,7 @@
     "test": "tsx --test tests/*.test.ts",
     "dev": "npm run build:web && tsx watch src/server.ts",
     "build": "npm run build:web && npm run build:server",
-    "build:web": "esbuild web/src/app.ts --bundle --format=esm --target=es2020 --outfile=public/app.js --minify && cp web/index.html web/styles.css public/",
+    "build:web": "esbuild web/src/app.ts --bundle --format=esm --target=es2020 --outfile=public/app.js --minify && node scripts/stamp.mjs",
     "build:server": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p web/tsconfig.json --noEmit",

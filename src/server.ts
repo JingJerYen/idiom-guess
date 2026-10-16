@@ -18,7 +18,18 @@ export function createApp() {
   app.use(express.json({ limit: "10kb" }));
   app.use("/api", api);
 
-  app.use(express.static(publicDir, { index: "index.html", maxAge: "1h" }));
+  app.use(
+    express.static(publicDir, {
+      index: "index.html",
+      etag: true,
+      setHeaders(res, filePath) {
+        // index.html must always be revalidated so a new deploy is picked up at once;
+        // app.js / styles.css are referenced with a ?v=<build> query, so they can be cached.
+        if (filePath.endsWith(".html")) res.setHeader("Cache-Control", "no-cache");
+        else res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+      },
+    }),
+  );
 
   app.use("/api", (_req, res) => {
     res.status(404).json({ ok: false, error: { code: "NOT_FOUND", message: "找不到這個端點。" } });

@@ -5,6 +5,7 @@ COPY package.json package-lock.json ./
 RUN npm ci
 COPY tsconfig.json ./
 COPY web ./web
+COPY scripts ./scripts
 COPY src ./src
 COPY data ./data
 RUN npm run build
