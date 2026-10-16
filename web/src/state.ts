@@ -16,6 +16,8 @@ export interface QuestionState {
   turns: Turn[];
   /** Reverse mode: clues shown so far. */
   clues: string[];
+  /** Reverse mode: index of the clue whose text is currently revealed, if any. */
+  shownClue?: number;
   done: boolean;
   solved: boolean;
   feedback?: FeedbackResponse | null;

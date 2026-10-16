@@ -44,6 +44,32 @@ function slots(length: number, confirmed: (string | null)[], draft: string): str
 function hearts(used: number, max: number): string {
   return `<span class="hearts" aria-label="剩餘 ${max - used} 次">${Array.from({ length: max }, (_, i) => `<i class="${i < max - used ? "" : "off"}"></i>`).join("")}</span>`;
 }
+// ---------- speech (browser TTS, no API cost) ----------
+
+const canSpeak = typeof window !== "undefined" && "speechSynthesis" in window;
+
+function pickVoice(): SpeechSynthesisVoice | null {
+  const voices = window.speechSynthesis.getVoices();
+  const en = voices.filter((v) => /^en(-|_)?(US|GB|AU)?/i.test(v.lang));
+  return en.find((v) => /Google|Samantha|Daniel|Natural/i.test(v.name)) ?? en[0] ?? voices[0] ?? null;
+}
+
+function speak(text: string) {
+  if (!canSpeak) return;
+  try {
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text.replace(/^\[MOCK[^\]]*\]\s*/, ""));
+    u.lang = "en-US";
+    u.rate = 0.9;
+    const v = pickVoice();
+    if (v) u.voice = v;
+    window.speechSynthesis.speak(u);
+  } catch {
+    /* ignore: speech is best-effort */
+  }
+}
+if (canSpeak) window.speechSynthesis.onvoiceschanged = () => pickVoice();
+
 function setScreen(s: Screen) {
   screen = s;
   render();
@@ -132,7 +158,16 @@ function renderPlay(game: Game) {
       <div class="idiom ${sizeClass}">${esc(q.idiom ?? "")}</div>
       <div class="chips"><span class="chip ban">🚫</span>${q.tabooWords.map((w) => `<span class="chip">${esc(w)}</span>`).join("")}</div>`;
   } else {
-    body += qs.clues.map((c, i) => `<div class="clue">${i > 0 ? `<span class="hint">💡</span>` : "🤖 "}${esc(c)}</div>`).join("");
+    body += qs.clues
+      .map((c, i) => {
+        const shown = !canSpeak || qs.shownClue === i;
+        return `<div class="clue ${shown ? "shown" : ""}">
+          <button class="iconbtn speak" data-i="${i}" aria-label="播放第 ${i + 1} 句">🔊</button>
+          <span class="cluetext">${shown ? esc(c) : `<span class="dotsline">${"•".repeat(Math.min(24, Math.max(8, Math.round(c.length / 4))))}</span>`}</span>
+          ${canSpeak ? `<button class="iconbtn eye" data-i="${i}" aria-pressed="${shown}" aria-label="顯示文字">${shown ? "🙈" : "👁"}</button>` : ""}
+        </div>`;
+      })
+      .join("");
     const confirmed: (string | null)[] = [];
     for (const t of qs.turns) chars(t.you).forEach((ch, i) => { if (t.positions?.[i]) confirmed[i] = ch; });
     if (!qs.done) body += slots(q.length ?? 4, confirmed, ui.draft);
@@ -185,6 +220,16 @@ function renderPlay(game: Game) {
     });
     if (!ui.busy) draft.focus();
   }
+  root.querySelectorAll<HTMLButtonElement>(".speak").forEach((b) =>
+    b.addEventListener("click", () => speak(qs.clues[Number(b.dataset.i)] ?? "")),
+  );
+  root.querySelectorAll<HTMLButtonElement>(".eye").forEach((b) =>
+    b.addEventListener("click", () => {
+      const i = Number(b.dataset.i);
+      qs.shownClue = qs.shownClue === i ? undefined : i;
+      render();
+    }),
+  );
   root.querySelector("#submit")?.addEventListener("click", () => void submit(game));
   root.querySelector("#next")?.addEventListener("click", () => void nextQuestion(game));
   root.querySelector("#retry-fb")?.addEventListener("click", () => void loadFeedback(game, qs));
@@ -206,6 +251,9 @@ function renderResult(game: Game, qs: QuestionState): string {
     : "";
   const ref = qs.referenceEnglish ?? qs.feedback?.reference_english;
   const refHtml = ref ? `<div class="ref">📖 ${esc(ref)}</div>` : "";
+  const transcript = game.mode === "reverse" && qs.clues.length
+    ? `<div class="transcript">${qs.clues.map((c, i) => `<div class="small"><button class="iconbtn speak sm" data-i="${i}" aria-label="播放">🔊</button> ${esc(c)}</div>`).join("")}</div>`
+    : "";
 
   let fb = "";
   if (game.mode === "forward") {
@@ -218,7 +266,7 @@ function renderResult(game: Game, qs: QuestionState): string {
     }
   }
   const last = game.index + 1 >= game.questions.length;
-  return `<section class="card result center">${head}${answer}${refHtml}${fb}
+  return `<section class="card result center">${head}${answer}${refHtml}${transcript}${fb}
     <button id="next" class="btn lg block" style="margin-top:16px">${last ? "總結" : "下一題 →"}</button></section>`;
 }
 
@@ -280,6 +328,8 @@ async function loadClue(game: Game, qs: QuestionState) {
   try {
     const r = await api.describe(qs.q.id, qs.clues.length + 1, qs.clues);
     qs.clues.push(r.description);
+    qs.shownClue = undefined;
+    speak(r.description);
   } catch (e) {
     ui.error = e instanceof Error ? e.message : "無法取得描述";
   }
