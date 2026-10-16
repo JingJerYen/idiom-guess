@@ -60,7 +60,7 @@ export async function getFeedback(
   attempts: number,
 ): Promise<FeedbackResult> {
   if (config.mockMode) return mockFeedback(idiom, descriptions);
-  return callJson({
+  return withFallback("feedback", () => mockFeedback(idiom, descriptions), () => callJson({
     kind: "feedback",
     system: FEEDBACK_SYSTEM_PROMPT,
     user: buildFeedbackUserMessage({
@@ -73,12 +73,32 @@ export async function getFeedback(
     }),
     maxTokens: config.maxTokens.feedback,
     schema: FeedbackResultSchema,
-  });
+  }));
+}
+
+function stripMockTags<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value).replace(/\\?\[MOCK[^\]]*\]\s*/g, "")) as T;
+}
+
+/**
+ * Run a model call; if its output is unreadable (after retry), substitute rule-based
+ * content so the player never sees a formatting error. API/network failures still throw.
+ */
+async function withFallback<T>(kind: string, fallback: () => T, call: () => Promise<T>): Promise<T> {
+  try {
+    return await call();
+  } catch (err) {
+    if (err instanceof AppError && err.code === "MODEL_OUTPUT_INVALID") {
+      log.error(`${kind} fell back to mock content`, { details: err.details });
+      return stripMockTags(fallback());
+    }
+    throw err;
+  }
 }
 
 export async function describeIdiom(idiom: Idiom, attempt: number, previousClues: string[]): Promise<DescribeResult> {
   if (config.mockMode) return mockDescribe(idiom, attempt, previousClues);
-  return callJson({
+  return withFallback("describe", () => mockDescribe(idiom, attempt, previousClues), () => callJson({
     kind: "describe",
     system: DESCRIBE_SYSTEM_PROMPT,
     user: buildDescribeUserMessage({
@@ -91,5 +111,5 @@ export async function describeIdiom(idiom: Idiom, attempt: number, previousClues
     }),
     maxTokens: config.maxTokens.describe,
     schema: DescribeResultSchema,
-  });
+  }));
 }

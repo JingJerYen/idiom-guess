@@ -161,16 +161,12 @@ function renderPlay(game: Game) {
         })
         .join("")}</div>`;
   } else {
-    body += qs.clues
-      .map((c, i) => {
-        const shown = !canSpeak || qs.shownClue === i;
-        return `<div class="clue ${shown ? "shown" : ""}">
-          <button class="iconbtn speak" data-i="${i}" aria-label="播放第 ${i + 1} 句">🔊</button>
-          <span class="cluetext">${shown ? esc(c) : `<span class="dotsline">${"•".repeat(Math.min(16, Math.max(6, Math.round(c.length / 6))))}</span>`}</span>
-          ${canSpeak ? `<button class="iconbtn eye" data-i="${i}" aria-pressed="${shown}" aria-label="顯示文字">${shown ? "🙈" : "👁"}</button>` : ""}
-        </div>`;
-      })
-      .join("");
+    // While guessing, a clue is only something you can replay. Text appears after the question ends.
+    body += canSpeak
+      ? `<div class="speakers">${qs.clues
+          .map((c, i) => `<button class="speaker" data-i="${i}" aria-label="播放第 ${i + 1} 句">🔊<small>${i + 1}</small></button>`)
+          .join("")}</div>`
+      : qs.clues.map((c, i) => `<div class="clue shown"><span class="cluetext">${i + 1}. ${esc(c)}</span></div>`).join("");
     const confirmed: (string | null)[] = [];
     for (const t of qs.turns) chars(t.you).forEach((ch, i) => { if (t.positions?.[i]) confirmed[i] = ch; });
     if (!qs.done) body += slots(q.length ?? 4, confirmed, ui.draft);
@@ -234,7 +230,7 @@ function renderPlay(game: Game) {
     });
     if (!ui.busy) draft.focus();
   }
-  root.querySelectorAll<HTMLButtonElement>(".speak").forEach((b) =>
+  root.querySelectorAll<HTMLButtonElement>(".speak, .speaker").forEach((b) =>
     b.addEventListener("click", () => speak(qs.clues[Number(b.dataset.i)] ?? "")),
   );
   root.querySelectorAll<HTMLButtonElement>(".chip.word").forEach((b) =>
@@ -306,11 +302,11 @@ function renderResult(game: Game, qs: QuestionState): string {
   }
   const last = game.index + 1 >= game.questions.length;
   const loading = game.mode === "forward" && qs.feedback === undefined && qs.turns.length > 0;
-  const detailsHtml = refHtml + transcript + fb;
+  const detailsHtml = game.mode === "reverse" ? refHtml : refHtml + fb;
   const toggle = detailsHtml
     ? `<button id="details" class="btn ghost sm details ${qs.showDetails ? "open" : ""}" aria-expanded="${qs.showDetails ? "true" : "false"}">${loading ? '<span class="spinner"></span>' : qs.showDetails ? "收起 ▴" : "📖 回饋 ▾"}</button>`
     : "";
-  return `<section class="card result center">${head}${answer}
+  return `<section class="card result center">${head}${answer}${game.mode === "reverse" ? transcript : ""}
     <div class="row" style="justify-content:center;margin-top:8px">${toggle}</div>
     ${qs.showDetails ? `<div class="details-body">${detailsHtml}</div>` : ""}
     <button id="next" class="btn lg block" style="margin-top:16px">${last ? "總結" : "下一題 →"}</button></section>`;
