@@ -1,4 +1,5 @@
 import { api, ApiError, type Level, type Mode, type Violation } from "./api.js";
+import { canListen, startListening, type Listener } from "./speech.js";
 import { MAX_ATTEMPTS, MAX_CHARS, MIN_WORDS, SCORES, SENTENCE_BONUS, countWords, maxScore, scoreFor, type Game, type QuestionState, type Screen } from "./state.js";
 
 const root = document.getElementById("app") as HTMLElement;
@@ -9,6 +10,10 @@ let chosenMode: Mode = "forward";
 let chosenLevel: Level = "hard";
 /** Transient per-question UI state. */
 const ui = { draft: "", busy: false, error: "", violations: [] as Violation[], confirmGiveUp: false };
+/** Active microphone session (forward mode). The text typed before recording is kept as a prefix. */
+let listener: Listener | null = null;
+let micPrefix = "";
+let micInterim = "";
 
 const MODE_LABEL: Record<Mode, string> = { forward: "口說", reverse: "聽力" };
 
@@ -197,7 +202,7 @@ function renderPlay(game: Game) {
 
   if (!qs.done) {
     if (forward) {
-      body += `<textarea id="draft" placeholder="Describe it in simple English…" maxlength="${MAX_CHARS + 50}" ${ui.busy ? "disabled" : ""}>${esc(ui.draft)}</textarea>
+      body += `<textarea id="draft" class="${listener ? "listening" : ""}" placeholder="${listener ? "Listening…" : "Describe it in simple English…"}" maxlength="${MAX_CHARS + 50}" ${ui.busy ? "disabled" : ""}>${esc(ui.draft)}${listener && micInterim ? esc((ui.draft && !/\s$/.test(ui.draft) ? " " : "") + micInterim) : ""}</textarea>
         <div class="counter">${wordDots(countWords(ui.draft))}<span class="chars"></span></div>`;
     } else {
       body += `<input id="draft" class="guess" type="text" maxlength="20" value="${esc(ui.draft)}" ${ui.busy ? "disabled" : ""} autocomplete="off" placeholder="…" />`;
@@ -206,7 +211,9 @@ function renderPlay(game: Game) {
     if (ui.error) body += `<div class="alert warn">${esc(ui.error)}</div>`;
     body += `<div class="actions">
       <button id="submit" class="btn" ${ui.busy ? "disabled" : ""}>${ui.busy ? '<span class="spinner"></span>' : "➤"}</button>
-      ${forward ? `<button class="mic" disabled title="語音輸入即將推出" aria-label="語音輸入（即將推出）">🎤</button>` : ""}
+      ${forward ? (canListen
+        ? `<button id="mic" class="mic ${listener ? "on" : ""}" ${ui.busy ? "disabled" : ""} aria-pressed="${listener ? "true" : "false"}" aria-label="${listener ? "停止錄音" : "語音輸入"}">${listener ? "⏹" : "🎤"}</button>`
+        : `<button class="mic off" disabled title="這個瀏覽器不支援語音輸入" aria-label="語音輸入（不支援）">🎤</button>`) : ""}
     </div>
     <button id="giveup" class="giveup ${ui.confirmGiveUp ? "confirm" : ""}" ${ui.busy ? "disabled" : ""}>${ui.confirmGiveUp ? "確定放棄？0 分" : "放棄"}</button>`;
   }
@@ -216,7 +223,8 @@ function renderPlay(game: Game) {
   const draft = root.querySelector<HTMLTextAreaElement | HTMLInputElement>("#draft");
   if (draft) {
     draft.addEventListener("input", () => {
-      ui.draft = draft.value;
+      // While listening, interim words are shown in the box but are not yet part of the draft.
+      if (!(listener && micInterim && draft.value.endsWith(micInterim))) ui.draft = draft.value;
       if (forward) {
         const n = countWords(ui.draft);
         const c = ui.draft.trim().length;
@@ -266,6 +274,7 @@ function renderPlay(game: Game) {
       render();
     }),
   );
+  root.querySelector("#mic")?.addEventListener("click", () => toggleMic(game));
   root.querySelector("#submit")?.addEventListener("click", () => void submit(game));
   root.querySelector("#next")?.addEventListener("click", () => void nextQuestion(game));
   root.querySelector("#giveup")?.addEventListener("click", () => {
@@ -360,7 +369,49 @@ async function startGame() {
   }
 }
 
+function stopMic() {
+  if (listener) listener.stop();
+  listener = null;
+  micInterim = "";
+}
+
+function toggleMic(game: Game) {
+  if (listener) { stopMic(); render(); return; }
+  micPrefix = ui.draft.trim();
+  micInterim = "";
+  ui.error = "";
+  const l = startListening({
+    onText(finalText, interim) {
+      const joined = [micPrefix, finalText].filter(Boolean).join(" ");
+      ui.draft = joined;
+      micInterim = interim;
+      const ta = root.querySelector<HTMLTextAreaElement>("#draft");
+      if (ta) {
+        ta.value = joined + (interim ? (joined ? " " : "") + interim : "");
+        ta.dispatchEvent(new Event("input"));
+        ta.scrollTop = ta.scrollHeight;
+      }
+    },
+    onEnd() {
+      // Browser ended the session (silence timeout) or we stopped it.
+      listener = null;
+      micInterim = "";
+      if (screen.name === "play" && screen.game === game) render();
+    },
+    onError(message) {
+      ui.error = message;
+      listener = null;
+      micInterim = "";
+      render();
+    },
+  });
+  if (!l) { ui.error = "無法啟動語音輸入。"; render(); return; }
+  listener = l;
+  render();
+}
+
 function resetUi() {
+  stopMic();
   ui.draft = "";
   ui.busy = false;
   ui.error = "";
@@ -425,6 +476,11 @@ async function submit(game: Game) {
   if (ui.busy) return;
   const qs = game.questions[game.index];
   if (qs.done) return;
+  if (listener) {
+    // Take whatever was recognised so far, including interim words, then stop.
+    if (micInterim) ui.draft = [ui.draft.trim(), micInterim].filter(Boolean).join(" ");
+    stopMic();
+  }
   const text = ui.draft.trim();
   ui.violations = [];
   ui.error = "";
