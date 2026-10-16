@@ -72,6 +72,7 @@ test("public question never leaks pinyin or reference; reverse hides the idiom",
   const rev = toPublic(it, "reverse") as Record<string, unknown>;
   assert.equal("idiom" in rev, false);
   assert.equal("tags" in rev, false);
+  assert.equal(rev.length, Array.from(it.idiom).length);
 });
 
 test("positionMatches reports right-character-right-position only", () => {

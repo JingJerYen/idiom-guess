@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { z } from "zod";
+import { normalizeIdiom } from "./match.js";
 
 const IdiomSchema = z.object({
   id: z.string().min(1),
@@ -24,6 +25,8 @@ export interface PublicQuestion {
   idiom?: string;
   /** Present in forward mode only; in reverse mode tags are revealed when the question ends. */
   tags?: string[];
+  /** Number of characters in the answer (reverse mode only), so the UI can draw empty tiles. */
+  length?: number;
   difficulty: 1 | 2 | 3;
   /** Shown on screen so the player knows what not to say. */
   tabooWords: string[];
@@ -110,6 +113,8 @@ export function toPublic(idiom: Idiom, mode: GameMode): PublicQuestion {
   if (mode === "forward") {
     q.idiom = idiom.idiom;
     q.tags = idiom.tags;
+  } else {
+    q.length = Array.from(normalizeIdiom(idiom.idiom)).length;
   }
   return q;
 }

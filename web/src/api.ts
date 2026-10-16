@@ -4,6 +4,7 @@ export interface Question {
   id: string;
   idiom?: string;
   tags?: string[];
+  length?: number;
   difficulty: 1 | 2 | 3;
   tabooWords: string[];
 }
