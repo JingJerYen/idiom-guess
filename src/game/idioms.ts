@@ -23,8 +23,8 @@ export interface PublicQuestion {
   id: string;
   /** Present in forward mode only. In reverse mode the player must guess it. */
   idiom?: string;
-  /** Present in forward mode only; in reverse mode tags are revealed when the question ends. */
-  tags?: string[];
+  /** The item's kind(s). Shown in both modes so the player knows what sort of term to guess. */
+  tags: string[];
   /** Number of characters in the answer (reverse mode only), so the UI can draw empty tiles. */
   length?: number;
   difficulty: 1 | 2 | 3;
@@ -124,12 +124,12 @@ export function toPublic(idiom: Idiom, mode: GameMode): PublicQuestion {
   const glossary = loadGlossary();
   const q: PublicQuestion = {
     id: idiom.id,
+    tags: idiom.tags,
     difficulty: idiom.difficulty,
     tabooWords: idiom.taboo.map((en) => ({ en, zh: glossary[en.toLowerCase()] ?? "" })),
   };
   if (mode === "forward") {
     q.idiom = idiom.idiom;
-    q.tags = idiom.tags;
   } else {
     q.length = Array.from(normalizeIdiom(idiom.idiom)).length;
   }

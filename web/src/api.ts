@@ -6,7 +6,7 @@ export interface TabooWord { en: string; zh: string }
 export interface Question {
   id: string;
   idiom?: string;
-  tags?: string[];
+  tags: string[];
   length?: number;
   difficulty: 1 | 2 | 3;
   tabooWords: TabooWord[];

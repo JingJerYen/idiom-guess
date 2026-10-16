@@ -74,7 +74,7 @@ docker run -p 3000:3000 -e GAME_ANTHROPIC_KEY=sk-ant-... -e TRUST_PROXY=1 idiom-
 | 端點 | 說明 |
 | --- | --- |
 | `GET /api/health` | 模式（mock/live）與模型名稱 |
-| `GET /api/round?mode=forward\|reverse` | 10 題：`id`、`difficulty`、`tabooWords`，forward 模式另含 `idiom`。不含拼音與參考說法 |
+| `GET /api/round?mode=forward\|reverse` | 10 題：`id`、`tags`、`difficulty`、`tabooWords`，forward 模式另含 `idiom`，reverse 模式另含 `length`。不含拼音與參考說法 |
 | `POST /api/guess` | `{ idiomId, level: "easy"\|"hard", descriptions[], previousGuesses[] }` → 程式檢查違規回 422 `{ violations }`；通過則回 `{ guess, reason, correct, positions[], perfectSentence, grammarNote, attempt, remaining }` |
 | `POST /api/feedback` | `{ idiomId, descriptions[], guessedCorrectly, attempts }` → `{ better_phrases, issues, tip, reference_english }` |
 | `POST /api/give-up` | `{ idiomId }` → `{ answer, tags, reference_english }`（放棄：0 分並揭露答案） |
@@ -131,8 +131,8 @@ API 無狀態：前端持有這一輪的題目與每題的描述歷史，伺服�
 ```
 
 - `tags`：這題的類型，可自由新增（目前有 成語、日常用語、店家名、地標）。
-  正向模式玩家看得到；AI 的 prompt 只會拿到「題庫中所有出現過的 tag」當作可能範圍，
-  不知道這題是哪一類，要靠玩家的描述讓它推理。反向模式玩家也看不到，題目結束才揭露。
+  兩種模式玩家都看得到這題的 tag；AI 的猜謎 prompt 只會拿到「題庫中所有出現過的 tag」當作可能範圍，
+  不知道這題是哪一類，要靠玩家的描述讓它推理。
 - 非成語的例子：`五十嵐`（aliases `50嵐`）、`整人節目`、`台北101`。數字與英文字母會保留比對。
 - `data/glossary.json`：每個 taboo 單字的中文翻譯，測試會檢查題庫裡每個單字都有翻譯；新增題目時記得補。
 - `taboo` 只需列原形：比對時自動涵蓋規則變化（s、es、ed、d、ing、去 e 加 ing、y 變 ies/ied、重複子音），不規則形要另外列（如 `feet`、`lost`、`shot`）。多字詞（如 `old man`）以片語比對，數字（如 `50`、`101`）也可以。

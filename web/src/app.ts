@@ -161,7 +161,7 @@ function renderPlay(game: Game) {
   if (forward) {
     const len = Array.from(q.idiom ?? "").length;
     const sizeClass = len <= 4 ? "" : len <= 6 ? "md" : "sm";
-    body += `<div class="tagrow">${(q.tags ?? []).map((t) => `<span class="kind">${esc(t)}</span>`).join("")}</div>
+    body += `<div class="tagrow">${q.tags.map((t) => `<span class="kind">${esc(t)}</span>`).join("")}</div>
       <div class="idiom ${sizeClass}">${esc(q.idiom ?? "")}</div>
       <div class="chips ${game.level}"><span class="chip ban">${game.level === "easy" ? "💡" : "🚫"}</span>${q.tabooWords
         .map((w, i) => {
@@ -170,6 +170,7 @@ function renderPlay(game: Game) {
         })
         .join("")}</div>`;
   } else {
+    body += `<div class="tagrow">${q.tags.map((t) => `<span class="kind">${esc(t)}</span>`).join("")}</div>`;
     // While guessing, a clue is only something you can replay. Text appears after the question ends.
     body += canSpeak
       ? `<div class="speakers">${qs.clues
