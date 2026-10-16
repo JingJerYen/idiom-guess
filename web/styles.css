@@ -143,8 +143,12 @@ input.guess:focus { outline: none; border-color: var(--accent); }
 .turn { border-left: 3px solid var(--line); padding: 2px 0 2px 10px; }
 .turn.hit { border-color: var(--ok); }
 .turn.miss { border-color: var(--accent); }
-.turn .you { font-style: italic; color: var(--muted); font-size: 14px; }
-.turn .ai { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
+.turn .you { font-style: italic; color: var(--muted); }
+.turn .ai { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.turnbtns { display: inline-flex; gap: 2px; }
+.turn .detail { margin-top: 6px; display: grid; gap: 2px; }
+.details-body { margin-top: 10px; }
+.details.open { opacity: 0.7; }
 
 /* ---- result ---- */
 .result .big-emoji { font-size: 48px; line-height: 1; }

@@ -99,11 +99,6 @@ function renderStart() {
         <span class="icon">👂</span><b>聽力</b><span class="small muted">AI 描述，你猜</span>
       </button>
     </section>
-    <section class="card row between scorehint">
-      <span class="muted">每題</span>
-      <span class="ladder big"><i class="now">5</i><i>3</i><i>1</i></span>
-      <span class="muted">分</span>
-    </section>
     ${ui.error ? `<div class="alert error">${esc(ui.error)}</div>` : ""}
     <button id="start" class="btn lg block">開始</button>`;
   root.querySelectorAll<HTMLButtonElement>(".mode").forEach((b) =>
@@ -169,10 +164,19 @@ function renderPlay(game: Game) {
 
   if (qs.turns.length) {
     body += `<div class="history">${qs.turns
-      .map((t) => forward
-        ? `<div class="turn ${t.correct ? "hit" : "miss"}"><div class="you">${esc(t.you)}</div>
-             <div class="ai">${tiles(t.guess ?? "", t.positions)}<span class="small muted">${esc(t.reason ?? "")}</span></div></div>`
-        : `<div class="turn ${t.correct ? "hit" : "miss"}">${tiles(t.you, t.positions)}</div>`)
+      .map((t, i) => {
+        if (!forward) return `<div class="turn ${t.correct ? "hit" : "miss"}">${tiles(t.you, t.positions)}</div>`;
+        const open = qs.shownTurn === i;
+        return `<div class="turn ${t.correct ? "hit" : "miss"}">
+          <div class="ai">${tiles(t.guess ?? "", t.positions)}
+            <span class="turnbtns">
+              ${canSpeak ? `<button class="iconbtn sm say" data-i="${i}" aria-label="聽理由">🔊</button>` : ""}
+              <button class="iconbtn sm eye2" data-i="${i}" aria-pressed="${open}" aria-label="看理由">${open ? "🙈" : "👁"}</button>
+            </span>
+          </div>
+          ${open ? `<div class="detail small"><div class="muted">${esc(t.reason ?? "")}</div><div class="you">“${esc(t.you)}”</div></div>` : ""}
+        </div>`;
+      })
       .join("")}</div>`;
   }
 
@@ -218,6 +222,17 @@ function renderPlay(game: Game) {
   root.querySelectorAll<HTMLButtonElement>(".speak").forEach((b) =>
     b.addEventListener("click", () => speak(qs.clues[Number(b.dataset.i)] ?? "")),
   );
+  root.querySelectorAll<HTMLButtonElement>(".say").forEach((b) =>
+    b.addEventListener("click", () => speak(qs.turns[Number(b.dataset.i)]?.reason ?? "")),
+  );
+  root.querySelectorAll<HTMLButtonElement>(".eye2").forEach((b) =>
+    b.addEventListener("click", () => {
+      const i = Number(b.dataset.i);
+      qs.shownTurn = qs.shownTurn === i ? undefined : i;
+      render();
+    }),
+  );
+  root.querySelector("#details")?.addEventListener("click", () => { qs.showDetails = !qs.showDetails; render(); });
   root.querySelectorAll<HTMLButtonElement>(".eye").forEach((b) =>
     b.addEventListener("click", () => {
       const i = Number(b.dataset.i);
@@ -255,7 +270,7 @@ function renderResult(game: Game, qs: QuestionState): string {
 
   let fb = "";
   if (game.mode === "forward") {
-    if (qs.feedback === undefined) fb = `<div class="muted center" style="margin-top:12px"><span class="spinner"></span></div>`;
+    if (qs.feedback === undefined) fb = qs.turns.length ? `<div class="muted center" style="margin-top:12px"><span class="spinner"></span></div>` : "";
     else if (qs.feedback === null && qs.feedbackError) fb = `<div class="alert warn">${esc(qs.feedbackError)} <button id="retry-fb" class="btn ghost sm">重試</button></div>`;
     else if (qs.feedback) {
       const f = qs.feedback;
@@ -264,7 +279,14 @@ function renderResult(game: Game, qs: QuestionState): string {
     }
   }
   const last = game.index + 1 >= game.questions.length;
-  return `<section class="card result center">${head}${answer}${refHtml}${transcript}${fb}
+  const loading = game.mode === "forward" && qs.feedback === undefined && qs.turns.length > 0;
+  const detailsHtml = refHtml + transcript + fb;
+  const toggle = detailsHtml
+    ? `<button id="details" class="btn ghost sm details ${qs.showDetails ? "open" : ""}" aria-expanded="${qs.showDetails ? "true" : "false"}">${loading ? '<span class="spinner"></span>' : qs.showDetails ? "收起 ▴" : "📖 回饋 ▾"}</button>`
+    : "";
+  return `<section class="card result center">${head}${answer}
+    <div class="row" style="justify-content:center;margin-top:8px">${toggle}</div>
+    ${qs.showDetails ? `<div class="details-body">${detailsHtml}</div>` : ""}
     <button id="next" class="btn lg block" style="margin-top:16px">${last ? "總結" : "下一題 →"}</button></section>`;
 }
 

@@ -18,6 +18,10 @@ export interface QuestionState {
   clues: string[];
   /** Reverse mode: index of the clue whose text is currently revealed, if any. */
   shownClue?: number;
+  /** Forward mode: index of the AI turn whose reason/description text is expanded, if any. */
+  shownTurn?: number;
+  /** Result card: whether the feedback / transcript section is expanded. */
+  showDetails?: boolean;
   done: boolean;
   solved: boolean;
   gaveUp: boolean;
