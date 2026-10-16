@@ -56,7 +56,7 @@ function pickVoice(): SpeechSynthesisVoice | null {
 }
 
 /** Speech rate by level: easy mode speaks noticeably slower. */
-const SPEECH_RATE: Record<Level, number> = { hard: 0.9, easy: 0.7 };
+const SPEECH_RATE: Record<Level, number> = { hard: 0.8, easy: 0.6 };
 let speechRate = SPEECH_RATE.hard;
 
 function speak(text: string) {
