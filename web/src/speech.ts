@@ -49,6 +49,28 @@ const ERROR_TEXT: Record<string, string> = {
   aborted: "",
 };
 
+/**
+ * Join two transcript pieces, dropping the words at the start of `next` that repeat the end of
+ * `prev`. Engines (Android Chrome in particular) often finalise "play" and then send an interim
+ * "play piano" for the same utterance; naive concatenation yields "play play piano".
+ */
+export function joinOverlap(prev: string, next: string): string {
+  const a = prev.trim().split(/\s+/).filter(Boolean);
+  const b = next.trim().split(/\s+/).filter(Boolean);
+  if (!a.length) return b.join(" ");
+  if (!b.length) return a.join(" ");
+  const norm = (w: string) => w.toLowerCase().replace(/[^\p{L}\p{N}']/gu, "");
+  const max = Math.min(a.length, b.length);
+  for (let k = max; k > 0; k--) {
+    let match = true;
+    for (let i = 0; i < k; i++) {
+      if (norm(a[a.length - k + i]) !== norm(b[i])) { match = false; break; }
+    }
+    if (match) return [...a, ...b.slice(k)].join(" ");
+  }
+  return [...a, ...b].join(" ");
+}
+
 /** Some engines emit the same segment twice in a row; keep one copy. */
 function dedupeAdjacent(parts: string[]): string[] {
   return parts.filter((p, i) => i === 0 || p.toLowerCase() !== parts[i - 1].toLowerCase());
@@ -77,8 +99,11 @@ export function startListening(h: ListenHandlers): Listener | null {
       if (!t) continue;
       (r.isFinal ? finals : interims).push(t);
     }
-    finalText = dedupeAdjacent(finals).join(" ");
-    h.onText(finalText, dedupeAdjacent(interims).join(" "));
+    finalText = dedupeAdjacent(finals).reduce((acc, p) => joinOverlap(acc, p), "");
+    const interim = dedupeAdjacent(interims).reduce((acc, p) => joinOverlap(acc, p), "");
+    // Hand back only the part of the interim text that is not already in finalText.
+    const merged = joinOverlap(finalText, interim);
+    h.onText(finalText, merged.slice(finalText.length).trim());
   };
   rec.onerror = (ev) => {
     const msg = ERROR_TEXT[ev.error] ?? `語音辨識錯誤（${ev.error}）`;

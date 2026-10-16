@@ -1,5 +1,5 @@
 import { api, ApiError, type Level, type Mode, type Violation } from "./api.js";
-import { canListen, startListening, type Listener } from "./speech.js";
+import { canListen, joinOverlap, startListening, type Listener } from "./speech.js";
 import { MAX_ATTEMPTS, MAX_CHARS, MIN_WORDS, SCORES, SENTENCE_BONUS, countWords, maxScore, scoreFor, type Game, type QuestionState, type Screen } from "./state.js";
 
 const root = document.getElementById("app") as HTMLElement;
@@ -383,7 +383,7 @@ function toggleMic(game: Game) {
   ui.error = "";
   const l = startListening({
     onText(finalText, interim) {
-      const joined = [micPrefix, finalText].filter(Boolean).join(" ");
+      const joined = joinOverlap(micPrefix, finalText);
       ui.draft = joined;
       micInterim = interim;
       const ta = root.querySelector<HTMLTextAreaElement>("#draft");
@@ -479,7 +479,7 @@ async function submit(game: Game) {
   if (qs.done) return;
   if (listener) {
     // Take whatever was recognised so far, including interim words, then stop.
-    if (micInterim) ui.draft = [ui.draft.trim(), micInterim].filter(Boolean).join(" ");
+    if (micInterim) ui.draft = joinOverlap(ui.draft.trim(), micInterim);
     stopMic();
   }
   const text = ui.draft.trim();
