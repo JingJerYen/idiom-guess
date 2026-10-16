@@ -1,0 +1,182 @@
+[
+  {
+    "id": "hua-she-tian-zu",
+    "idiom": "畫蛇添足",
+    "aliases": ["画蛇添足"],
+    "pinyin": "hua she tian zu",
+    "taboo": ["snake", "foot", "feet", "leg", "draw", "paint", "drawing", "painting"],
+    "difficulty": 1,
+    "reference_english": "Ruining something that was already fine by adding something unnecessary."
+  },
+  {
+    "id": "shou-zhu-dai-tu",
+    "idiom": "守株待兔",
+    "aliases": ["守株待兎"],
+    "pinyin": "shou zhu dai tu",
+    "taboo": ["rabbit", "hare", "bunny", "tree", "stump", "trunk", "wait", "waiting"],
+    "difficulty": 1,
+    "reference_english": "Waiting passively for luck to strike again instead of making an effort."
+  },
+  {
+    "id": "wang-yang-bu-lao",
+    "idiom": "亡羊補牢",
+    "aliases": ["亡羊补牢"],
+    "pinyin": "wang yang bu lao",
+    "taboo": ["sheep", "lamb", "goat", "pen", "fence", "fold", "mend", "repair", "fix", "lost"],
+    "difficulty": 1,
+    "reference_english": "It is never too late to fix a problem after you have suffered a loss from it."
+  },
+  {
+    "id": "yan-er-dao-ling",
+    "idiom": "掩耳盜鈴",
+    "aliases": ["掩耳盗铃", "掩耳偷鈴"],
+    "pinyin": "yan er dao ling",
+    "taboo": ["ear", "bell", "steal", "stealing", "thief", "cover", "covering", "plug"],
+    "difficulty": 1,
+    "reference_english": "Deceiving yourself by pretending a problem does not exist when everyone else can see it."
+  },
+  {
+    "id": "jing-di-zhi-wa",
+    "idiom": "井底之蛙",
+    "aliases": ["井底之蛙", "井底蛙"],
+    "pinyin": "jing di zhi wa",
+    "taboo": ["frog", "toad", "well", "bottom", "hole"],
+    "difficulty": 1,
+    "reference_english": "Someone with a narrow view who believes their tiny world is all there is."
+  },
+  {
+    "id": "dui-niu-tan-qin",
+    "idiom": "對牛彈琴",
+    "aliases": ["对牛弹琴"],
+    "pinyin": "dui niu tan qin",
+    "taboo": ["cow", "ox", "bull", "cattle", "buffalo", "lute", "zither", "piano", "guitar", "harp", "music", "musical", "play", "playing", "instrument"],
+    "difficulty": 1,
+    "reference_english": "Explaining something to someone who cannot possibly understand or appreciate it."
+  },
+  {
+    "id": "hu-jia-hu-wei",
+    "idiom": "狐假虎威",
+    "aliases": ["狐假虎威"],
+    "pinyin": "hu jia hu wei",
+    "taboo": ["fox", "tiger", "borrow", "borrowing", "borrowed", "authority", "power"],
+    "difficulty": 1,
+    "reference_english": "Bullying or intimidating others by relying on the power of someone stronger behind you."
+  },
+  {
+    "id": "ke-zhou-qiu-jian",
+    "idiom": "刻舟求劍",
+    "aliases": ["刻舟求剑"],
+    "pinyin": "ke zhou qiu jian",
+    "taboo": ["boat", "ship", "canoe", "sword", "blade", "carve", "carving", "mark", "marking", "notch"],
+    "difficulty": 1,
+    "reference_english": "Stubbornly sticking to an old method even though the situation has completely changed."
+  },
+  {
+    "id": "zi-xiang-mao-dun",
+    "idiom": "自相矛盾",
+    "aliases": ["自相矛盾"],
+    "pinyin": "zi xiang mao dun",
+    "taboo": ["spear", "shield", "contradict", "contradiction", "contradictory", "contradicting"],
+    "difficulty": 2,
+    "reference_english": "Saying two things that cannot both be true at the same time."
+  },
+  {
+    "id": "bei-gong-she-ying",
+    "idiom": "杯弓蛇影",
+    "aliases": ["杯弓蛇影"],
+    "pinyin": "bei gong she ying",
+    "taboo": ["cup", "glass", "bow", "snake", "shadow", "reflection"],
+    "difficulty": 2,
+    "reference_english": "Being so jumpy or paranoid that you mistake harmless things for real threats."
+  },
+  {
+    "id": "ya-miao-zhu-zhang",
+    "idiom": "揠苗助長",
+    "aliases": ["拔苗助長", "揠苗助长", "拔苗助长"],
+    "pinyin": "ya miao zhu zhang",
+    "taboo": ["seedling", "sprout", "sprouts", "plant", "plants", "crop", "crops", "rice", "pull", "pulling", "pulled", "grow", "growing", "growth"],
+    "difficulty": 2,
+    "reference_english": "Spoiling something by being impatient and forcing it to progress faster than it naturally can."
+  },
+  {
+    "id": "sai-weng-shi-ma",
+    "idiom": "塞翁失馬",
+    "aliases": ["塞翁失马", "塞翁失馬焉知非福", "塞翁失马焉知非福"],
+    "pinyin": "sai weng shi ma",
+    "taboo": ["horse", "horses", "old man", "lose", "lost", "losing", "blessing", "disguise"],
+    "difficulty": 2,
+    "reference_english": "A setback may turn out to be good fortune later, and good luck may turn into bad."
+  },
+  {
+    "id": "yi-jian-shuang-diao",
+    "idiom": "一箭雙鵰",
+    "aliases": ["一箭双雕", "一箭雙雕"],
+    "pinyin": "yi jian shuang diao",
+    "taboo": ["arrow", "arrows", "eagle", "eagles", "hawk", "bird", "birds", "two", "shot", "shoot", "stone"],
+    "difficulty": 2,
+    "reference_english": "Achieving two goals with a single action."
+  },
+  {
+    "id": "nan-yuan-bei-zhe",
+    "idiom": "南轅北轍",
+    "aliases": ["南辕北辙"],
+    "pinyin": "nan yuan bei zhe",
+    "taboo": ["south", "north", "cart", "carriage", "wheel", "wheels", "track", "tracks", "direction", "opposite"],
+    "difficulty": 2,
+    "reference_english": "Acting in a way that takes you further from your goal, no matter how hard you try."
+  },
+  {
+    "id": "hua-long-dian-jing",
+    "idiom": "畫龍點睛",
+    "aliases": ["画龙点睛"],
+    "pinyin": "hua long dian jing",
+    "taboo": ["dragon", "dragons", "eye", "eyes", "pupil", "dot", "paint", "painting", "draw", "drawing"],
+    "difficulty": 2,
+    "reference_english": "The small finishing touch that brings the whole work to life."
+  },
+  {
+    "id": "zhao-san-mu-si",
+    "idiom": "朝三暮四",
+    "aliases": ["朝三暮四"],
+    "pinyin": "zhao san mu si",
+    "taboo": ["three", "four", "morning", "evening", "night", "monkey", "monkeys", "chestnut", "chestnuts"],
+    "difficulty": 3,
+    "reference_english": "Being fickle and constantly changing your mind, often chasing whatever seems better at the moment."
+  },
+  {
+    "id": "yuan-mu-qiu-yu",
+    "idiom": "緣木求魚",
+    "aliases": ["缘木求鱼"],
+    "pinyin": "yuan mu qiu yu",
+    "taboo": ["tree", "trees", "climb", "climbing", "fish", "fishing", "wood"],
+    "difficulty": 3,
+    "reference_english": "Trying to reach a goal with a method that can never possibly work."
+  },
+  {
+    "id": "qi-ren-you-tian",
+    "idiom": "杞人憂天",
+    "aliases": ["杞人忧天"],
+    "pinyin": "qi ren you tian",
+    "taboo": ["sky", "heaven", "heavens", "fall", "falling", "collapse", "worry", "worried", "worrying"],
+    "difficulty": 3,
+    "reference_english": "Worrying needlessly about disasters that are extremely unlikely to happen."
+  },
+  {
+    "id": "tang-bi-dang-che",
+    "idiom": "螳臂當車",
+    "aliases": ["螳臂当车", "螳臂擋車", "螳臂挡车"],
+    "pinyin": "tang bi dang che",
+    "taboo": ["mantis", "insect", "bug", "arm", "arms", "cart", "car", "chariot", "wheel", "block", "blocking", "stop"],
+    "difficulty": 3,
+    "reference_english": "Overestimating yourself by trying to stop a force that is far too strong for you."
+  },
+  {
+    "id": "yu-gong-yi-shan",
+    "idiom": "愚公移山",
+    "aliases": ["愚公移山"],
+    "pinyin": "yu gong yi shan",
+    "taboo": ["mountain", "mountains", "hill", "hills", "move", "moving", "moved", "old man", "foolish", "dig", "digging"],
+    "difficulty": 3,
+    "reference_english": "Persisting with unshakable determination until an enormous task is finally finished."
+  }
+]
