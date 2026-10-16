@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { extractJsonObject, parseWithSchema } from "../src/llm/callJson.js";
+import { extractJsonObject, parseWithSchema, salvageGuess } from "../src/llm/callJson.js";
 import { FeedbackResultSchema, GuessResultSchema } from "../src/llm/types.js";
 import { mockGuess, mockFeedback, mockPerfectSentence } from "../src/llm/mock.js";
 import { loadIdioms } from "../src/game/idioms.js";
@@ -16,6 +16,20 @@ test("grammar fields are optional and default to not-perfect", () => {
   assert.equal(r.perfect_sentence, false);
   assert.equal(r.grammar_note, "");
   assert.throws(() => parseWithSchema('{"guess":"畫蛇添足","reason":"x","perfect_sentence":"yes"}', GuessResultSchema), SyntaxError);
+});
+
+test("salvageGuess recovers the guess from a truncated reply", () => {
+  const cut = '{"guess": "守株待兔", "reason": "The player describes waiting for luck instead of wor';
+  const s = salvageGuess(cut) as { guess: string; reason: string; perfect_sentence: boolean };
+  assert.equal(s.guess, "守株待兔");
+  assert.equal(s.reason, "The player describes waiting for luck instead of wor");
+  assert.equal(s.perfect_sentence, false);
+  assert.ok(GuessResultSchema.safeParse(s).success, "salvaged object must satisfy the schema");
+  // a reply with the whole flag present keeps it
+  assert.equal((salvageGuess('{"guess":"台北101","reason":"x","perfect_sentence":true,"grammar_note":"this is a long note that never clo') as { perfect_sentence: boolean }).perfect_sentence, true);
+  // nothing usable
+  assert.equal(salvageGuess("I think it is 守株待兔"), null);
+  assert.equal(salvageGuess('{"gu'), null);
 });
 
 test("mock grammar heuristic", () => {

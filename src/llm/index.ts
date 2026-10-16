@@ -1,6 +1,6 @@
 import { config } from "../config.js";
 import { allTags, type Idiom } from "../game/idioms.js";
-import { callJson } from "./callJson.js";
+import { callJson, salvageGuess } from "./callJson.js";
 import { mockDescribe, mockFeedback, mockGuess } from "./mock.js";
 import { buildGuessSystemPrompt, buildGuessUserMessage, type PreviousGuess } from "../prompts/guess.js";
 import { FEEDBACK_SYSTEM_PROMPT, buildFeedbackUserMessage } from "../prompts/feedback.js";
@@ -24,6 +24,7 @@ export async function guessIdiom(descriptions: string[], previousGuesses: Previo
     user: buildGuessUserMessage({ descriptions, previousGuesses }),
     maxTokens: config.maxTokens.guess,
     schema: GuessResultSchema,
+    salvage: salvageGuess,
   });
 }
 

@@ -3,7 +3,8 @@ import { z } from "zod";
 export const GuessResultSchema = z.object({
   guess: z.string().trim().min(1).max(40),
   // Long free-text fields are clipped rather than rejected: a verbose model must not fail the round.
-  reason: z.string().trim().min(1).transform((s) => s.slice(0, 300)),
+  // reason may be empty when the reply was salvaged from a truncated JSON.
+  reason: z.string().trim().default("").transform((s) => s.slice(0, 300)),
   /** True only when the newest description is a complete, error-free sentence. */
   perfect_sentence: z.boolean().default(false),
   grammar_note: z.string().trim().default("").transform((s) => s.slice(0, 200)),

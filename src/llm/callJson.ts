@@ -12,6 +12,28 @@ export interface JsonCallOptions<S extends z.ZodTypeAny> {
   user: string;
   maxTokens: number;
   schema: S;
+  /**
+   * Last resort when the reply is not valid JSON (e.g. cut off by max_tokens): build a
+   * partial object from the raw text. Return null if nothing usable can be recovered.
+   */
+  salvage?: (raw: string) => unknown | null;
+}
+
+/** Pull "guess": "..." out of a broken JSON reply so the player at least sees the AI's answer. */
+export function salvageGuess(raw: string): unknown | null {
+  const m = raw.match(/"guess"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+  if (!m) return null;
+  let guess: string;
+  try {
+    guess = JSON.parse(`"${m[1]}"`);
+  } catch {
+    guess = m[1];
+  }
+  if (!guess.trim()) return null;
+  // The reason may be the field that got cut off, so do not require its closing quote.
+  const reason = raw.match(/"reason"\s*:\s*"((?:[^"\\]|\\.)*)/)?.[1] ?? "";
+  const perfect = /"perfect_sentence"\s*:\s*true/.test(raw);
+  return { guess, reason, perfect_sentence: perfect, grammar_note: "" };
 }
 
 /** Pull the first {...} object out of a text reply, tolerating code fences and chatter. */
@@ -91,6 +113,14 @@ export async function callJson<S extends z.ZodTypeAny>(opts: JsonCallOptions<S>)
     } catch (err) {
       lastParseError = err instanceof Error ? err.message : String(err);
       const truncated = r.response.stop_reason === "max_tokens";
+      if (opts.salvage) {
+        const partial = opts.salvage(r.text);
+        const ok = partial !== null ? opts.schema.safeParse(partial) : null;
+        if (ok?.success) {
+          log.warn("model output salvaged", { kind: opts.kind, attempt, error: lastParseError, stop_reason: r.response.stop_reason, sample: r.text.slice(0, 300) });
+          return ok.data;
+        }
+      }
       log.warn(truncated ? "model output truncated by max_tokens" : "model output invalid", {
         kind: opts.kind,
         attempt,
