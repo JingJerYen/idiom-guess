@@ -9,7 +9,7 @@ export interface Question {
   tags: string[];
   length?: number;
   difficulty: 1 | 2 | 3;
-  tabooWords: TabooWord[];
+  hintWords: TabooWord[];
 }
 
 export interface RoundResponse {
@@ -75,7 +75,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  round: (mode: Mode) => request<RoundResponse>(`/api/round?mode=${mode}`),
+  round: (mode: Mode, level: Level) => request<RoundResponse>(`/api/round?mode=${mode}&level=${level}`),
   guess: (idiomId: string, level: Level, descriptions: string[], previousGuesses: string[]) =>
     request<GuessResponse>("/api/guess", { method: "POST", body: JSON.stringify({ idiomId, level, descriptions, previousGuesses }) }),
   feedback: (idiomId: string, descriptions: string[], guessedCorrectly: boolean, attempts: number) =>

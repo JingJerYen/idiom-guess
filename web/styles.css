@@ -157,6 +157,11 @@ input.guess:focus { outline: none; border-color: var(--accent); }
 .actions { display: flex; gap: 10px; margin-top: 10px; align-items: center; }
 .actions .btn { flex: 1; font-size: 20px; }
 .mic { width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--line); background: var(--card); font-size: 22px; cursor: pointer; flex: 0 0 auto; box-shadow: var(--shadow); }
+.mic.hint { font-size: 20px; }
+.mic.hint.on { background: var(--warn-soft); border-color: var(--warn); animation: none; color: inherit; }
+.starters { display: grid; gap: 6px; margin-top: 10px; padding: 10px; background: var(--warn-soft); border-radius: 12px; }
+.starter { text-align: left; border: 0; background: var(--card); border-radius: 10px; padding: 8px 10px; cursor: pointer; font-style: italic; }
+.starter:active { transform: scale(0.98); }
 .mic.off { border-style: dashed; color: var(--muted); cursor: not-allowed; opacity: 0.5; box-shadow: none; }
 .mic.on { background: var(--accent); border-color: var(--accent); color: #fff; animation: pulse 1.2s ease-in-out infinite; }
 @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(217, 83, 79, 0.45); } 50% { box-shadow: 0 0 0 10px rgba(217, 83, 79, 0); } }

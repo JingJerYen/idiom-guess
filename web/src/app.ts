@@ -17,6 +17,20 @@ let micInterim = "";
 
 const MODE_LABEL: Record<Mode, string> = { forward: "口說", reverse: "聽力" };
 
+/** Sentence starters for players who do not know how to begin, chosen by the item's kind. */
+const STARTERS: Record<string, string[]> = {
+  成語: ["It's a saying about a person who ", "People use it when someone ", "The lesson is that "],
+  日常用語: ["It's something people say when ", "You use this word when ", "It means that "],
+  店家名: ["It's a shop where you can buy ", "It's a chain that is famous for ", "You go there when you want "],
+  地標: ["It's a famous place in ", "It looks like ", "People go there to "],
+};
+const DEFAULT_STARTERS = ["It's a kind of ", "It's used for ", "It happens when "];
+
+function startersFor(tags: string[]): string[] {
+  for (const t of tags) if (STARTERS[t]) return STARTERS[t];
+  return DEFAULT_STARTERS;
+}
+
 function esc(s: string): string {
   return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] as string);
 }
@@ -103,8 +117,8 @@ function renderStart() {
       <p class="muted">不知道那個字怎麼講？把意思說清楚就好。</p>
     </section>
     <section class="levels" role="group" aria-label="難度">
-      <button class="level" data-level="easy" aria-pressed="${chosenLevel === "easy"}"><span class="icon">🌱</span><b>簡單</b><span class="small muted">${chosenMode === "forward" ? "單字可以用" : "語速較慢"}</span></button>
-      <button class="level" data-level="hard" aria-pressed="${chosenLevel === "hard"}"><span class="icon">🔥</span><b>困難</b><span class="small muted">${chosenMode === "forward" ? "單字不能說" : "正常語速"}</span></button>
+      <button class="level" data-level="easy" aria-pressed="${chosenLevel === "easy"}"><span class="icon">🌱</span><b>簡單</b><span class="small muted">${chosenMode === "forward" ? "有提示單字" : "語速較慢"}</span></button>
+      <button class="level" data-level="hard" aria-pressed="${chosenLevel === "hard"}"><span class="icon">🔥</span><b>困難</b><span class="small muted">${chosenMode === "forward" ? "沒有提示單字" : "正常語速"}</span></button>
     </section>
     <section class="modes" role="group" aria-label="模式">
       <button class="mode" data-mode="forward" aria-pressed="${chosenMode === "forward"}">
@@ -163,12 +177,12 @@ function renderPlay(game: Game) {
     const sizeClass = len <= 4 ? "" : len <= 6 ? "md" : "sm";
     body += `<div class="tagrow">${q.tags.map((t) => `<span class="kind">${esc(t)}</span>`).join("")}</div>
       <div class="idiom ${sizeClass}">${esc(q.idiom ?? "")}</div>
-      <div class="chips ${game.level}"><span class="chip ban">${game.level === "easy" ? "💡" : "🚫"}</span>${q.tabooWords
+      ${q.hintWords.length ? `<div class="chips easy"><span class="chip ban">💡</span>${q.hintWords
         .map((w, i) => {
           const zh = qs.flipped?.has(i) && w.zh;
           return `<button class="chip word ${zh ? "zh" : ""}" data-i="${i}" aria-label="${esc(w.en)}">${esc(zh ? w.zh : w.en)}</button>`;
         })
-        .join("")}</div>`;
+        .join("")}</div>` : ""}`;
   } else {
     body += `<div class="tagrow">${q.tags.map((t) => `<span class="kind">${esc(t)}</span>`).join("")}</div>`;
     // While guessing, a clue is only something you can replay. Text appears after the question ends.
@@ -203,6 +217,12 @@ function renderPlay(game: Game) {
 
   if (!qs.done) {
     if (forward) {
+      if (qs.showStarters) {
+        body += `<div class="starters">
+          <div class="small muted">先說它是什麼 → 用來做什麼／什麼情況 → 結果或感覺</div>
+          ${startersFor(q.tags).map((s) => `<button class="starter" data-s="${esc(s)}">${esc(s.trim())}…</button>`).join("")}
+        </div>`;
+      }
       body += `<textarea id="draft" class="${listener ? "listening" : ""}" placeholder="${listener ? "Listening…" : "Describe it in simple English…"}" maxlength="${MAX_CHARS + 50}" ${ui.busy ? "disabled" : ""}>${esc(ui.draft)}${listener && micInterim ? esc((ui.draft && !/\s$/.test(ui.draft) ? " " : "") + micInterim) : ""}</textarea>
         <div class="counter">${wordDots(countWords(ui.draft))}<span class="chars"></span></div>`;
     } else {
@@ -211,6 +231,7 @@ function renderPlay(game: Game) {
     if (ui.violations.length) body += `<div class="alert error">${ui.violations.map((v) => `<div>${esc(violationText(v))}</div>`).join("")}</div>`;
     if (ui.error) body += `<div class="alert warn">${esc(ui.error)}</div>`;
     body += `<div class="actions">
+      ${forward ? `<button id="starters" class="mic hint ${qs.showStarters ? "on" : ""}" aria-pressed="${qs.showStarters ? "true" : "false"}" aria-label="不知道怎麼開口？">💡</button>` : ""}
       <button id="submit" class="btn" ${ui.busy ? "disabled" : ""}>${ui.busy ? '<span class="spinner"></span>' : "➤"}</button>
       ${forward ? (canListen
         ? `<button id="mic" class="mic ${listener ? "on" : ""}" ${ui.busy ? "disabled" : ""} aria-pressed="${listener ? "true" : "false"}" aria-label="${listener ? "停止錄音" : "語音輸入"}">${listener ? "⏹" : "🎤"}</button>`
@@ -251,7 +272,7 @@ function renderPlay(game: Game) {
       const i = Number(b.dataset.i);
       qs.flipped ??= new Set();
       if (qs.flipped.has(i)) qs.flipped.delete(i); else qs.flipped.add(i);
-      const w = q.tabooWords[i];
+      const w = q.hintWords[i];
       const zh = qs.flipped.has(i) && w?.zh;
       b.textContent = zh ? w.zh : (w?.en ?? "");
       b.classList.toggle("zh", Boolean(zh));
@@ -276,6 +297,17 @@ function renderPlay(game: Game) {
     }),
   );
   root.querySelector("#mic")?.addEventListener("click", () => toggleMic(game));
+  root.querySelector("#starters")?.addEventListener("click", () => { qs.showStarters = !qs.showStarters; render(); });
+  root.querySelectorAll<HTMLButtonElement>(".starter").forEach((b) =>
+    b.addEventListener("click", () => {
+      const s = b.dataset.s ?? "";
+      ui.draft = ui.draft.trim() ? `${ui.draft.trim()} ${s}` : s;
+      qs.showStarters = false;
+      render();
+      const ta = root.querySelector<HTMLTextAreaElement>("#draft");
+      if (ta) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
+    }),
+  );
   root.querySelector("#submit")?.addEventListener("click", () => void submit(game));
   root.querySelector("#next")?.addEventListener("click", () => void nextQuestion(game));
   root.querySelector("#giveup")?.addEventListener("click", () => {
@@ -348,7 +380,7 @@ async function startGame() {
   ui.error = "";
   setScreen({ name: "loading", text: "" });
   try {
-    const r = await api.round(chosenMode);
+    const r = await api.round(chosenMode, chosenLevel);
     const game: Game = {
       mode: r.mode,
       level: chosenLevel,

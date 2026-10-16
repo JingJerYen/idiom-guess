@@ -97,12 +97,12 @@ export function findTabooWords(text: string, taboo: string[]): string[] {
   return hits;
 }
 
-export interface ValidateOptions {
-  /** Easy mode: taboo words are allowed (they become vocabulary hints). Chinese, pinyin and length still apply. */
-  allowTaboo?: boolean;
-}
-
-export function validateDescription(text: string, idiom: Idiom, opts: ValidateOptions = {}): ValidationResult {
+/**
+ * Rule check for a description. Direct-translation words ("taboo" in the data) are NOT
+ * enforced any more: in easy mode they are shown as hints, in hard mode they are simply
+ * hidden. Only Chinese characters, the full pinyin and the length limits are checked.
+ */
+export function validateDescription(text: string, idiom: Idiom): ValidationResult {
   const violations: Violation[] = [];
   const trimmed = text.trim();
   if (!trimmed) return { ok: false, violations: [{ type: "empty" }] };
@@ -115,10 +115,6 @@ export function validateDescription(text: string, idiom: Idiom, opts: ValidateOp
 
   if (containsPinyin(trimmed, idiom.pinyin)) violations.push({ type: "pinyin" });
 
-  if (!opts.allowTaboo) {
-    const taboo = findTabooWords(trimmed, idiom.taboo);
-    if (taboo.length) violations.push({ type: "taboo", words: taboo });
-  }
 
   const words = countEnglishWords(trimmed);
   if (words < MIN_WORDS) violations.push({ type: "too_short", words, min: MIN_WORDS });

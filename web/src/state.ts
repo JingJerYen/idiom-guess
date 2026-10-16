@@ -29,6 +29,8 @@ export interface QuestionState {
   showDetails?: boolean;
   /** Word cards currently flipped to Chinese (by index). */
   flipped?: Set<number>;
+  /** Forward mode: sentence-starter panel open. */
+  showStarters?: boolean;
   done: boolean;
   solved: boolean;
   gaveUp: boolean;

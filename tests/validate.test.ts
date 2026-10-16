@@ -33,12 +33,13 @@ test("rejects Chinese characters and reports them", () => {
   const v = r.violations.find((x) => x.type === "chinese");
   assert.ok(v && v.type === "chinese");
   assert.deepEqual(v.chars, ["蛇"]);
+  assert.equal(r.violations.some((x) => x.type === "taboo"), false, "taboo is no longer a violation");
 });
 
-test("easy level allows taboo words but still blocks Chinese and pinyin", () => {
-  const r = validateDescription("A snake gets extra legs and that ruins the drawing completely", huaShe, { allowTaboo: true });
+test("hint words are never enforced; Chinese and pinyin still are", () => {
+  const r = validateDescription("A snake gets extra legs and that ruins the drawing completely", huaShe);
   assert.equal(r.ok, true);
-  const r2 = validateDescription("A snake 蛇 gets extra legs and that ruins it", huaShe, { allowTaboo: true });
+  const r2 = validateDescription("A snake 蛇 gets extra legs and that ruins it", huaShe);
   assert.deepEqual(r2.violations.map((v) => v.type), ["chinese"]);
 });
 

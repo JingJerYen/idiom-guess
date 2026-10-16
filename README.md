@@ -6,8 +6,10 @@
 
 - 一輪 10 題，由易到難；每題最多 3 次猜測，第 1、2、3 次猜中分別得 5、3、1 分（簡單模式 3、2、1），沒猜中 0 分，可按「放棄」直接 0 分看答案。
   讓 AI 猜中的那句描述若被判定為「完整且沒有文法錯誤的句子」，再加 5 分（兩種難度都適用）。一輪滿分 100（簡單 80）。
-- 描述中不能出現中文字、該詞的拼音；畫面上列出的直譯單字在「困難」模式禁用、在「簡單」模式可以使用（給程度較初階的玩家看著單字造句）。
-  違規由伺服器端程式檢查，不呼叫 AI、不扣次數。單字牌點一下翻成中文、再點翻回英文（翻譯來自 `data/glossary.json`）。
+- 描述中不能出現中文字、該詞的拼音，違規由伺服器端程式檢查，不呼叫 AI、不扣次數。
+  直譯單字不再禁用：「簡單」模式把它們當提示單字顯示（點一下翻成中文、再點翻回英文，翻譯來自 `data/glossary.json`），
+  「困難」模式不顯示也不傳到前端，純粹少一層提示。
+- 💡 提示按鈕：不知道怎麼開口時，依題目類型給三個英文開頭句型，點一下填進輸入框。
 - 每題結束給你英文說法的回饋（更自然的說法、文法／用字、小技巧，繁體中文說明）。
 - 後端 Node.js + TypeScript + Express；前端純 HTML/CSS/TypeScript；模型 `claude-haiku-5-5`。
 
@@ -74,7 +76,7 @@ docker run -p 3000:3000 -e GAME_ANTHROPIC_KEY=sk-ant-... -e TRUST_PROXY=1 idiom-
 | 端點 | 說明 |
 | --- | --- |
 | `GET /api/health` | 模式（mock/live）與模型名稱 |
-| `GET /api/round?mode=forward\|reverse` | 10 題：`id`、`tags`、`difficulty`、`tabooWords`，forward 模式另含 `idiom`，reverse 模式另含 `length`。不含拼音與參考說法 |
+| `GET /api/round?mode=forward\|reverse&level=easy\|hard` | 10 題：`id`、`tags`、`difficulty`、`hintWords`（只有 forward + easy 有內容），forward 模式另含 `idiom`，reverse 模式另含 `length`。不含拼音與參考說法 |
 | `POST /api/guess` | `{ idiomId, level: "easy"\|"hard", descriptions[], previousGuesses[] }` → 程式檢查違規回 422 `{ violations }`；通過則回 `{ guess, reason, correct, positions[], perfectSentence, grammarNote, attempt, remaining }` |
 | `POST /api/feedback` | `{ idiomId, descriptions[], guessedCorrectly, attempts }` → `{ better_phrases, issues, tip, reference_english }` |
 | `POST /api/give-up` | `{ idiomId }` → `{ answer, tags, reference_english }`（放棄：0 分並揭露答案） |

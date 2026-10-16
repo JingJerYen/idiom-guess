@@ -14,7 +14,7 @@ export const LevelSchema = z.enum(["easy", "hard"]);
 
 export const GuessBodySchema = z.object({
   idiomId: z.string().min(1).max(64),
-  /** easy = taboo words may be used; hard = they are forbidden (default). */
+  /** Kept for logging/compat; the level no longer changes server-side checks. */
   level: LevelSchema.default("hard"),
   descriptions: DescriptionsSchema,
   /** The AI's earlier guesses for this question (client-held state, re-scored server-side). */

@@ -12,6 +12,7 @@ import {
   FeedbackBodySchema,
   GiveUpBodySchema,
   GuessBodySchema,
+  LevelSchema,
   ModeSchema,
   ReverseGuessBodySchema,
 } from "./schemas.js";
@@ -33,9 +34,9 @@ function requireIdiom(id: string): Idiom {
 }
 
 /** Re-check every description server-side; earlier ones were checked before but never trust the client. */
-function checkDescriptions(descriptions: string[], idiom: Idiom, allowTaboo: boolean) {
+function checkDescriptions(descriptions: string[], idiom: Idiom) {
   for (const d of descriptions) {
-    const v = validateDescription(d, idiom, { allowTaboo });
+    const v = validateDescription(d, idiom);
     if (!v.ok) return v;
   }
   return null;
@@ -48,15 +49,17 @@ api.get("/health", (_req, res) => {
 api.get("/round", lightLimiter, (req, res) => {
   const mode = ModeSchema.safeParse(req.query.mode ?? "forward");
   if (!mode.success) throw new AppError("BAD_REQUEST", "mode 必須是 forward 或 reverse。");
-  const questions = pickRound(loadIdioms()).map((q) => toPublic(q, mode.data));
-  res.json({ ok: true, mode: mode.data, maxGuesses: config.maxGuesses, mock: config.mockMode, questions });
+  const level = LevelSchema.safeParse(req.query.level ?? "hard");
+  if (!level.success) throw new AppError("BAD_REQUEST", "level 必須是 easy 或 hard。");
+  const questions = pickRound(loadIdioms()).map((q) => toPublic(q, mode.data, level.data));
+  res.json({ ok: true, mode: mode.data, level: level.data, maxGuesses: config.maxGuesses, mock: config.mockMode, questions });
 });
 
 api.post("/guess", modelLimiter, async (req, res) => {
   const body = parseBody(req, GuessBodySchema);
   const idiom = requireIdiom(body.idiomId);
 
-  const bad = checkDescriptions(body.descriptions, idiom, body.level === "easy");
+  const bad = checkDescriptions(body.descriptions, idiom);
   if (bad) {
     // Rule violation: no model call, no attempt consumed.
     res.status(422).json({ ok: false, violations: bad.violations });

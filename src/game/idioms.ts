@@ -28,11 +28,12 @@ export interface PublicQuestion {
   /** Number of characters in the answer (reverse mode only), so the UI can draw empty tiles. */
   length?: number;
   difficulty: 1 | 2 | 3;
-  /** Shown on screen as word cards: forbidden in hard mode, usable hints in easy mode. */
-  tabooWords: TabooWord[];
+  /** Hint word cards (direct translations). Sent only for forward mode at the easy level. */
+  hintWords: TabooWord[];
 }
 
 export type GameMode = "forward" | "reverse";
+export type GameLevel = "easy" | "hard";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const DATA_PATH = resolve(here, "../../data/idioms.json");
@@ -120,14 +121,14 @@ export function pickRound(
   return chosen.sort((a, b) => a.difficulty - b.difficulty).slice(0, size);
 }
 
-export function toPublic(idiom: Idiom, mode: GameMode): PublicQuestion {
+export function toPublic(idiom: Idiom, mode: GameMode, level: GameLevel = "hard"): PublicQuestion {
   const glossary = loadGlossary();
+  const showHints = mode === "forward" && level === "easy";
   const q: PublicQuestion = {
     id: idiom.id,
     tags: idiom.tags,
     difficulty: idiom.difficulty,
-    // Reverse mode gets no word cards: the direct-translation words would be a hint about the answer.
-    tabooWords: mode === "forward" ? idiom.taboo.map((en) => ({ en, zh: glossary[en.toLowerCase()] ?? "" })) : [],
+    hintWords: showHints ? idiom.taboo.map((en) => ({ en, zh: glossary[en.toLowerCase()] ?? "" })) : [],
   };
   if (mode === "forward") {
     q.idiom = idiom.idiom;
