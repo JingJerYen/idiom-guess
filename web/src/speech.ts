@@ -49,6 +49,11 @@ const ERROR_TEXT: Record<string, string> = {
   aborted: "",
 };
 
+/** Some engines emit the same segment twice in a row; keep one copy. */
+function dedupeAdjacent(parts: string[]): string[] {
+  return parts.filter((p, i) => i === 0 || p.toLowerCase() !== parts[i - 1].toLowerCase());
+}
+
 /** Start recognising English speech; keeps listening until stop() or the browser ends the session. */
 export function startListening(h: ListenHandlers): Listener | null {
   if (!Ctor) return null;
@@ -62,14 +67,18 @@ export function startListening(h: ListenHandlers): Listener | null {
   let stopped = false;
 
   rec.onresult = (ev) => {
-    let interim = "";
-    for (let i = ev.resultIndex; i < ev.results.length; i++) {
+    // Rebuild from the full result list every time instead of accumulating: Chrome (notably on
+    // Android) re-reports earlier results and resultIndex is unreliable, which duplicates words.
+    const finals: string[] = [];
+    const interims: string[] = [];
+    for (let i = 0; i < ev.results.length; i++) {
       const r = ev.results[i];
-      const t = r[0]?.transcript ?? "";
-      if (r.isFinal) finalText += (finalText && !/\s$/.test(finalText) ? " " : "") + t.trim();
-      else interim += t;
+      const t = (r[0]?.transcript ?? "").trim();
+      if (!t) continue;
+      (r.isFinal ? finals : interims).push(t);
     }
-    h.onText(finalText, interim.trim());
+    finalText = dedupeAdjacent(finals).join(" ");
+    h.onText(finalText, dedupeAdjacent(interims).join(" "));
   };
   rec.onerror = (ev) => {
     const msg = ERROR_TEXT[ev.error] ?? `語音辨識錯誤（${ev.error}）`;
