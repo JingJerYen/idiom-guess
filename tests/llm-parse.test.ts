@@ -1,0 +1,47 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { extractJsonObject, parseWithSchema } from "../src/llm/callJson.js";
+import { FeedbackResultSchema, GuessResultSchema } from "../src/llm/types.js";
+import { mockGuess, mockFeedback } from "../src/llm/mock.js";
+import { loadIdioms } from "../src/game/idioms.js";
+
+test("parses a clean JSON reply", () => {
+  const r = parseWithSchema('{"guess":"畫蛇添足","reason":"Adding extras ruins it."}', GuessResultSchema);
+  assert.equal(r.guess, "畫蛇添足");
+});
+
+test("tolerates code fences and surrounding chatter", () => {
+  const text = 'Sure! Here you go:\n```json\n{"guess": "守株待兔", "reason": "Waiting for luck."}\n```\nHope that helps.';
+  const r = parseWithSchema(text, GuessResultSchema);
+  assert.equal(r.guess, "守株待兔");
+});
+
+test("throws SyntaxError when there is no JSON object", () => {
+  assert.throws(() => extractJsonObject("I think it is 守株待兔."), SyntaxError);
+});
+
+test("throws SyntaxError on truncated JSON (e.g. max_tokens cut-off)", () => {
+  assert.throws(() => parseWithSchema('{"guess":"守株待兔","reason":"Wai', GuessResultSchema), SyntaxError);
+});
+
+test("throws SyntaxError when JSON does not match the schema", () => {
+  assert.throws(() => parseWithSchema('{"guess":"","reason":"x"}', GuessResultSchema), SyntaxError);
+  assert.throws(() => parseWithSchema('{"idiom":"守株待兔"}', GuessResultSchema), SyntaxError);
+  assert.throws(() => parseWithSchema('{"better_phrases":"not an array","issues":[],"tip":"x"}', FeedbackResultSchema), SyntaxError);
+});
+
+test("feedback schema accepts the documented shape", () => {
+  const r = parseWithSchema('{"better_phrases":["a","b"],"issues":[],"tip":"t"}', FeedbackResultSchema);
+  assert.deepEqual(r.issues, []);
+});
+
+test("mock guess always returns a four-character idiom from the bank", () => {
+  const idioms = new Set(loadIdioms().map((i) => i.idiom));
+  for (const d of ["random words that match nothing at all", "Adding something unnecessary ruins a fine thing"]) {
+    const g = mockGuess([d]);
+    assert.ok(idioms.has(g.guess), g.guess);
+    assert.ok(g.reason.length > 0);
+  }
+  const fb = mockFeedback(loadIdioms()[0], ["short"]);
+  assert.ok(FeedbackResultSchema.safeParse(fb).success);
+});

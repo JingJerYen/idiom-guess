@@ -1,0 +1,20 @@
+# Render Blueprint: import this repo at https://dashboard.render.com/blueprints
+# Every push to the connected branch redeploys automatically.
+services:
+  - type: web
+    name: idiom-charades
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: TRUST_PROXY
+        value: "1"
+      - key: MAX_GUESSES
+        value: "3"
+      - key: GAME_ANTHROPIC_KEY
+        sync: false   # set it in the Render dashboard; never commit it
