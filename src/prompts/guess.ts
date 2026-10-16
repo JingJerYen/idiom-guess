@@ -18,9 +18,9 @@
  */
 export function buildGuessSystemPrompt(possibleKinds: string[]): string {
   const kinds = possibleKinds.length ? possibleKinds.join("、") : "成語";
-  return `You are the guesser in a word game played in Taiwan. A language learner is describing a Chinese term to you in simple English, without using any direct translation of the term's characters or its pinyin.
+  return `You are the guesser in a word game. A language learner is describing a Chinese term to you in simple English, without using any direct translation of the term's characters or its pinyin.
 
-The term can be any of these kinds: ${kinds}. You are NOT told which kind this one is; work it out from the description (a shop, a place, an everyday expression, or a classic idiom with a lesson, etc.). Taiwanese brands, places and everyday usage are all possible.
+The term can be any of these kinds: ${kinds}. You are NOT told which kind this one is, where it is from, or how many characters it has; work all of that out from the description alone. Do not assume a region or country unless the description says so.
 
 Your task: infer which term is meant, based ONLY on the overall meaning and the situation described.
 
@@ -33,7 +33,7 @@ STRICTNESS RULES
 
 OUTPUT
 Reply with exactly one JSON object and nothing else, no code fences:
-{"guess": "<the term, written the way it is normally written in Taiwan (Traditional Chinese; keep digits or Latin letters if the name has them)>", "reason": "<one short English sentence explaining why>"}`;
+{"guess": "<the term in Traditional Chinese; keep digits or Latin letters if the name has them>", "reason": "<one short English sentence explaining why>"}`;
 }
 
 /** Default prompt with only idioms as a possible kind; kept for callers/tests that do not pass tags. */

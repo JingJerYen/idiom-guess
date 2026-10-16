@@ -22,6 +22,12 @@ test("guess prompt contains no idiom, alias, pinyin or taboo list from the bank"
   assert.deepEqual(han, []);
 });
 
+test("guess prompt gives no regional hint and no character count", () => {
+  const full = GUESS_SYSTEM_PROMPT + "\n" + buildGuessUserMessage({ descriptions: ["the tallest building in the world"] });
+  assert.equal(/taiwan|taipei|china|chinese city/i.test(full), false, "prompt must not hint at a region");
+  assert.equal(/\b(four|4)[- ]character/i.test(full), false, "prompt must not reveal the length");
+});
+
 test("guess system prompt lists every kind in the bank but cannot single out the current item's kind", () => {
   for (const t of tags) assert.ok(GUESS_SYSTEM_PROMPT.includes(t), `missing kind ${t}`);
   // The same system prompt is used for every item, so it carries no per-item information.
