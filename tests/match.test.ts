@@ -1,13 +1,14 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { isCorrectGuess, normalizeIdiom, positionMatches } from "../src/game/match.js";
-import { loadIdioms, pickRound, toPublic } from "../src/game/idioms.js";
+import { allTags, loadIdioms, pickRound, toPublic } from "../src/game/idioms.js";
 import type { Idiom } from "../src/game/idioms.js";
 
 const yaMiao: Idiom = {
   id: "ya-miao-zhu-zhang",
   idiom: "揠苗助長",
   aliases: ["拔苗助長"],
+  tags: ["成語"],
   pinyin: "ya miao zhu zhang",
   taboo: [],
   difficulty: 2,
@@ -40,11 +41,14 @@ test("wrong or empty guesses are rejected", () => {
 
 test("question bank loads and every idiom has valid data", () => {
   const all = loadIdioms();
-  assert.equal(all.length, 20);
+  assert.ok(all.length >= 20);
   for (const it of all) {
     assert.ok(it.taboo.length >= 3, `${it.idiom} needs taboo words`);
     assert.ok(/^[a-z ]+$/.test(it.pinyin), `${it.idiom} pinyin should be plain lowercase`);
+    assert.ok(it.tags.length >= 1, `${it.idiom} needs at least one tag`);
   }
+  assert.ok(allTags(all).includes("成語"));
+  assert.ok(allTags(all).length >= 2, "bank should contain more than one kind of term");
 });
 
 test("a round has 10 unique questions sorted easy to hard", () => {
@@ -62,10 +66,12 @@ test("public question never leaks pinyin or reference; reverse hides the idiom",
   const it = loadIdioms()[0];
   const fwd = toPublic(it, "forward") as Record<string, unknown>;
   assert.equal(fwd.idiom, it.idiom);
+  assert.deepEqual(fwd.tags, it.tags);
   assert.equal("pinyin" in fwd, false);
   assert.equal("reference_english" in fwd, false);
   const rev = toPublic(it, "reverse") as Record<string, unknown>;
   assert.equal("idiom" in rev, false);
+  assert.equal("tags" in rev, false);
 });
 
 test("positionMatches reports right-character-right-position only", () => {

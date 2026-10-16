@@ -22,6 +22,7 @@ export interface QuestionState {
   feedbackError?: string;
   /** Reverse mode: revealed when the question ends. */
   answer?: string;
+  answerTags?: string[];
   referenceEnglish?: string;
 }
 

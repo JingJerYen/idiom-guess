@@ -95,6 +95,13 @@ select {
 
 .idiom {
   font-size: 44px; font-weight: 900; letter-spacing: 6px; text-align: center; margin: 6px 0 2px;
+  overflow-wrap: anywhere;
+}
+.idiom.md { font-size: 34px; letter-spacing: 4px; }
+.idiom.sm { font-size: 26px; letter-spacing: 2px; }
+.tagrow { display: flex; justify-content: center; gap: 6px; }
+.kind {
+  font-size: 12px; padding: 2px 10px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-weight: 600;
 }
 .stars { text-align: center; color: var(--warn); letter-spacing: 2px; }
 

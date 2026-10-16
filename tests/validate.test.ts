@@ -12,6 +12,7 @@ const huaShe: Idiom = {
   id: "hua-she-tian-zu",
   idiom: "畫蛇添足",
   aliases: ["画蛇添足"],
+  tags: ["成語"],
   pinyin: "hua she tian zu",
   taboo: ["snake", "foot", "feet", "leg", "draw"],
   difficulty: 1,
@@ -66,4 +67,10 @@ test("rejects descriptions longer than 300 characters", () => {
 
 test("rejects empty input", () => {
   assert.deepEqual(validateDescription("   ", huaShe).violations, [{ type: "empty" }]);
+});
+
+test("taboo entries with digits or multi-word names match too", () => {
+  assert.deepEqual(findTabooWords("the famous 50 lan shop", ["fifty", "50", "lan"]), ["50", "lan"]);
+  assert.deepEqual(findTabooWords("it is 101 floors tall", ["101", "taipei"]), ["101"]);
+  assert.deepEqual(findTabooWords("about 1010 things", ["101"]), []);
 });

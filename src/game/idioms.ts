@@ -7,6 +7,8 @@ const IdiomSchema = z.object({
   id: z.string().min(1),
   idiom: z.string().min(2),
   aliases: z.array(z.string()).default([]),
+  /** Kind of answer, e.g. 成語 / 日常用語 / 店家名 / 地標. Free-form, extensible. */
+  tags: z.array(z.string().min(1)).min(1),
   pinyin: z.string().min(1),
   taboo: z.array(z.string()).default([]),
   difficulty: z.union([z.literal(1), z.literal(2), z.literal(3)]),
@@ -20,6 +22,8 @@ export interface PublicQuestion {
   id: string;
   /** Present in forward mode only. In reverse mode the player must guess it. */
   idiom?: string;
+  /** Present in forward mode only; in reverse mode tags are revealed when the question ends. */
+  tags?: string[];
   difficulty: 1 | 2 | 3;
   /** Shown on screen so the player knows what not to say. */
   tabooWords: string[];
@@ -47,6 +51,11 @@ export function loadIdioms(path: string = DATA_PATH): Idiom[] {
 
 export function getIdiomById(id: string): Idiom | undefined {
   return loadIdioms().find((i) => i.id === id);
+}
+
+/** Every distinct tag in the bank, sorted. This whole list (never the current item's tags) goes to the guesser. */
+export function allTags(all: Idiom[] = loadIdioms()): string[] {
+  return Array.from(new Set(all.flatMap((i) => i.tags))).sort((a, b) => a.localeCompare(b, "zh-Hant"));
 }
 
 export const ROUND_SIZE = 10;
@@ -98,6 +107,9 @@ export function toPublic(idiom: Idiom, mode: GameMode): PublicQuestion {
     difficulty: idiom.difficulty,
     tabooWords: idiom.taboo,
   };
-  if (mode === "forward") q.idiom = idiom.idiom;
+  if (mode === "forward") {
+    q.idiom = idiom.idiom;
+    q.tags = idiom.tags;
+  }
   return q;
 }

@@ -46,11 +46,11 @@ function renderStart() {
     .join("");
   root.innerHTML = `
     <section class="card hero">
-      <h1>用英文把成語「繞著說」</h1>
-      <p class="muted">不知道那個字怎麼講？用簡單的英文把意思說清楚，讓 AI 猜出是哪個成語。一輪 10 題，由易到難。</p>
+      <h1>用英文把中文詞「繞著說」</h1>
+      <p class="muted">不知道那個字怎麼講？用簡單的英文把意思說清楚，讓 AI 猜出是哪個詞：成語、日常用語、店家、地標都有。一輪 10 題，由易到難。</p>
       <div class="seg" role="group" aria-label="模式">
         <button data-mode="forward" aria-pressed="${chosenMode === "forward"}"><b>我描述，AI 猜</b><span class="small muted">練英文口說表達</span></button>
-        <button data-mode="reverse" aria-pressed="${chosenMode === "reverse"}"><b>AI 描述，我猜</b><span class="small muted">練英文理解與成語</span></button>
+        <button data-mode="reverse" aria-pressed="${chosenMode === "reverse"}"><b>AI 描述，我猜</b><span class="small muted">練英文理解</span></button>
       </div>
       <div class="row between" style="margin-top:14px">
         <label class="inline">每題最多猜 <select id="guesses">${options}</select></label>
@@ -60,7 +60,7 @@ function renderStart() {
       <button id="start" class="btn lg block" style="margin-top:16px">開始遊戲</button>
     </section>
     <section class="card small muted">
-      <b>規則</b>：描述中不能出現中文字、該成語的拼音，或畫面上列出的禁用詞（直譯關鍵字）。違規時只需改寫，不扣次數。每題結束會給你英文說法的回饋。
+      <b>規則</b>：描述中不能出現中文字、該詞的拼音，或畫面上列出的禁用詞（直譯關鍵字）。AI 只知道題庫裡有哪些類型，不知道這題是哪一類，要靠你的描述讓它推理。違規時只需改寫，不扣次數。每題結束會給你英文說法的回饋。
     </section>`;
   root.querySelectorAll<HTMLButtonElement>("[data-mode]").forEach((b) =>
     b.addEventListener("click", () => { chosenMode = b.dataset.mode as Mode; render(); }),
@@ -101,7 +101,10 @@ function renderPlay(game: Game) {
 
   let body = "";
   if (game.mode === "forward") {
-    body += `<div class="idiom">${esc(q.idiom ?? "")}</div><div class="stars">${stars(q.difficulty)}</div>
+    const len = Array.from(q.idiom ?? "").length;
+    const sizeClass = len <= 4 ? "" : len <= 6 ? "md" : "sm";
+    body += `<div class="tagrow">${(q.tags ?? []).map((t) => `<span class="kind">${esc(t)}</span>`).join("")}</div>
+      <div class="idiom ${sizeClass}">${esc(q.idiom ?? "")}</div><div class="stars">${stars(q.difficulty)}</div>
       <div class="small muted" style="margin-top:10px">⛔ 禁用詞（含變化形）</div>
       <div class="chips">${q.tabooWords.map((w) => `<span class="chip">${esc(w)}</span>`).join("")}</div>`;
   } else {
@@ -129,7 +132,7 @@ function renderPlay(game: Game) {
       body += `<textarea id="draft" placeholder="${used === 0 ? "Describe the meaning in simple English…" : "Add more detail so the AI can guess again…"}" maxlength="${MAX_CHARS + 50}" ${ui.busy ? "disabled" : ""}>${esc(ui.draft)}</textarea>
         <div class="counter"><span class="${words < MIN_WORDS ? "bad" : ""}">${words} / ${MIN_WORDS}+ words</span><span class="${chars > MAX_CHARS ? "bad" : ""}">${chars} / ${MAX_CHARS}</span></div>`;
     } else {
-      body += `<input id="draft" class="guess" type="text" placeholder="輸入四字成語" maxlength="20" value="${esc(ui.draft)}" ${ui.busy ? "disabled" : ""} autocomplete="off" />`;
+      body += `<input id="draft" class="guess" type="text" placeholder="輸入答案" maxlength="20" value="${esc(ui.draft)}" ${ui.busy ? "disabled" : ""} autocomplete="off" />`;
     }
     if (ui.violations.length) {
       body += `<div class="alert error">請改寫後再送出（不扣次數）：<ul>${ui.violations.map((v) => `<li>${esc(violationText(v))}</li>`).join("")}</ul></div>`;
@@ -176,7 +179,9 @@ function renderResult(game: Game, qs: QuestionState): string {
   const head = qs.solved
     ? `<h2>🎉 ${game.mode === "forward" ? "AI 猜中了" : "答對了"}！用了 ${attempts} 次</h2>`
     : `<h2>😅 ${game.mode === "forward" ? "AI 沒猜中" : "沒答對"}</h2>`;
-  const answer = game.mode === "reverse" ? `<div>答案：<b style="font-size:26px;letter-spacing:4px">${esc(qs.answer ?? "")}</b></div>` : "";
+  const answer = game.mode === "reverse"
+    ? `<div>答案：<b style="font-size:26px;letter-spacing:4px">${esc(qs.answer ?? "")}</b> ${(qs.answerTags ?? []).map((t) => `<span class="kind">${esc(t)}</span>`).join("")}</div>`
+    : "";
   const ref = qs.referenceEnglish ?? qs.feedback?.reference_english;
   const refHtml = ref ? `<div class="ref"><div class="small muted">參考說法</div>${esc(ref)}</div>` : "";
 
@@ -328,6 +333,7 @@ async function submit(game: Game) {
         qs.done = true;
         qs.solved = r.correct;
         qs.answer = r.answer;
+        qs.answerTags = r.tags;
         qs.referenceEnglish = r.reference_english;
         ui.busy = false;
         render();

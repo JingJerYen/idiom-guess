@@ -66,7 +66,7 @@ export function mockFeedback(idiom: Idiom, descriptions: string[]): FeedbackResu
 export function mockDescribe(idiom: Idiom, attempt: number, previous: string[]): DescribeResult {
   const extras = [
     `Think of a situation where ${idiom.reference_english.charAt(0).toLowerCase()}${idiom.reference_english.slice(1).replace(/\.$/, "")}. People usually say this as a warning or a comment.`,
-    `[MOCK hint ${attempt}] It describes a person's behaviour and the lesson we learn from it. Difficulty level ${idiom.difficulty}.`,
+    `[MOCK hint ${attempt}] Think about where you would hear or see this in daily life in Taiwan. Difficulty level ${idiom.difficulty}.`,
   ];
   if (attempt <= 1 || previous.length === 0) return { description: `[MOCK] ${idiom.reference_english}` };
   return { description: extras[Math.min(attempt - 2, extras.length - 1)] };

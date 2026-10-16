@@ -69,7 +69,7 @@ export function findTabooWords(text: string, taboo: string[]): string[] {
     const w = word.trim().toLowerCase();
     if (!w) continue;
     const base = escapeRe(w).replace(/\s+/g, "\\s+");
-    const re = new RegExp(`(?<![a-z])${base}(?:s|es|ed|ing)?(?![a-z])`, "i");
+    const re = new RegExp(`(?<![a-z0-9])${base}(?:s|es|ed|ing)?(?![a-z0-9])`, "i");
     if (re.test(lower)) hits.push(word);
   }
   return hits;

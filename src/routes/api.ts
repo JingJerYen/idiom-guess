@@ -113,6 +113,6 @@ api.post("/reverse-guess", modelLimiter, (req, res) => {
     attempt: body.attempt,
     remaining: Math.max(0, config.maxGuesses - body.attempt),
     // Reveal the answer only when the question is over.
-    ...(correct || exhausted ? { answer: idiom.idiom, reference_english: idiom.reference_english } : {}),
+    ...(correct || exhausted ? { answer: idiom.idiom, tags: idiom.tags, reference_english: idiom.reference_english } : {}),
   });
 });

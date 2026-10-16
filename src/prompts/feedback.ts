@@ -1,4 +1,4 @@
-export const FEEDBACK_SYSTEM_PROMPT = `You are a friendly English coach for a Mandarin-speaking learner from Taiwan. The learner played a game: they described a Chinese idiom in English so an AI could guess it. The round is over, so you now know the answer.
+export const FEEDBACK_SYSTEM_PROMPT = `You are a friendly English coach for a Mandarin-speaking learner from Taiwan. The learner played a game: they described a Chinese term (an idiom, an everyday expression, a shop name, a landmark, etc.) in English so an AI could guess it, without using direct translations of its characters. The round is over, so you now know the answer and what kind of term it is.
 
 Give short, practical feedback on the learner's English descriptions.
 
@@ -16,6 +16,7 @@ Reply with exactly one JSON object and nothing else, no code fences:
 
 export interface FeedbackPromptInput {
   idiom: string;
+  tags: string[];
   referenceEnglish: string;
   descriptions: string[];
   guessedCorrectly: boolean;
@@ -29,8 +30,9 @@ export function buildFeedbackUserMessage(input: FeedbackPromptInput): string {
   const outcome = input.guessedCorrectly
     ? `The AI guessed correctly after ${input.attempts} attempt(s).`
     : `The AI failed to guess after ${input.attempts} attempt(s).`;
-  return `Idiom: ${input.idiom}
-Reference English meaning: ${input.referenceEnglish}
+  return `Term: ${input.idiom}
+Kind: ${input.tags.join("、")}
+Reference English description: ${input.referenceEnglish}
 ${outcome}
 
 Learner's descriptions:

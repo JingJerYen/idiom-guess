@@ -3,6 +3,7 @@ export type Mode = "forward" | "reverse";
 export interface Question {
   id: string;
   idiom?: string;
+  tags?: string[];
   difficulty: 1 | 2 | 3;
   tabooWords: string[];
 }
@@ -44,6 +45,7 @@ export interface ReverseGuessResponse {
   attempt: number;
   remaining: number;
   answer?: string;
+  tags?: string[];
   reference_english?: string;
 }
 
