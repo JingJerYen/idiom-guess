@@ -163,7 +163,7 @@ function renderPlay(game: Game) {
         const shown = !canSpeak || qs.shownClue === i;
         return `<div class="clue ${shown ? "shown" : ""}">
           <button class="iconbtn speak" data-i="${i}" aria-label="播放第 ${i + 1} 句">🔊</button>
-          <span class="cluetext">${shown ? esc(c) : `<span class="dotsline">${"•".repeat(Math.min(24, Math.max(8, Math.round(c.length / 4))))}</span>`}</span>
+          <span class="cluetext">${shown ? esc(c) : `<span class="dotsline">${"•".repeat(Math.min(16, Math.max(6, Math.round(c.length / 6))))}</span>`}</span>
           ${canSpeak ? `<button class="iconbtn eye" data-i="${i}" aria-pressed="${shown}" aria-label="顯示文字">${shown ? "🙈" : "👁"}</button>` : ""}
         </div>`;
       })

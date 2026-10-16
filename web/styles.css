@@ -92,8 +92,8 @@ button, input, textarea { font: inherit; color: inherit; }
 
 .clue { font-size: 17px; padding: 10px 10px 10px 8px; background: var(--chip); border-radius: 14px; display: grid; grid-template-columns: 44px 1fr 36px; align-items: center; gap: 6px; }
 .clue + .clue { margin-top: 8px; }
-.clue .cluetext { min-height: 24px; }
-.clue .dotsline { letter-spacing: 3px; color: var(--muted); user-select: none; }
+.clue .cluetext { min-height: 24px; min-width: 0; overflow-wrap: anywhere; }
+.clue .dotsline { letter-spacing: 3px; color: var(--muted); user-select: none; word-break: break-all; }
 .iconbtn { border: 0; background: var(--card); border-radius: 50%; width: 40px; height: 40px; font-size: 20px; cursor: pointer; box-shadow: var(--shadow); }
 .iconbtn.eye { width: 32px; height: 32px; font-size: 16px; background: transparent; box-shadow: none; opacity: 0.8; }
 .iconbtn.sm { width: 28px; height: 28px; font-size: 14px; box-shadow: none; vertical-align: middle; }
