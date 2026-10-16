@@ -81,6 +81,8 @@ api.post("/guess", modelLimiter, async (req, res) => {
     reason: result.reason,
     correct,
     positions: positionMatches(result.guess, idiom),
+    perfectSentence: result.perfect_sentence,
+    grammarNote: result.grammar_note,
     attempt,
     remaining: Math.max(0, config.maxGuesses - attempt),
   });

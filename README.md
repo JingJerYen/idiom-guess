@@ -4,7 +4,8 @@
 看到一個中文詞（成語、日常用語、店家名、地標……），用簡單的英文把意思說清楚，讓 AI 猜出是哪個詞；
 也有反向模式：AI 用英文描述，你猜中文。介面上兩種模式分別叫「口說」(forward) 與「聽力」(reverse)。
 
-- 一輪 10 題，由易到難；每題最多 3 次猜測，第 1、2、3 次猜中分別得 5、3、1 分（簡單模式 3、2、1），沒猜中 0 分，可按「放棄」直接 0 分看答案。一輪滿分 50（簡單 30）。
+- 一輪 10 題，由易到難；每題最多 3 次猜測，第 1、2、3 次猜中分別得 5、3、1 分（簡單模式 3、2、1），沒猜中 0 分，可按「放棄」直接 0 分看答案。
+  讓 AI 猜中的那句描述若被判定為「完整且沒有文法錯誤的句子」，再加 5 分（兩種難度都適用）。一輪滿分 100（簡單 80）。
 - 描述中不能出現中文字、該詞的拼音；畫面上列出的直譯單字在「困難」模式禁用、在「簡單」模式可以使用（給程度較初階的玩家看著單字造句）。
   違規由伺服器端程式檢查，不呼叫 AI、不扣次數。單字牌點一下翻成中文、再點翻回英文（翻譯來自 `data/glossary.json`）。
 - 每題結束給你英文說法的回饋（更自然的說法、文法／用字、小技巧，繁體中文說明）。
@@ -74,7 +75,7 @@ docker run -p 3000:3000 -e GAME_ANTHROPIC_KEY=sk-ant-... -e TRUST_PROXY=1 idiom-
 | --- | --- |
 | `GET /api/health` | 模式（mock/live）與模型名稱 |
 | `GET /api/round?mode=forward\|reverse` | 10 題：`id`、`difficulty`、`tabooWords`，forward 模式另含 `idiom`。不含拼音與參考說法 |
-| `POST /api/guess` | `{ idiomId, level: "easy"\|"hard", descriptions[], previousGuesses[] }` → 程式檢查違規回 422 `{ violations }`；通過則回 `{ guess, reason, correct, positions[], attempt, remaining }` |
+| `POST /api/guess` | `{ idiomId, level: "easy"\|"hard", descriptions[], previousGuesses[] }` → 程式檢查違規回 422 `{ violations }`；通過則回 `{ guess, reason, correct, positions[], perfectSentence, grammarNote, attempt, remaining }` |
 | `POST /api/feedback` | `{ idiomId, descriptions[], guessedCorrectly, attempts }` → `{ better_phrases, issues, tip, reference_english }` |
 | `POST /api/give-up` | `{ idiomId }` → `{ answer, tags, reference_english }`（放棄：0 分並揭露答案） |
 | `POST /api/describe` | 反向模式：`{ idiomId, attempt, previousClues[] }` → `{ description }` |
@@ -94,6 +95,7 @@ API 無狀態：前端持有這一輪的題目與每題的描述歷史，伺服�
   是否猜中由伺服器比對（簡繁、空白、標點正規化，支援 `aliases`）。
 - 玩家描述包在 `<description>` 標籤內，prompt 明示為資料而非指令。
 - 只有 `/api/feedback` 與 `/api/describe`（該題結束後或反向模式）才把答案交給模型。
+- 猜測呼叫同時做文法判斷：`perfect_sentence` 只看最新一句描述，需為完整句子、無拼字／文法錯誤、大寫開頭、句號結尾，有疑慮即 false 並在 `grammar_note` 指出第一個問題。
 - 模型輸出固定 JSON，zod 驗證；解析失敗重試一次，再失敗回 `MODEL_OUTPUT_INVALID`。
 - 猜謎 prompt 集中在 `src/prompts/guess.ts`，想調整 AI 的「猜題強度」改這一個檔案即可。
 - `tests/prompt-no-answer.test.ts` 會檢查 prompt 不含任何題庫成語、別名、拼音與參考說法。

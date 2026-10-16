@@ -9,6 +9,9 @@ export interface Turn {
   correct: boolean;
   /** Per-character result for the guess shown in this turn (true = right character, right position). */
   positions?: boolean[];
+  /** Forward mode: the model judged this description a complete, error-free sentence. */
+  perfect?: boolean;
+  grammarNote?: string;
 }
 
 export interface QuestionState {
@@ -27,8 +30,10 @@ export interface QuestionState {
   done: boolean;
   solved: boolean;
   gaveUp: boolean;
-  /** Points earned: SCORES[attempt - 1] when solved, else 0. */
+  /** Points earned: SCORES[attempt - 1] when solved, else 0, plus the sentence bonus. */
   score: number;
+  /** +5 awarded when the description that solved the question was a perfect sentence. */
+  bonus: number;
   feedback?: FeedbackResponse | null;
   feedbackError?: string;
   /** Reverse mode: revealed when the question ends. */
@@ -56,6 +61,8 @@ export type Screen =
 /** Points by the attempt on which the answer was found; 0 after that or on give-up. */
 export const SCORES: Record<Level, readonly number[]> = { hard: [5, 3, 1], easy: [3, 2, 1] };
 export const MAX_ATTEMPTS = 3;
+/** Bonus for solving with a complete, error-free sentence (both levels). */
+export const SENTENCE_BONUS = 5;
 
 export function maxScore(level: Level): number {
   return SCORES[level][0];

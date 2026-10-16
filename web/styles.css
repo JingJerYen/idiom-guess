@@ -90,6 +90,9 @@ button, input, textarea { font: inherit; color: inherit; }
 .giveup:disabled { opacity: 0.4; }
 .points { color: var(--ok); font-size: 30px; }
 .points.zero { color: var(--muted); }
+.gbadge { font-size: 16px; margin-left: 2px; }
+.gnote { color: var(--warn); }
+.bonus { color: var(--ok); font-weight: 700; margin-top: 2px; }
 .pts { font-weight: 800; color: var(--ok); }
 .pts.zero { color: var(--muted); font-weight: 600; }
 .stars { color: var(--warn); letter-spacing: 1px; font-size: 14px; }

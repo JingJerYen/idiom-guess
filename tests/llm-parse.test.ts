@@ -2,12 +2,26 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { extractJsonObject, parseWithSchema } from "../src/llm/callJson.js";
 import { FeedbackResultSchema, GuessResultSchema } from "../src/llm/types.js";
-import { mockGuess, mockFeedback } from "../src/llm/mock.js";
+import { mockGuess, mockFeedback, mockPerfectSentence } from "../src/llm/mock.js";
 import { loadIdioms } from "../src/game/idioms.js";
 
 test("parses a clean JSON reply", () => {
-  const r = parseWithSchema('{"guess":"畫蛇添足","reason":"Adding extras ruins it."}', GuessResultSchema);
+  const r = parseWithSchema('{"guess":"畫蛇添足","reason":"Adding extras ruins it.","perfect_sentence":true,"grammar_note":""}', GuessResultSchema);
   assert.equal(r.guess, "畫蛇添足");
+  assert.equal(r.perfect_sentence, true);
+});
+
+test("grammar fields are optional and default to not-perfect", () => {
+  const r = parseWithSchema('{"guess":"畫蛇添足","reason":"x"}', GuessResultSchema);
+  assert.equal(r.perfect_sentence, false);
+  assert.equal(r.grammar_note, "");
+  assert.throws(() => parseWithSchema('{"guess":"畫蛇添足","reason":"x","perfect_sentence":"yes"}', GuessResultSchema), SyntaxError);
+});
+
+test("mock grammar heuristic", () => {
+  assert.equal(mockPerfectSentence("Someone adds useless extras to a job that was already finished.").perfect, true);
+  assert.equal(mockPerfectSentence("someone adds useless extras to a finished job.").perfect, false);
+  assert.equal(mockPerfectSentence("Someone adds useless extras to a finished job").perfect, false);
 });
 
 test("tolerates code fences and surrounding chatter", () => {

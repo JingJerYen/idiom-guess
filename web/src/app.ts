@@ -1,5 +1,5 @@
 import { api, ApiError, type Level, type Mode, type Violation } from "./api.js";
-import { MAX_ATTEMPTS, MAX_CHARS, MIN_WORDS, SCORES, countWords, maxScore, scoreFor, type Game, type QuestionState, type Screen } from "./state.js";
+import { MAX_ATTEMPTS, MAX_CHARS, MIN_WORDS, SCORES, SENTENCE_BONUS, countWords, maxScore, scoreFor, type Game, type QuestionState, type Screen } from "./state.js";
 
 const root = document.getElementById("app") as HTMLElement;
 const badge = document.getElementById("mode-badge") as HTMLElement;
@@ -181,14 +181,15 @@ function renderPlay(game: Game) {
       .map((t, i) => {
         if (!forward) return `<div class="turn ${t.correct ? "hit" : "miss"}">${tiles(t.you, t.positions)}</div>`;
         const open = qs.shownTurn === i;
+        const badge = t.perfect === undefined ? "" : t.perfect ? `<span class="gbadge ok" title="完整正確的句子">✅</span>` : `<span class="gbadge" title="句子有問題">✏️</span>`;
         return `<div class="turn ${t.correct ? "hit" : "miss"}">
-          <div class="ai">${tiles(t.guess ?? "", t.positions)}
+          <div class="ai">${tiles(t.guess ?? "", t.positions)}${badge}
             <span class="turnbtns">
               ${canSpeak ? `<button class="iconbtn sm say" data-i="${i}" aria-label="聽理由">🔊</button>` : ""}
               <button class="iconbtn sm eye2" data-i="${i}" aria-pressed="${open}" aria-label="看理由">${open ? "🙈" : "👁"}</button>
             </span>
           </div>
-          ${open ? `<div class="detail small"><div class="muted">${esc(t.reason ?? "")}</div><div class="you">“${esc(t.you)}”</div></div>` : ""}
+          ${open ? `<div class="detail small"><div class="muted">${esc(t.reason ?? "")}</div>${t.grammarNote ? `<div class="gnote">✏️ ${esc(t.grammarNote)}</div>` : ""}<div class="you">“${esc(t.you)}”</div></div>` : ""}
         </div>`;
       })
       .join("")}</div>`;
@@ -282,7 +283,7 @@ function fragment(html: string): Node {
 
 function renderResult(game: Game, qs: QuestionState): string {
   const head = qs.solved
-    ? `<div class="big-emoji">🎉</div><h2 class="points">+${qs.score}</h2>`
+    ? `<div class="big-emoji">🎉</div><h2 class="points">+${qs.score}</h2>${qs.bonus ? `<div class="bonus">✅ 完整句子 +${qs.bonus}</div>` : ""}`
     : `<div class="big-emoji">${qs.gaveUp ? "🏳️" : "😅"}</div><h2 class="points zero">+0</h2>`;
   const answer = game.mode === "reverse"
     ? `<div class="answer">${tiles(qs.answer ?? "", chars(qs.answer ?? "").map(() => qs.solved), "lg")}<div class="tagrow">${(qs.answerTags ?? []).map((t) => `<span class="kind">${esc(t)}</span>`).join("")}</div></div>`
@@ -320,10 +321,10 @@ function renderSummary(game: Game) {
   const total = qs.reduce((n, q) => n + q.score, 0);
   const solved = qs.filter((q) => q.solved).length;
   const rows = qs
-    .map((q) => `<li class="${q.solved ? "ok" : "no"}"><span>${esc(q.q.idiom ?? q.answer ?? "？")}</span><span class="pts ${q.score ? "" : "zero"}">${q.gaveUp ? "🏳️ " : ""}+${q.score}</span></li>`)
+    .map((q) => `<li class="${q.solved ? "ok" : "no"}"><span>${esc(q.q.idiom ?? q.answer ?? "？")}</span><span class="pts ${q.score ? "" : "zero"}">${q.gaveUp ? "🏳️ " : ""}${q.bonus ? "✅ " : ""}+${q.score}</span></li>`)
     .join("");
   root.innerHTML = `<section class="card summary center">
-      <div class="big">${total}<span class="muted">/${qs.length * maxScore(game.level)}</span></div>
+      <div class="big">${total}<span class="muted">/${qs.length * (maxScore(game.level) + SENTENCE_BONUS)}</span></div>
       <div class="muted">${solved}/${qs.length} 題猜中</div>
       <ul class="list">${rows}</ul>
       <button id="again" class="btn lg block" style="margin-top:16px">再玩</button>
@@ -343,7 +344,7 @@ async function startGame() {
       level: r.mode === "forward" ? chosenLevel : "hard",
       maxGuesses: Math.min(MAX_ATTEMPTS, r.maxGuesses),
       mock: r.mock,
-      questions: r.questions.map((q) => ({ q, turns: [], clues: [], done: false, solved: false, gaveUp: false, score: 0 })),
+      questions: r.questions.map((q) => ({ q, turns: [], clues: [], done: false, solved: false, gaveUp: false, score: 0, bonus: 0 })),
       index: 0,
     };
     badge.hidden = false;
@@ -448,12 +449,14 @@ async function submit(game: Game) {
       if (!r.ok) {
         ui.violations = r.violations;
       } else {
-        qs.turns.push({ you: text, guess: r.guess, reason: r.reason, correct: r.correct, positions: r.positions });
+        qs.turns.push({ you: text, guess: r.guess, reason: r.reason, correct: r.correct, positions: r.positions, perfect: r.perfectSentence, grammarNote: r.grammarNote });
         ui.draft = "";
         if (r.correct || qs.turns.length >= game.maxGuesses) {
           qs.done = true;
           qs.solved = r.correct;
-          qs.score = scoreFor(game.level, r.correct, qs.turns.length);
+          // Rule 1: the bonus looks only at the description that produced the correct guess.
+          qs.bonus = r.correct && r.perfectSentence ? SENTENCE_BONUS : 0;
+          qs.score = scoreFor(game.level, r.correct, qs.turns.length) + qs.bonus;
           qs.feedback = undefined;
           ui.busy = false;
           render();

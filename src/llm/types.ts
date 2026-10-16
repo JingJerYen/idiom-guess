@@ -3,6 +3,9 @@ import { z } from "zod";
 export const GuessResultSchema = z.object({
   guess: z.string().trim().min(1).max(20),
   reason: z.string().trim().min(1).max(300),
+  /** True only when the newest description is a complete, error-free sentence. */
+  perfect_sentence: z.boolean().default(false),
+  grammar_note: z.string().trim().max(200).default(""),
 });
 export type GuessResult = z.infer<typeof GuessResultSchema>;
 

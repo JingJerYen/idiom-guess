@@ -29,10 +29,22 @@ function hash(s: string): number {
  * sentence. It only sees descriptions, like the real model, so wrong guesses are common,
  * which is useful for exercising the retry flow.
  */
+/** Crude stand-in for the model's grammar check: capitalised, ends with punctuation, enough words, no doubled spaces. */
+export function mockPerfectSentence(text: string): { perfect: boolean; note: string } {
+  const t = text.trim();
+  if (!/^[A-Z]/.test(t)) return { perfect: false, note: "[MOCK] should start with a capital letter" };
+  if (!/[.!?]$/.test(t)) return { perfect: false, note: "[MOCK] should end with . ! or ?" };
+  if ((t.match(/[A-Za-z]+/g) ?? []).length < 6) return { perfect: false, note: "[MOCK] too short to be a full sentence" };
+  if (/\s{2,}|\bi\b/.test(t)) return { perfect: false, note: "[MOCK] spacing or lowercase 'i'" };
+  return { perfect: true, note: "" };
+}
+
 export function mockGuess(descriptions: string[], previousGuesses: string[] = []): GuessResult {
   // Like the real model, never repeat an earlier wrong guess.
   const all = loadIdioms().filter((it) => !previousGuesses.includes(it.idiom));
   const words = keywords(descriptions.join(" "));
+  const g = mockPerfectSentence(descriptions[descriptions.length - 1] ?? "");
+  const grammar = { perfect_sentence: g.perfect, grammar_note: g.note };
   let best: Idiom | null = null;
   let bestScore = 0;
   for (const it of all) {
@@ -46,9 +58,9 @@ export function mockGuess(descriptions: string[], previousGuesses: string[] = []
   }
   if (!best || bestScore === 0) {
     const pick = all[hash(descriptions.join("|")) % all.length];
-    return { guess: pick.idiom, reason: "[MOCK] No matching words, so this is a random pick." };
+    return { guess: pick.idiom, reason: "[MOCK] No matching words, so this is a random pick.", ...grammar };
   }
-  return { guess: best.idiom, reason: `[MOCK] Matched ${bestScore} key word(s) from the description.` };
+  return { guess: best.idiom, reason: `[MOCK] Matched ${bestScore} key word(s) from the description.`, ...grammar };
 }
 
 export function mockFeedback(idiom: Idiom, descriptions: string[]): FeedbackResult {
