@@ -59,17 +59,39 @@ function escapeRe(s: string): string {
 }
 
 /**
- * Taboo words match as whole words, case-insensitively, allowing simple
- * inflections (s, es, ed, ing). Multi-word entries ("old man") match as phrases.
+ * Regular English inflections of a base word, so the bank only needs to list
+ * base forms (plus irregulars such as feet, lost, shot):
+ *   snake -> snakes; draw -> drawing, drawed; carve -> carving, carved;
+ *   worry -> worries, worried, worrying; dig -> digging, digged; bus -> buses.
+ */
+export function inflections(base: string): string[] {
+  const w = base.trim().toLowerCase();
+  if (!w) return [];
+  const out = new Set<string>([w, `${w}s`, `${w}es`, `${w}ed`, `${w}d`, `${w}ing`]);
+  if (/e$/.test(w)) out.add(`${w.slice(0, -1)}ing`);
+  if (/[^aeiou]y$/.test(w)) {
+    out.add(`${w.slice(0, -1)}ies`);
+    out.add(`${w.slice(0, -1)}ied`);
+  }
+  if (/[aeiou][bdgklmnprt]$/.test(w) && !/[aeiou]{2}[bdgklmnprt]$/.test(w)) {
+    const c = w[w.length - 1];
+    out.add(`${w}${c}ing`);
+    out.add(`${w}${c}ed`);
+  }
+  return Array.from(out);
+}
+
+/**
+ * Taboo words match as whole words, case-insensitively, in any regular
+ * inflection (see inflections()). Multi-word entries ("old man") match as phrases.
  */
 export function findTabooWords(text: string, taboo: string[]): string[] {
   const hits: string[] = [];
   const lower = text.toLowerCase();
   for (const word of taboo) {
-    const w = word.trim().toLowerCase();
-    if (!w) continue;
-    const base = escapeRe(w).replace(/\s+/g, "\\s+");
-    const re = new RegExp(`(?<![a-z0-9])${base}(?:s|es|ed|ing)?(?![a-z0-9])`, "i");
+    const forms = inflections(word).map((f) => escapeRe(f).replace(/\s+/g, "\\s+"));
+    if (!forms.length) continue;
+    const re = new RegExp(`(?<![a-z0-9])(?:${forms.join("|")})(?![a-z0-9])`, "i");
     if (re.test(lower)) hits.push(word);
   }
   return hits;

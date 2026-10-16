@@ -15,9 +15,7 @@
       "feet",
       "leg",
       "draw",
-      "paint",
-      "drawing",
-      "painting"
+      "paint"
     ],
     "difficulty": 1,
     "reference_english": "Ruining something that was already fine by adding something unnecessary."
@@ -39,8 +37,7 @@
       "tree",
       "stump",
       "trunk",
-      "wait",
-      "waiting"
+      "wait"
     ],
     "difficulty": 1,
     "reference_english": "Waiting passively for luck to strike again instead of making an effort."
@@ -85,10 +82,8 @@
       "ear",
       "bell",
       "steal",
-      "stealing",
       "thief",
       "cover",
-      "covering",
       "plug"
     ],
     "difficulty": 1,
@@ -139,7 +134,6 @@
       "music",
       "musical",
       "play",
-      "playing",
       "instrument"
     ],
     "difficulty": 1,
@@ -159,8 +153,6 @@
       "fox",
       "tiger",
       "borrow",
-      "borrowing",
-      "borrowed",
       "authority",
       "power"
     ],
@@ -184,9 +176,7 @@
       "sword",
       "blade",
       "carve",
-      "carving",
       "mark",
-      "marking",
       "notch"
     ],
     "difficulty": 1,
@@ -207,8 +197,7 @@
       "shield",
       "contradict",
       "contradiction",
-      "contradictory",
-      "contradicting"
+      "contradictory"
     ],
     "difficulty": 2,
     "reference_english": "Saying two things that cannot both be true at the same time."
@@ -249,17 +238,11 @@
     "taboo": [
       "seedling",
       "sprout",
-      "sprouts",
       "plant",
-      "plants",
       "crop",
-      "crops",
       "rice",
       "pull",
-      "pulling",
-      "pulled",
       "grow",
-      "growing",
       "growth"
     ],
     "difficulty": 2,
@@ -279,11 +262,9 @@
     "pinyin": "sai weng shi ma",
     "taboo": [
       "horse",
-      "horses",
       "old man",
       "lose",
       "lost",
-      "losing",
       "blessing",
       "disguise"
     ],
@@ -303,12 +284,9 @@
     "pinyin": "yi jian shuang diao",
     "taboo": [
       "arrow",
-      "arrows",
       "eagle",
-      "eagles",
       "hawk",
       "bird",
-      "birds",
       "two",
       "shot",
       "shoot",
@@ -333,9 +311,7 @@
       "cart",
       "carriage",
       "wheel",
-      "wheels",
       "track",
-      "tracks",
       "direction",
       "opposite"
     ],
@@ -354,15 +330,11 @@
     "pinyin": "hua long dian jing",
     "taboo": [
       "dragon",
-      "dragons",
       "eye",
-      "eyes",
       "pupil",
       "dot",
       "paint",
-      "painting",
-      "draw",
-      "drawing"
+      "draw"
     ],
     "difficulty": 2,
     "reference_english": "The small finishing touch that brings the whole work to life."
@@ -384,9 +356,7 @@
       "evening",
       "night",
       "monkey",
-      "monkeys",
-      "chestnut",
-      "chestnuts"
+      "chestnut"
     ],
     "difficulty": 3,
     "reference_english": "Being fickle and constantly changing your mind, often chasing whatever seems better at the moment."
@@ -403,11 +373,8 @@
     "pinyin": "yuan mu qiu yu",
     "taboo": [
       "tree",
-      "trees",
       "climb",
-      "climbing",
       "fish",
-      "fishing",
       "wood"
     ],
     "difficulty": 3,
@@ -426,13 +393,9 @@
     "taboo": [
       "sky",
       "heaven",
-      "heavens",
       "fall",
-      "falling",
       "collapse",
-      "worry",
-      "worried",
-      "worrying"
+      "worry"
     ],
     "difficulty": 3,
     "reference_english": "Worrying needlessly about disasters that are extremely unlikely to happen."
@@ -454,13 +417,11 @@
       "insect",
       "bug",
       "arm",
-      "arms",
       "cart",
       "car",
       "chariot",
       "wheel",
       "block",
-      "blocking",
       "stop"
     ],
     "difficulty": 3,
@@ -478,16 +439,11 @@
     "pinyin": "yu gong yi shan",
     "taboo": [
       "mountain",
-      "mountains",
       "hill",
-      "hills",
       "move",
-      "moving",
-      "moved",
       "old man",
       "foolish",
-      "dig",
-      "digging"
+      "dig"
     ],
     "difficulty": 3,
     "reference_english": "Persisting with unshakable determination until an enormous task is finally finished."

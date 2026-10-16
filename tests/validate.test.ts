@@ -42,6 +42,18 @@ test("easy level allows taboo words but still blocks Chinese and pinyin", () => 
   assert.deepEqual(r2.violations.map((v) => v.type), ["chinese"]);
 });
 
+test("regular inflections are matched from the base form only", () => {
+  assert.deepEqual(findTabooWords("He moved it while carving and digging", ["move", "carve", "dig"]), ["move", "carve", "dig"]);
+  assert.deepEqual(findTabooWords("She worried and worries a lot", ["worry"]), ["worry"]);
+  assert.deepEqual(findTabooWords("They were waiting and borrowed it", ["wait", "borrow"]), ["wait", "borrow"]);
+  // irregular forms still need their own entry
+  assert.deepEqual(findTabooWords("my feet hurt", ["foot"]), []);
+  assert.deepEqual(findTabooWords("my feet hurt", ["foot", "feet"]), ["feet"]);
+  // no false positives on longer words
+  assert.deepEqual(findTabooWords("the mover was moving slowly", ["move"]), ["move"]);
+  assert.deepEqual(findTabooWords("a movement began", ["move"]), []);
+});
+
 test("rejects taboo words as whole words with simple inflections", () => {
   assert.deepEqual(findTabooWords("Two snakes were drawing legs", huaShe.taboo), ["snake", "leg", "draw"]);
   // "snakeskin" is not the word "snake"; "footnote" is not "foot"
