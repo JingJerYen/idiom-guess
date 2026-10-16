@@ -35,6 +35,13 @@ test("rejects Chinese characters and reports them", () => {
   assert.deepEqual(v.chars, ["蛇"]);
 });
 
+test("easy level allows taboo words but still blocks Chinese and pinyin", () => {
+  const r = validateDescription("A snake gets extra legs and that ruins the drawing completely", huaShe, { allowTaboo: true });
+  assert.equal(r.ok, true);
+  const r2 = validateDescription("A snake 蛇 gets extra legs and that ruins it", huaShe, { allowTaboo: true });
+  assert.deepEqual(r2.violations.map((v) => v.type), ["chinese"]);
+});
+
 test("rejects taboo words as whole words with simple inflections", () => {
   assert.deepEqual(findTabooWords("Two snakes were drawing legs", huaShe.taboo), ["snake", "leg", "draw"]);
   // "snakeskin" is not the word "snake"; "footnote" is not "foot"

@@ -75,7 +75,12 @@ export function findTabooWords(text: string, taboo: string[]): string[] {
   return hits;
 }
 
-export function validateDescription(text: string, idiom: Idiom): ValidationResult {
+export interface ValidateOptions {
+  /** Easy mode: taboo words are allowed (they become vocabulary hints). Chinese, pinyin and length still apply. */
+  allowTaboo?: boolean;
+}
+
+export function validateDescription(text: string, idiom: Idiom, opts: ValidateOptions = {}): ValidationResult {
   const violations: Violation[] = [];
   const trimmed = text.trim();
   if (!trimmed) return { ok: false, violations: [{ type: "empty" }] };
@@ -88,8 +93,10 @@ export function validateDescription(text: string, idiom: Idiom): ValidationResul
 
   if (containsPinyin(trimmed, idiom.pinyin)) violations.push({ type: "pinyin" });
 
-  const taboo = findTabooWords(trimmed, idiom.taboo);
-  if (taboo.length) violations.push({ type: "taboo", words: taboo });
+  if (!opts.allowTaboo) {
+    const taboo = findTabooWords(trimmed, idiom.taboo);
+    if (taboo.length) violations.push({ type: "taboo", words: taboo });
+  }
 
   const words = countEnglishWords(trimmed);
   if (words < MIN_WORDS) violations.push({ type: "too_short", words, min: MIN_WORDS });

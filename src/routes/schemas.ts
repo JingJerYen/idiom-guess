@@ -10,8 +10,12 @@ export const DescriptionsSchema = z
   .min(1)
   .max(config.maxGuesses);
 
+export const LevelSchema = z.enum(["easy", "hard"]);
+
 export const GuessBodySchema = z.object({
   idiomId: z.string().min(1).max(64),
+  /** easy = taboo words may be used; hard = they are forbidden (default). */
+  level: LevelSchema.default("hard"),
   descriptions: DescriptionsSchema,
   /** The AI's earlier guesses for this question (client-held state, re-scored server-side). */
   previousGuesses: z.array(z.string().max(20)).max(Math.max(0, config.maxGuesses - 1)).default([]),

@@ -1,4 +1,4 @@
-import { api, ApiError, type Mode, type Violation } from "./api.js";
+import { api, ApiError, type Level, type Mode, type Violation } from "./api.js";
 import { MAX_ATTEMPTS, MAX_CHARS, MAX_SCORE, MIN_WORDS, SCORES, countWords, scoreFor, type Game, type QuestionState, type Screen } from "./state.js";
 
 const root = document.getElementById("app") as HTMLElement;
@@ -6,6 +6,7 @@ const badge = document.getElementById("mode-badge") as HTMLElement;
 
 let screen: Screen = { name: "start" };
 let chosenMode: Mode = "forward";
+let chosenLevel: Level = "hard";
 /** Transient per-question UI state. */
 const ui = { draft: "", busy: false, error: "", violations: [] as Violation[], confirmGiveUp: false };
 
@@ -91,6 +92,10 @@ function renderStart() {
       <h1>用英文<em>繞著說</em></h1>
       <p class="muted">不知道那個字怎麼講？把意思說清楚就好。</p>
     </section>
+    <section class="levels" role="group" aria-label="難度">
+      <button class="level" data-level="easy" aria-pressed="${chosenLevel === "easy"}"><span class="icon">🌱</span><b>簡單</b><span class="small muted">單字可以用</span></button>
+      <button class="level" data-level="hard" aria-pressed="${chosenLevel === "hard"}"><span class="icon">🔥</span><b>困難</b><span class="small muted">單字不能說</span></button>
+    </section>
     <section class="modes" role="group" aria-label="模式">
       <button class="mode" data-mode="forward" aria-pressed="${chosenMode === "forward"}">
         <span class="icon">🗣️</span><b>口說</b><span class="small muted">你描述，AI 猜</span>
@@ -104,6 +109,9 @@ function renderStart() {
   root.querySelectorAll<HTMLButtonElement>(".mode").forEach((b) =>
     b.addEventListener("click", () => { chosenMode = b.dataset.mode as Mode; render(); }),
   );
+  root.querySelectorAll<HTMLButtonElement>(".level").forEach((b) =>
+    b.addEventListener("click", () => { chosenLevel = b.dataset.level as Level; render(); }),
+  );
   (root.querySelector("#start") as HTMLButtonElement).addEventListener("click", () => void startGame());
 }
 
@@ -112,7 +120,7 @@ function renderTop(game: Game): string {
   const total = game.questions.length;
   const qs = game.questions[game.index];
   return `<div class="top">
-      <span class="muted">${MODE_LABEL[game.mode]}</span>
+      <span class="muted">${MODE_LABEL[game.mode]}${game.mode === "forward" ? (game.level === "easy" ? " 🌱" : " 🔥") : ""}</span>
       <span class="dots">${game.questions.map((q, i) => `<i class="${i < game.index ? (q.solved ? "ok" : "no") : i === game.index ? "now" : ""}"></i>`).join("")}</span>
       <span class="muted">${n}/${total}</span>
     </div>
@@ -145,7 +153,12 @@ function renderPlay(game: Game) {
     const sizeClass = len <= 4 ? "" : len <= 6 ? "md" : "sm";
     body += `<div class="tagrow">${(q.tags ?? []).map((t) => `<span class="kind">${esc(t)}</span>`).join("")}</div>
       <div class="idiom ${sizeClass}">${esc(q.idiom ?? "")}</div>
-      <div class="chips"><span class="chip ban">🚫</span>${q.tabooWords.map((w) => `<span class="chip">${esc(w)}</span>`).join("")}</div>`;
+      <div class="chips ${game.level}"><span class="chip ban">${game.level === "easy" ? "💡" : "🚫"}</span>${q.tabooWords
+        .map((w, i) => {
+          const zh = qs.flipped?.has(i) && w.zh;
+          return `<button class="chip word ${zh ? "zh" : ""}" data-i="${i}" aria-label="${esc(w.en)}">${esc(zh ? w.zh : w.en)}</button>`;
+        })
+        .join("")}</div>`;
   } else {
     body += qs.clues
       .map((c, i) => {
@@ -221,6 +234,17 @@ function renderPlay(game: Game) {
   }
   root.querySelectorAll<HTMLButtonElement>(".speak").forEach((b) =>
     b.addEventListener("click", () => speak(qs.clues[Number(b.dataset.i)] ?? "")),
+  );
+  root.querySelectorAll<HTMLButtonElement>(".chip.word").forEach((b) =>
+    b.addEventListener("click", () => {
+      const i = Number(b.dataset.i);
+      qs.flipped ??= new Set();
+      if (qs.flipped.has(i)) qs.flipped.delete(i); else qs.flipped.add(i);
+      const w = q.tabooWords[i];
+      const zh = qs.flipped.has(i) && w?.zh;
+      b.textContent = zh ? w.zh : (w?.en ?? "");
+      b.classList.toggle("zh", Boolean(zh));
+    }),
   );
   root.querySelectorAll<HTMLButtonElement>(".say").forEach((b) =>
     b.addEventListener("click", () => speak(qs.turns[Number(b.dataset.i)]?.reason ?? "")),
@@ -315,6 +339,7 @@ async function startGame() {
     const r = await api.round(chosenMode);
     const game: Game = {
       mode: r.mode,
+      level: chosenLevel,
       maxGuesses: Math.min(MAX_ATTEMPTS, r.maxGuesses),
       mock: r.mock,
       questions: r.questions.map((q) => ({ q, turns: [], clues: [], done: false, solved: false, gaveUp: false, score: 0 })),
@@ -418,7 +443,7 @@ async function submit(game: Game) {
     const descriptions = [...qs.turns.map((t) => t.you), text];
     try {
       const previousGuesses = qs.turns.map((t) => t.guess ?? "").filter(Boolean);
-      const r = await api.guess(qs.q.id, descriptions, previousGuesses);
+      const r = await api.guess(qs.q.id, game.level, descriptions, previousGuesses);
       if (!r.ok) {
         ui.violations = r.violations;
       } else {

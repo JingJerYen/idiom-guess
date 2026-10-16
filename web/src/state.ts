@@ -1,4 +1,4 @@
-import type { FeedbackResponse, Mode, Question } from "./api.js";
+import type { FeedbackResponse, Level, Mode, Question } from "./api.js";
 
 export interface Turn {
   /** Forward: the player's description. Reverse: the player's idiom guess. */
@@ -22,6 +22,8 @@ export interface QuestionState {
   shownTurn?: number;
   /** Result card: whether the feedback / transcript section is expanded. */
   showDetails?: boolean;
+  /** Word cards currently flipped to Chinese (by index). */
+  flipped?: Set<number>;
   done: boolean;
   solved: boolean;
   gaveUp: boolean;
@@ -37,6 +39,8 @@ export interface QuestionState {
 
 export interface Game {
   mode: Mode;
+  /** easy: word cards may be used in the description; hard: they are forbidden. */
+  level: Level;
   maxGuesses: number;
   mock: boolean;
   questions: QuestionState[];

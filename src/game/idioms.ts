@@ -28,14 +28,30 @@ export interface PublicQuestion {
   /** Number of characters in the answer (reverse mode only), so the UI can draw empty tiles. */
   length?: number;
   difficulty: 1 | 2 | 3;
-  /** Shown on screen so the player knows what not to say. */
-  tabooWords: string[];
+  /** Shown on screen as word cards: forbidden in hard mode, usable hints in easy mode. */
+  tabooWords: TabooWord[];
 }
 
 export type GameMode = "forward" | "reverse";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const DATA_PATH = resolve(here, "../../data/idioms.json");
+const GLOSSARY_PATH = resolve(here, "../../data/glossary.json");
+
+let glossaryCache: Record<string, string> | null = null;
+
+/** English taboo word -> Traditional Chinese gloss, shown when the player flips a word card. */
+export function loadGlossary(path: string = GLOSSARY_PATH): Record<string, string> {
+  if (glossaryCache && path === GLOSSARY_PATH) return glossaryCache;
+  const g = z.record(z.string(), z.string().min(1)).parse(JSON.parse(readFileSync(path, "utf8")));
+  if (path === GLOSSARY_PATH) glossaryCache = g;
+  return g;
+}
+
+export interface TabooWord {
+  en: string;
+  zh: string;
+}
 
 let cache: Idiom[] | null = null;
 
@@ -105,10 +121,11 @@ export function pickRound(
 }
 
 export function toPublic(idiom: Idiom, mode: GameMode): PublicQuestion {
+  const glossary = loadGlossary();
   const q: PublicQuestion = {
     id: idiom.id,
     difficulty: idiom.difficulty,
-    tabooWords: idiom.taboo,
+    tabooWords: idiom.taboo.map((en) => ({ en, zh: glossary[en.toLowerCase()] ?? "" })),
   };
   if (mode === "forward") {
     q.idiom = idiom.idiom;

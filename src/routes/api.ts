@@ -33,9 +33,9 @@ function requireIdiom(id: string): Idiom {
 }
 
 /** Re-check every description server-side; earlier ones were checked before but never trust the client. */
-function checkDescriptions(descriptions: string[], idiom: Idiom) {
+function checkDescriptions(descriptions: string[], idiom: Idiom, allowTaboo: boolean) {
   for (const d of descriptions) {
-    const v = validateDescription(d, idiom);
+    const v = validateDescription(d, idiom, { allowTaboo });
     if (!v.ok) return v;
   }
   return null;
@@ -56,7 +56,7 @@ api.post("/guess", modelLimiter, async (req, res) => {
   const body = parseBody(req, GuessBodySchema);
   const idiom = requireIdiom(body.idiomId);
 
-  const bad = checkDescriptions(body.descriptions, idiom);
+  const bad = checkDescriptions(body.descriptions, idiom, body.level === "easy");
   if (bad) {
     // Rule violation: no model call, no attempt consumed.
     res.status(422).json({ ok: false, violations: bad.violations });

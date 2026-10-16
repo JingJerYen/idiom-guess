@@ -1,4 +1,7 @@
 export type Mode = "forward" | "reverse";
+export type Level = "easy" | "hard";
+
+export interface TabooWord { en: string; zh: string }
 
 export interface Question {
   id: string;
@@ -6,7 +9,7 @@ export interface Question {
   tags?: string[];
   length?: number;
   difficulty: 1 | 2 | 3;
-  tabooWords: string[];
+  tabooWords: TabooWord[];
 }
 
 export interface RoundResponse {
@@ -73,8 +76,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const api = {
   round: (mode: Mode) => request<RoundResponse>(`/api/round?mode=${mode}`),
-  guess: (idiomId: string, descriptions: string[], previousGuesses: string[]) =>
-    request<GuessResponse>("/api/guess", { method: "POST", body: JSON.stringify({ idiomId, descriptions, previousGuesses }) }),
+  guess: (idiomId: string, level: Level, descriptions: string[], previousGuesses: string[]) =>
+    request<GuessResponse>("/api/guess", { method: "POST", body: JSON.stringify({ idiomId, level, descriptions, previousGuesses }) }),
   feedback: (idiomId: string, descriptions: string[], guessedCorrectly: boolean, attempts: number) =>
     request<FeedbackResponse>("/api/feedback", {
       method: "POST",
