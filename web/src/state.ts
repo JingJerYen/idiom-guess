@@ -54,12 +54,15 @@ export type Screen =
   | { name: "summary"; game: Game };
 
 /** Points by the attempt on which the answer was found; 0 after that or on give-up. */
-export const SCORES = [5, 3, 1] as const;
-export const MAX_ATTEMPTS = SCORES.length;
-export const MAX_SCORE = SCORES[0];
+export const SCORES: Record<Level, readonly number[]> = { hard: [5, 3, 1], easy: [3, 2, 1] };
+export const MAX_ATTEMPTS = 3;
 
-export function scoreFor(solved: boolean, attempts: number): number {
-  return solved ? (SCORES[attempts - 1] ?? 0) : 0;
+export function maxScore(level: Level): number {
+  return SCORES[level][0];
+}
+
+export function scoreFor(level: Level, solved: boolean, attempts: number): number {
+  return solved ? (SCORES[level][attempts - 1] ?? 0) : 0;
 }
 
 export const MIN_WORDS = 5;

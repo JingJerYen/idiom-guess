@@ -1,5 +1,5 @@
 import { api, ApiError, type Level, type Mode, type Violation } from "./api.js";
-import { MAX_ATTEMPTS, MAX_CHARS, MAX_SCORE, MIN_WORDS, SCORES, countWords, scoreFor, type Game, type QuestionState, type Screen } from "./state.js";
+import { MAX_ATTEMPTS, MAX_CHARS, MIN_WORDS, SCORES, countWords, maxScore, scoreFor, type Game, type QuestionState, type Screen } from "./state.js";
 
 const root = document.getElementById("app") as HTMLElement;
 const badge = document.getElementById("mode-badge") as HTMLElement;
@@ -41,8 +41,9 @@ function slots(length: number, confirmed: (string | null)[], draft: string): str
   return `<div class="tiles lg center" aria-label="${length} 個字">${cells.join("")}</div>`;
 }
 /** Score ladder: 5 · 3 · 1, dimming the points already lost; the next attempt's value is highlighted. */
-function ladder(used: number, done: boolean): string {
-  return `<span class="ladder" aria-label="這題可得 ${done ? 0 : SCORES[used] ?? 0} 分">${SCORES.map((s, i) => `<i class="${i < used || done ? "lost" : i === used ? "now" : ""}">${s}</i>`).join("")}</span>`;
+function ladder(level: Level, used: number, done: boolean): string {
+  const scores = SCORES[level];
+  return `<span class="ladder" aria-label="這題可得 ${done ? 0 : scores[used] ?? 0} 分">${scores.map((s, i) => `<i class="${i < used || done ? "lost" : i === used ? "now" : ""}">${s}</i>`).join("")}</span>`;
 }
 // ---------- speech (browser TTS, no API cost) ----------
 
@@ -124,7 +125,7 @@ function renderTop(game: Game): string {
       <span class="dots">${game.questions.map((q, i) => `<i class="${i < game.index ? (q.solved ? "ok" : "no") : i === game.index ? "now" : ""}"></i>`).join("")}</span>
       <span class="muted">${n}/${total}</span>
     </div>
-    <div class="row between" style="margin-top:8px">${ladder(qs.turns.length, qs.done)}<span class="muted small">${game.questions.reduce((n, q) => n + q.score, 0)} 分</span>${stars(qs.q.difficulty)}</div>`;
+    <div class="row between" style="margin-top:8px">${ladder(game.level, qs.turns.length, qs.done)}<span class="muted small">${game.questions.reduce((n, q) => n + q.score, 0)} 分</span>${stars(qs.q.difficulty)}</div>`;
 }
 
 function violationText(v: Violation): string {
@@ -322,7 +323,7 @@ function renderSummary(game: Game) {
     .map((q) => `<li class="${q.solved ? "ok" : "no"}"><span>${esc(q.q.idiom ?? q.answer ?? "？")}</span><span class="pts ${q.score ? "" : "zero"}">${q.gaveUp ? "🏳️ " : ""}+${q.score}</span></li>`)
     .join("");
   root.innerHTML = `<section class="card summary center">
-      <div class="big">${total}<span class="muted">/${qs.length * MAX_SCORE}</span></div>
+      <div class="big">${total}<span class="muted">/${qs.length * maxScore(game.level)}</span></div>
       <div class="muted">${solved}/${qs.length} 題猜中</div>
       <ul class="list">${rows}</ul>
       <button id="again" class="btn lg block" style="margin-top:16px">再玩</button>
@@ -339,7 +340,7 @@ async function startGame() {
     const r = await api.round(chosenMode);
     const game: Game = {
       mode: r.mode,
-      level: chosenLevel,
+      level: r.mode === "forward" ? chosenLevel : "hard",
       maxGuesses: Math.min(MAX_ATTEMPTS, r.maxGuesses),
       mock: r.mock,
       questions: r.questions.map((q) => ({ q, turns: [], clues: [], done: false, solved: false, gaveUp: false, score: 0 })),
@@ -452,7 +453,7 @@ async function submit(game: Game) {
         if (r.correct || qs.turns.length >= game.maxGuesses) {
           qs.done = true;
           qs.solved = r.correct;
-          qs.score = scoreFor(r.correct, qs.turns.length);
+          qs.score = scoreFor(game.level, r.correct, qs.turns.length);
           qs.feedback = undefined;
           ui.busy = false;
           render();
@@ -477,7 +478,7 @@ async function submit(game: Game) {
       if (r.correct || attempt >= game.maxGuesses) {
         qs.done = true;
         qs.solved = r.correct;
-        qs.score = scoreFor(r.correct, attempt);
+        qs.score = scoreFor(game.level, r.correct, attempt);
         qs.answer = r.answer;
         qs.answerTags = r.tags;
         qs.referenceEnglish = r.reference_english;
