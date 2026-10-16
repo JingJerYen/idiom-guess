@@ -1,0 +1,35 @@
+import { z } from "zod";
+import { config } from "../config.js";
+import { MAX_CHARS } from "../game/validate.js";
+
+export const ModeSchema = z.enum(["forward", "reverse"]);
+
+/** Up to maxGuesses descriptions; each bounded so the body stays small. */
+export const DescriptionsSchema = z
+  .array(z.string().max(MAX_CHARS * 2))
+  .min(1)
+  .max(config.maxGuesses);
+
+export const GuessBodySchema = z.object({
+  idiomId: z.string().min(1).max(64),
+  descriptions: DescriptionsSchema,
+});
+
+export const FeedbackBodySchema = z.object({
+  idiomId: z.string().min(1).max(64),
+  descriptions: DescriptionsSchema,
+  guessedCorrectly: z.boolean(),
+  attempts: z.number().int().min(1).max(config.maxGuesses),
+});
+
+export const DescribeBodySchema = z.object({
+  idiomId: z.string().min(1).max(64),
+  attempt: z.number().int().min(1).max(config.maxGuesses),
+  previousClues: z.array(z.string().max(500)).max(config.maxGuesses).default([]),
+});
+
+export const ReverseGuessBodySchema = z.object({
+  idiomId: z.string().min(1).max(64),
+  guess: z.string().min(1).max(40),
+  attempt: z.number().int().min(1).max(config.maxGuesses),
+});
