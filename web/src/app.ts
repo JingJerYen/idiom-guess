@@ -371,6 +371,8 @@ async function startGame() {
 }
 
 function stopMic() {
+  // Keep whatever was still interim when the player stops: it is usually the last word or two.
+  if (listener && micInterim) ui.draft = joinOverlap(ui.draft.trim(), micInterim);
   if (listener) listener.stop();
   listener = null;
   micInterim = "";
@@ -477,11 +479,7 @@ async function submit(game: Game) {
   if (ui.busy) return;
   const qs = game.questions[game.index];
   if (qs.done) return;
-  if (listener) {
-    // Take whatever was recognised so far, including interim words, then stop.
-    if (micInterim) ui.draft = joinOverlap(ui.draft.trim(), micInterim);
-    stopMic();
-  }
+  if (listener) stopMic(); // keeps interim words too
   const text = ui.draft.trim();
   ui.violations = [];
   ui.error = "";
