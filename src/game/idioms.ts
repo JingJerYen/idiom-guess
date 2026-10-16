@@ -123,7 +123,8 @@ export function toPublic(idiom: Idiom, mode: GameMode): PublicQuestion {
     id: idiom.id,
     tags: idiom.tags,
     difficulty: idiom.difficulty,
-    tabooWords: idiom.taboo.map((en) => ({ en, zh: glossary[en.toLowerCase()] ?? "" })),
+    // Reverse mode gets no word cards: the direct-translation words would be a hint about the answer.
+    tabooWords: mode === "forward" ? idiom.taboo.map((en) => ({ en, zh: glossary[en.toLowerCase()] ?? "" })) : [],
   };
   // Reverse mode deliberately omits the answer length: the player gets no more hints than the AI does.
   if (mode === "forward") q.idiom = idiom.idiom;

@@ -77,6 +77,7 @@ test("public question never leaks pinyin or reference; reverse hides the idiom",
   assert.equal("idiom" in rev, false);
   assert.deepEqual(rev.tags, it.tags, "reverse mode shows the kind so the player knows what to guess");
   assert.equal("length" in rev, false, "answer length must not leak");
+  assert.deepEqual(rev.tabooWords, [], "direct-translation words must not leak in reverse mode");
 });
 
 test("positionMatches reports right-character-right-position only", () => {
