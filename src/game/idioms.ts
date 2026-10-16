@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { z } from "zod";
+import { normalizeIdiom } from "./match.js";
 
 const IdiomSchema = z.object({
   id: z.string().min(1),
@@ -24,6 +25,8 @@ export interface PublicQuestion {
   idiom?: string;
   /** The item's kind(s). Shown in both modes so the player knows what sort of term to guess. */
   tags: string[];
+  /** Number of characters in the answer (reverse mode only), so the UI can draw empty tiles. */
+  length?: number;
   difficulty: 1 | 2 | 3;
   /** Shown on screen as word cards: forbidden in hard mode, usable hints in easy mode. */
   tabooWords: TabooWord[];
@@ -126,7 +129,10 @@ export function toPublic(idiom: Idiom, mode: GameMode): PublicQuestion {
     // Reverse mode gets no word cards: the direct-translation words would be a hint about the answer.
     tabooWords: mode === "forward" ? idiom.taboo.map((en) => ({ en, zh: glossary[en.toLowerCase()] ?? "" })) : [],
   };
-  // Reverse mode deliberately omits the answer length: the player gets no more hints than the AI does.
-  if (mode === "forward") q.idiom = idiom.idiom;
+  if (mode === "forward") {
+    q.idiom = idiom.idiom;
+  } else {
+    q.length = Array.from(normalizeIdiom(idiom.idiom)).length;
+  }
   return q;
 }

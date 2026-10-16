@@ -76,7 +76,7 @@ test("public question never leaks pinyin or reference; reverse hides the idiom",
   const rev = toPublic(it, "reverse") as Record<string, unknown>;
   assert.equal("idiom" in rev, false);
   assert.deepEqual(rev.tags, it.tags, "reverse mode shows the kind so the player knows what to guess");
-  assert.equal("length" in rev, false, "answer length must not leak");
+  assert.equal(rev.length, Array.from(it.idiom).length, "reverse mode shows the answer length as a hint");
   assert.deepEqual(rev.tabooWords, [], "direct-translation words must not leak in reverse mode");
 });
 

@@ -74,7 +74,7 @@ docker run -p 3000:3000 -e GAME_ANTHROPIC_KEY=sk-ant-... -e TRUST_PROXY=1 idiom-
 | 端點 | 說明 |
 | --- | --- |
 | `GET /api/health` | 模式（mock/live）與模型名稱 |
-| `GET /api/round?mode=forward\|reverse` | 10 題：`id`、`tags`、`difficulty`、`tabooWords`，forward 模式另含 `idiom`。不含拼音、參考說法與答案字數 |
+| `GET /api/round?mode=forward\|reverse` | 10 題：`id`、`tags`、`difficulty`、`tabooWords`，forward 模式另含 `idiom`，reverse 模式另含 `length`。不含拼音與參考說法 |
 | `POST /api/guess` | `{ idiomId, level: "easy"\|"hard", descriptions[], previousGuesses[] }` → 程式檢查違規回 422 `{ violations }`；通過則回 `{ guess, reason, correct, positions[], perfectSentence, grammarNote, attempt, remaining }` |
 | `POST /api/feedback` | `{ idiomId, descriptions[], guessedCorrectly, attempts }` → `{ better_phrases, issues, tip, reference_english }` |
 | `POST /api/give-up` | `{ idiomId }` → `{ answer, tags, reference_english }`（放棄：0 分並揭露答案） |

@@ -32,21 +32,18 @@ function tiles(text: string, positions: boolean[] = [], size = ""): string {
     .map((c, i) => `<span class="tile ${positions[i] ? "hit" : ""}">${esc(c)}</span>`)
     .join("")}</span>`;
 }
-/**
- * Live tiles for the reverse-mode draft. No fixed slot count: the answer length is not revealed.
- * Characters confirmed by earlier guesses stay green in their position; typed ones fill the rest.
- */
-function slots(confirmed: (string | null)[], draft: string): string {
+/** Empty answer slots for reverse mode, pre-filled with characters already confirmed. */
+function slots(length: number, confirmed: (string | null)[], draft: string): string {
   const d = chars(draft);
-  const n = Math.max(d.length, confirmed.length);
   const cells: string[] = [];
-  for (let i = 0; i < n; i++) {
+  for (let i = 0; i < Math.max(length, d.length); i++) {
     const known = confirmed[i];
     const typed = d[i];
     const cls = known ? "hit" : typed ? "typed" : "";
-    cells.push(`<span class="tile lg ${cls}">${esc(known ?? typed ?? "")}</span>`);
+    const extra = i >= length ? " over" : "";
+    cells.push(`<span class="tile lg ${cls}${extra}">${esc(known ?? typed ?? "")}</span>`);
   }
-  return `<div class="tiles lg center" aria-label="你的答案">${cells.join("")}</div>`;
+  return `<div class="tiles lg center" aria-label="${length} 個字">${cells.join("")}</div>`;
 }
 /** Score ladder: 5 · 3 · 1, dimming the points already lost; the next attempt's value is highlighted. */
 function ladder(level: Level, used: number, done: boolean): string {
@@ -182,7 +179,7 @@ function renderPlay(game: Game) {
       : qs.clues.map((c, i) => `<div class="clue shown"><span class="cluetext">${i + 1}. ${esc(c)}</span></div>`).join("");
     const confirmed: (string | null)[] = [];
     for (const t of qs.turns) chars(t.you).forEach((ch, i) => { if (t.positions?.[i]) confirmed[i] = ch; });
-    if (!qs.done) body += slots(confirmed, ui.draft);
+    if (!qs.done) body += slots(q.length ?? 4, confirmed, ui.draft);
   }
 
   if (qs.turns.length) {
@@ -237,7 +234,7 @@ function renderPlay(game: Game) {
       } else {
         const confirmed: (string | null)[] = [];
         for (const t of qs.turns) chars(t.you).forEach((ch, i) => { if (t.positions?.[i]) confirmed[i] = ch; });
-        root.querySelector(".tiles.lg")?.replaceWith(fragment(slots(confirmed, ui.draft)));
+        root.querySelector(".tiles.lg")?.replaceWith(fragment(slots(q.length ?? 4, confirmed, ui.draft)));
       }
     });
     draft.addEventListener("keydown", (ev) => {
