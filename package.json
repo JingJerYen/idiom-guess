@@ -4,13 +4,13 @@
   "description": "Practice English circumlocution by describing Chinese idioms to an AI",
   "scripts": {
     "test": "tsx --test tests/*.test.ts",
-    "dev": "tsx watch src/server.ts",
+    "dev": "npm run build:web && tsx watch src/server.ts",
     "build": "npm run build:web && npm run build:server",
     "build:web": "esbuild web/src/app.ts --bundle --format=esm --target=es2020 --outfile=public/app.js --minify && cp web/index.html web/styles.css public/",
     "build:server": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p web/tsconfig.json --noEmit",
-    "mock": "MOCK_MODE=1 tsx src/server.ts"
+    "mock": "npm run build:web && MOCK_MODE=1 tsx src/server.ts"
   },
   "repository": {
     "type": "git",
