@@ -55,13 +55,17 @@ function pickVoice(): SpeechSynthesisVoice | null {
   return en.find((v) => /Google|Samantha|Daniel|Natural/i.test(v.name)) ?? en[0] ?? voices[0] ?? null;
 }
 
+/** Speech rate by level: easy mode speaks noticeably slower. */
+const SPEECH_RATE: Record<Level, number> = { hard: 0.9, easy: 0.7 };
+let speechRate = SPEECH_RATE.hard;
+
 function speak(text: string) {
   if (!canSpeak) return;
   try {
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text.replace(/^\[MOCK[^\]]*\]\s*/, ""));
     u.lang = "en-US";
-    u.rate = 0.9;
+    u.rate = speechRate;
     const v = pickVoice();
     if (v) u.voice = v;
     window.speechSynthesis.speak(u);
@@ -94,8 +98,8 @@ function renderStart() {
       <p class="muted">不知道那個字怎麼講？把意思說清楚就好。</p>
     </section>
     <section class="levels" role="group" aria-label="難度">
-      <button class="level" data-level="easy" aria-pressed="${chosenLevel === "easy"}"><span class="icon">🌱</span><b>簡單</b><span class="small muted">單字可以用</span></button>
-      <button class="level" data-level="hard" aria-pressed="${chosenLevel === "hard"}"><span class="icon">🔥</span><b>困難</b><span class="small muted">單字不能說</span></button>
+      <button class="level" data-level="easy" aria-pressed="${chosenLevel === "easy"}"><span class="icon">🌱</span><b>簡單</b><span class="small muted">${chosenMode === "forward" ? "單字可以用" : "語速較慢"}</span></button>
+      <button class="level" data-level="hard" aria-pressed="${chosenLevel === "hard"}"><span class="icon">🔥</span><b>困難</b><span class="small muted">${chosenMode === "forward" ? "單字不能說" : "正常語速"}</span></button>
     </section>
     <section class="modes" role="group" aria-label="模式">
       <button class="mode" data-mode="forward" aria-pressed="${chosenMode === "forward"}">
@@ -121,7 +125,7 @@ function renderTop(game: Game): string {
   const total = game.questions.length;
   const qs = game.questions[game.index];
   return `<div class="top">
-      <span class="muted">${MODE_LABEL[game.mode]}${game.mode === "forward" ? (game.level === "easy" ? " 🌱" : " 🔥") : ""}</span>
+      <span class="muted">${MODE_LABEL[game.mode]} ${game.level === "easy" ? "🌱" : "🔥"}</span>
       <span class="dots">${game.questions.map((q, i) => `<i class="${i < game.index ? (q.solved ? "ok" : "no") : i === game.index ? "now" : ""}"></i>`).join("")}</span>
       <span class="muted">${n}/${total}</span>
     </div>
@@ -337,12 +341,13 @@ async function startGame() {
     const r = await api.round(chosenMode);
     const game: Game = {
       mode: r.mode,
-      level: r.mode === "forward" ? chosenLevel : "hard",
+      level: chosenLevel,
       maxGuesses: Math.min(MAX_ATTEMPTS, r.maxGuesses),
       mock: r.mock,
       questions: r.questions.map((q) => ({ q, turns: [], clues: [], done: false, solved: false, gaveUp: false, score: 0, bonus: 0 })),
       index: 0,
     };
+    speechRate = SPEECH_RATE[chosenLevel];
     badge.hidden = false;
     badge.textContent = r.mock ? "MOCK" : "Haiku";
     badge.className = r.mock ? "badge" : "badge live";
