@@ -63,15 +63,15 @@ export function mockGuess(descriptions: string[], previousGuesses: string[] = []
   return { guess: best.idiom, reason: `[MOCK] Matched ${bestScore} key word(s) from the description.`, ...grammar };
 }
 
-export function mockFeedback(idiom: Idiom, descriptions: string[]): FeedbackResult {
-  const words = descriptions.reduce((n, d) => n + (d.match(/[A-Za-z]+/g)?.length ?? 0), 0);
+/** MOCK proofreader: capitalise the first letter, fix lowercase "i", add a final period. */
+export function mockFeedback(_idiom: Idiom, descriptions: string[]): FeedbackResult {
   return {
-    better_phrases: [
-      `${idiom.reference_english} — 這是題庫的參考說法，可以直接學起來。`,
-      "It's like when... — 用「舉例情境」開頭，比直接下定義更容易讓人懂。",
-    ],
-    issues: words < 15 ? ["[MOCK] 描述偏短，試著加上一個具體情境或結果。"] : [],
-    tip: "[MOCK] 不知道某個字時，先說它「屬於哪一類、用來做什麼、結果如何」，通常對方就猜得到。",
+    corrections: descriptions.map((d) => {
+      let t = d.trim().replace(/\s+/g, " ").replace(/\bi\b/g, "I");
+      t = t.charAt(0).toUpperCase() + t.slice(1);
+      if (!/[.!?]$/.test(t)) t += ".";
+      return t;
+    }),
   };
 }
 

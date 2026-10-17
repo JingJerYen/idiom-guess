@@ -10,7 +10,7 @@
   直譯單字：「簡單」模式把整份單字當提示顯示、全部可用；「困難」模式每題從該詞的單字庫隨機抽 2 個當禁用詞顯示並由伺服器檢查
   （前端送猜測時把這 2 個字帶回，伺服器驗證它們屬於該題的單字庫）。單字牌點一下翻成中文、再點翻回英文（翻譯來自 `data/glossary.json`）。
 - 💡 提示按鈕：不知道怎麼開口時，依題目類型給三個英文開頭句型，點一下填進輸入框。
-- 每題結束給你英文說法的回饋（更自然的說法、文法／用字、小技巧，繁體中文說明）。
+- 每題結束給你回饋：題庫的參考說法，加上你每一句描述的修正版英文（只修文法、拼字、用字，改動的字會標示）。
 - 後端 Node.js + TypeScript + Express；前端純 HTML/CSS/TypeScript；模型 `claude-haiku-5-5`。
 
 ## 本機執行
@@ -78,7 +78,7 @@ docker run -p 3000:3000 -e GAME_ANTHROPIC_KEY=sk-ant-... -e TRUST_PROXY=1 idiom-
 | `GET /api/health` | 模式（mock/live）與模型名稱 |
 | `GET /api/round?mode=forward\|reverse&level=easy\|hard` | 10 題：`id`、`tags`、`difficulty`、`hintWords`（forward + easy）、`forbiddenWords`（forward + hard，隨機 2 個），forward 模式另含 `idiom`，reverse 模式另含 `length`。不含拼音與參考說法 |
 | `POST /api/guess` | `{ idiomId, level: "easy"\|"hard", forbidden[], descriptions[], previousGuesses[] }` → 程式檢查違規回 422 `{ violations }`；通過則回 `{ guess, reason, correct, positions[], perfectSentence, grammarNote, attempt, remaining }` |
-| `POST /api/feedback` | `{ idiomId, descriptions[], guessedCorrectly, attempts }` → `{ better_phrases, issues, tip, reference_english }` |
+| `POST /api/feedback` | `{ idiomId, descriptions[], guessedCorrectly, attempts }` → `{ corrections[], reference_english }`（每句描述一個修正版，順序相同） |
 | `POST /api/give-up` | `{ idiomId }` → `{ answer, tags, reference_english }`（放棄：0 分並揭露答案） |
 | `POST /api/describe` | 反向模式：`{ idiomId, attempt, previousClues[] }` → `{ description }` |
 | `POST /api/reverse-guess` | 反向模式：`{ idiomId, guess, attempt }` → `{ correct, positions[], remaining, answer? }`（答案只在猜中或用完次數時揭露） |

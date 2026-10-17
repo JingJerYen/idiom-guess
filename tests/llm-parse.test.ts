@@ -55,12 +55,12 @@ test("throws SyntaxError on truncated JSON (e.g. max_tokens cut-off)", () => {
 test("throws SyntaxError when JSON does not match the schema", () => {
   assert.throws(() => parseWithSchema('{"guess":"","reason":"x"}', GuessResultSchema), SyntaxError);
   assert.throws(() => parseWithSchema('{"idiom":"守株待兔"}', GuessResultSchema), SyntaxError);
-  assert.throws(() => parseWithSchema('{"better_phrases":"not an array","issues":[],"tip":"x"}', FeedbackResultSchema), SyntaxError);
+  assert.throws(() => parseWithSchema('{"corrections":"not an array"}', FeedbackResultSchema), SyntaxError);
 });
 
 test("feedback schema accepts the documented shape", () => {
-  const r = parseWithSchema('{"better_phrases":["a","b"],"issues":[],"tip":"t"}', FeedbackResultSchema);
-  assert.deepEqual(r.issues, []);
+  const r = parseWithSchema('{"corrections":["Someone adds extra things.","It is fine."]}', FeedbackResultSchema);
+  assert.equal(r.corrections.length, 2);
 });
 
 test("mock guess always returns a four-character idiom from the bank", () => {
@@ -70,6 +70,7 @@ test("mock guess always returns a four-character idiom from the bank", () => {
     assert.ok(idioms.has(g.guess), g.guess);
     assert.ok(g.reason.length > 0);
   }
-  const fb = mockFeedback(loadIdioms()[0], ["short"]);
+  const fb = mockFeedback(loadIdioms()[0], ["someone adds extra things and i like it"]);
   assert.ok(FeedbackResultSchema.safeParse(fb).success);
+  assert.deepEqual(fb.corrections, ["Someone adds extra things and I like it."]);
 });

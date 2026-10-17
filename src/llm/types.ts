@@ -12,9 +12,8 @@ export const GuessResultSchema = z.object({
 export type GuessResult = z.infer<typeof GuessResultSchema>;
 
 export const FeedbackResultSchema = z.object({
-  better_phrases: z.array(z.string().trim().min(1).transform((s) => s.slice(0, 300))).transform((a) => a.slice(0, 5)),
-  issues: z.array(z.string().trim().min(1).transform((s) => s.slice(0, 300))).transform((a) => a.slice(0, 5)),
-  tip: z.string().trim().min(1).transform((s) => s.slice(0, 400)),
+  /** One corrected version per description, same order. */
+  corrections: z.array(z.string().trim().transform((s) => s.slice(0, 600))).min(1).max(10),
 });
 export type FeedbackResult = z.infer<typeof FeedbackResultSchema>;
 

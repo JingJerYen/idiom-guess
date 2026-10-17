@@ -186,6 +186,11 @@ textarea.listening { border-color: var(--accent); }
 .result h2 { margin: 4px 0 0; font-size: 22px; }
 .result .answer { margin: 10px 0 6px; display: grid; gap: 8px; justify-items: center; }
 .result .ref { background: var(--chip); border-radius: 12px; padding: 10px 12px; margin-top: 10px; text-align: left; }
+.corrections { display: grid; gap: 10px; margin-top: 12px; text-align: left; }
+.corr .orig { color: var(--muted); font-style: italic; }
+.corr .orig.ok { color: var(--ink); font-style: normal; }
+.corr .fixed { margin-top: 4px; padding-left: 26px; line-height: 1.6; }
+.corr mark { background: var(--ok-soft); color: var(--ok); border-radius: 4px; padding: 0 3px; font-weight: 700; }
 ul.fb { list-style: none; margin: 10px 0 0; padding: 0; text-align: left; }
 ul.fb li { display: grid; grid-template-columns: 24px 1fr; gap: 6px; margin: 4px 0; }
 ul.fb .fi { text-align: center; }

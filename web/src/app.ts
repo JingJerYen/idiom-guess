@@ -318,6 +318,28 @@ function renderPlay(game: Game) {
   root.querySelector("#retry-fb")?.addEventListener("click", () => void loadFeedback(game, qs));
 }
 
+function normalizeForDiff(s: string): string {
+  return s.replace(/\s+/g, " ").trim();
+}
+
+/** Render `after` with the words that differ from `before` highlighted (word-level LCS diff). */
+function diffWords(before: string, after: string): string {
+  const a = normalizeForDiff(before).split(" ");
+  const b = normalizeForDiff(after).split(" ");
+  const n = a.length, m = b.length;
+  const dp: number[][] = Array.from({ length: n + 1 }, () => new Array<number>(m + 1).fill(0));
+  for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--) dp[i][j] = a[i] === b[j] ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
+  const out: string[] = [];
+  let i = 0, j = 0;
+  while (i < n && j < m) {
+    if (a[i] === b[j]) { out.push(esc(b[j])); i++; j++; }
+    else if (dp[i + 1][j] >= dp[i][j + 1]) i++;
+    else { out.push(`<mark>${esc(b[j])}</mark>`); j++; }
+  }
+  while (j < m) out.push(`<mark>${esc(b[j++])}</mark>`);
+  return out.join(" ");
+}
+
 function fragment(html: string): Node {
   const t = document.createElement("template");
   t.innerHTML = html.trim();
@@ -343,8 +365,16 @@ function renderResult(game: Game, qs: QuestionState): string {
     else if (qs.feedback === null && qs.feedbackError) fb = `<div class="alert warn">${esc(qs.feedbackError)} <button id="retry-fb" class="btn ghost sm">重試</button></div>`;
     else if (qs.feedback) {
       const f = qs.feedback;
-      const section = (icon: string, items: string[]) => items.length ? `<ul class="fb">${items.map((p, i) => `<li>${i === 0 ? `<span class="fi">${icon}</span>` : `<span class="fi"></span>`}<span>${esc(p)}</span></li>`).join("")}</ul>` : "";
-      fb = section("✨", f.better_phrases) + section("✏️", f.issues) + section("💡", [f.tip]);
+      fb = `<div class="corrections">${qs.turns
+        .map((t, i) => {
+          const corrected = f.corrections[i] ?? t.you;
+          const same = normalizeForDiff(corrected) === normalizeForDiff(t.you);
+          return `<div class="corr">
+            <div class="orig ${same ? "ok" : ""}">${same ? "✅" : "✏️"} ${esc(t.you)}</div>
+            ${same ? "" : `<div class="fixed">${diffWords(t.you, corrected)}</div>`}
+          </div>`;
+        })
+        .join("")}</div>`;
     }
   }
   const last = game.index + 1 >= game.questions.length;

@@ -109,7 +109,9 @@ api.post("/feedback", modelLimiter, async (req, res) => {
   const body = parseBody(req, FeedbackBodySchema);
   const idiom = requireIdiom(body.idiomId);
   const fb = await getFeedback(idiom, body.descriptions, body.guessedCorrectly, body.attempts);
-  res.json({ ok: true, ...fb, reference_english: idiom.reference_english });
+  // Keep one correction per description; fall back to the original text where the model gave none.
+  const corrections = body.descriptions.map((d, i) => fb.corrections[i]?.trim() || d);
+  res.json({ ok: true, corrections, reference_english: idiom.reference_english });
 });
 
 /** Player gives up: zero points, reveal the answer. */

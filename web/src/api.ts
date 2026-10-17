@@ -35,9 +35,8 @@ export type GuessResponse =
 
 export interface FeedbackResponse {
   ok: true;
-  better_phrases: string[];
-  issues: string[];
-  tip: string;
+  /** One corrected version per description the player wrote, same order. */
+  corrections: string[];
   reference_english: string;
 }
 
