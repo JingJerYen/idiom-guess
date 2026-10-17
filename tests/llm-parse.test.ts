@@ -59,8 +59,10 @@ test("throws SyntaxError when JSON does not match the schema", () => {
 });
 
 test("feedback schema accepts the documented shape", () => {
-  const r = parseWithSchema('{"corrections":["Someone adds extra things.","It is fine."]}', FeedbackResultSchema);
+  const r = parseWithSchema('{"corrections":[{"corrected":"Someone adds extra things.","note":"句首要大寫。"},{"corrected":"It is fine.","note":""}]}', FeedbackResultSchema);
   assert.equal(r.corrections.length, 2);
+  assert.equal(r.corrections[1].note, "");
+  assert.throws(() => parseWithSchema('{"corrections":["plain string"]}', FeedbackResultSchema), SyntaxError);
 });
 
 test("mock guess always returns a four-character idiom from the bank", () => {
@@ -72,5 +74,6 @@ test("mock guess always returns a four-character idiom from the bank", () => {
   }
   const fb = mockFeedback(loadIdioms()[0], ["someone adds extra things and i like it"]);
   assert.ok(FeedbackResultSchema.safeParse(fb).success);
-  assert.deepEqual(fb.corrections, ["Someone adds extra things and I like it."]);
+  assert.equal(fb.corrections[0].corrected, "Someone adds extra things and I like it.");
+  assert.ok(fb.corrections[0].note.includes("大寫"));
 });

@@ -11,9 +11,16 @@ export const GuessResultSchema = z.object({
 });
 export type GuessResult = z.infer<typeof GuessResultSchema>;
 
+export const CorrectionSchema = z.object({
+  corrected: z.string().trim().transform((s) => s.slice(0, 600)),
+  /** Short Traditional Chinese explanation of the grammar / word-choice fixes; empty when unchanged. */
+  note: z.string().trim().default("").transform((s) => s.slice(0, 300)),
+});
+export type Correction = z.infer<typeof CorrectionSchema>;
+
 export const FeedbackResultSchema = z.object({
-  /** One corrected version per description, same order. */
-  corrections: z.array(z.string().trim().transform((s) => s.slice(0, 600))).min(1).max(10),
+  /** One entry per description, same order. */
+  corrections: z.array(CorrectionSchema).min(1).max(10),
 });
 export type FeedbackResult = z.infer<typeof FeedbackResultSchema>;
 

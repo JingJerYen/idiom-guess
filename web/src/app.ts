@@ -367,11 +367,12 @@ function renderResult(game: Game, qs: QuestionState): string {
       const f = qs.feedback;
       fb = `<div class="corrections">${qs.turns
         .map((t, i) => {
-          const corrected = f.corrections[i] ?? t.you;
-          const same = normalizeForDiff(corrected) === normalizeForDiff(t.you);
+          const c = f.corrections[i] ?? { corrected: t.you, note: "" };
+          const same = normalizeForDiff(c.corrected) === normalizeForDiff(t.you);
           return `<div class="corr">
             <div class="orig ${same ? "ok" : ""}">${same ? "✅" : "✏️"} ${esc(t.you)}</div>
-            ${same ? "" : `<div class="fixed">${diffWords(t.you, corrected)}</div>`}
+            ${same ? "" : `<div class="fixed">${diffWords(t.you, c.corrected)}</div>`}
+            ${c.note ? `<div class="note small">${esc(c.note)}</div>` : ""}
           </div>`;
         })
         .join("")}</div>`;

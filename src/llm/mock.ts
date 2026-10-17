@@ -67,10 +67,12 @@ export function mockGuess(descriptions: string[], previousGuesses: string[] = []
 export function mockFeedback(_idiom: Idiom, descriptions: string[]): FeedbackResult {
   return {
     corrections: descriptions.map((d) => {
-      let t = d.trim().replace(/\s+/g, " ").replace(/\bi\b/g, "I");
-      t = t.charAt(0).toUpperCase() + t.slice(1);
-      if (!/[.!?]$/.test(t)) t += ".";
-      return t;
+      const notes: string[] = [];
+      let t = d.trim().replace(/\s+/g, " ");
+      if (/\bi\b/.test(t)) { t = t.replace(/\bi\b/g, "I"); notes.push("「i」作為主詞要大寫 I"); }
+      if (/^[a-z]/.test(t)) { t = t.charAt(0).toUpperCase() + t.slice(1); notes.push("句首要大寫"); }
+      if (!/[.!?]$/.test(t)) { t += "."; notes.push("句尾要加句號"); }
+      return { corrected: t, note: notes.length ? `[MOCK] ${notes.join("；")}。` : "" };
     }),
   };
 }
