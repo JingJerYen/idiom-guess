@@ -118,7 +118,7 @@ function renderStart() {
     </section>
     <section class="levels" role="group" aria-label="難度">
       <button class="level" data-level="easy" aria-pressed="${chosenLevel === "easy"}"><span class="icon">🌱</span><b>簡單</b><span class="small muted">${chosenMode === "forward" ? "有提示單字" : "語速較慢"}</span></button>
-      <button class="level" data-level="hard" aria-pressed="${chosenLevel === "hard"}"><span class="icon">🔥</span><b>困難</b><span class="small muted">${chosenMode === "forward" ? "沒有提示單字" : "正常語速"}</span></button>
+      <button class="level" data-level="hard" aria-pressed="${chosenLevel === "hard"}"><span class="icon">🔥</span><b>困難</b><span class="small muted">${chosenMode === "forward" ? "2 個禁用詞" : "正常語速"}</span></button>
     </section>
     <section class="modes" role="group" aria-label="模式">
       <button class="mode" data-mode="forward" aria-pressed="${chosenMode === "forward"}">
@@ -175,9 +175,10 @@ function renderPlay(game: Game) {
   if (forward) {
     const len = Array.from(q.idiom ?? "").length;
     const sizeClass = len <= 4 ? "" : len <= 6 ? "md" : "sm";
+    const cards = game.level === "easy" ? q.hintWords : q.forbiddenWords;
     body += `<div class="tagrow">${q.tags.map((t) => `<span class="kind">${esc(t)}</span>`).join("")}</div>
       <div class="idiom ${sizeClass}">${esc(q.idiom ?? "")}</div>
-      ${q.hintWords.length ? `<div class="chips easy"><span class="chip ban">💡</span>${q.hintWords
+      ${cards.length ? `<div class="chips ${game.level}"><span class="chip ban">${game.level === "easy" ? "💡" : "🚫"}</span>${cards
         .map((w, i) => {
           const zh = qs.flipped?.has(i) && w.zh;
           return `<button class="chip word ${zh ? "zh" : ""}" data-i="${i}" aria-label="${esc(w.en)}">${esc(zh ? w.zh : w.en)}</button>`;
@@ -272,7 +273,7 @@ function renderPlay(game: Game) {
       const i = Number(b.dataset.i);
       qs.flipped ??= new Set();
       if (qs.flipped.has(i)) qs.flipped.delete(i); else qs.flipped.add(i);
-      const w = q.hintWords[i];
+      const w = (game.level === "easy" ? q.hintWords : q.forbiddenWords)[i];
       const zh = qs.flipped.has(i) && w?.zh;
       b.textContent = zh ? w.zh : (w?.en ?? "");
       b.classList.toggle("zh", Boolean(zh));
@@ -514,6 +515,7 @@ async function loadClue(game: Game, qs: QuestionState) {
 async function submit(game: Game) {
   if (ui.busy) return;
   const qs = game.questions[game.index];
+  const q = qs.q;
   if (qs.done) return;
   if (listener) stopMic(); // keeps interim words too
   const text = ui.draft.trim();
@@ -529,6 +531,10 @@ async function submit(game: Game) {
       if (text.length > MAX_CHARS) local.push({ type: "too_long", chars: text.length, max: MAX_CHARS });
       const han = Array.from(new Set(text.match(/\p{Script=Han}/gu) ?? []));
       if (han.length) local.push({ type: "chinese", chars: han });
+      if (game.level === "hard") {
+        const hits = q.forbiddenWords.filter((w) => new RegExp(`(?<![a-z0-9])${w.en.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?:s|es|ed|d|ing)?(?![a-z0-9])`, "i").test(text)).map((w) => w.en);
+        if (hits.length) local.push({ type: "taboo", words: hits });
+      }
     }
     if (local.length) { ui.violations = local; render(); return; }
 
@@ -537,7 +543,7 @@ async function submit(game: Game) {
     const descriptions = [...qs.turns.map((t) => t.you), text];
     try {
       const previousGuesses = qs.turns.map((t) => t.guess ?? "").filter(Boolean);
-      const r = await api.guess(qs.q.id, game.level, descriptions, previousGuesses);
+      const r = await api.guess(qs.q.id, game.level, q.forbiddenWords.map((w) => w.en), descriptions, previousGuesses);
       if (!r.ok) {
         ui.violations = r.violations;
       } else {

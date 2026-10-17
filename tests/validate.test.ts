@@ -36,11 +36,20 @@ test("rejects Chinese characters and reports them", () => {
   assert.equal(r.violations.some((x) => x.type === "taboo"), false, "taboo is no longer a violation");
 });
 
-test("hint words are never enforced; Chinese and pinyin still are", () => {
+test("without a forbidden list, translation words are allowed; Chinese and pinyin still blocked", () => {
   const r = validateDescription("A snake gets extra legs and that ruins the drawing completely", huaShe);
   assert.equal(r.ok, true);
   const r2 = validateDescription("A snake 蛇 gets extra legs and that ruins it", huaShe);
   assert.deepEqual(r2.violations.map((v) => v.type), ["chinese"]);
+});
+
+test("hard level enforces only the drawn forbidden words", () => {
+  const r = validateDescription("A snake gets extra legs and that ruins the drawing completely", huaShe, { forbidden: ["snake", "draw"] });
+  const v = r.violations.find((x) => x.type === "taboo");
+  assert.ok(v && v.type === "taboo");
+  assert.deepEqual(v.words, ["snake", "draw"]);
+  const ok = validateDescription("A snake gets extra legs and that ruins the picture completely", huaShe, { forbidden: ["foot", "paint"] });
+  assert.equal(ok.ok, true);
 });
 
 test("regular inflections are matched from the base form only", () => {

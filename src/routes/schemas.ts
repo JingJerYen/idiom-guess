@@ -14,8 +14,9 @@ export const LevelSchema = z.enum(["easy", "hard"]);
 
 export const GuessBodySchema = z.object({
   idiomId: z.string().min(1).max(64),
-  /** Kept for logging/compat; the level no longer changes server-side checks. */
   level: LevelSchema.default("hard"),
+  /** Hard level: the forbidden words shown for this question; verified against the item's list. */
+  forbidden: z.array(z.string().min(1).max(40)).max(5).default([]),
   descriptions: DescriptionsSchema,
   /** The AI's earlier guesses for this question (client-held state, re-scored server-side). */
   previousGuesses: z.array(z.string().max(20)).max(Math.max(0, config.maxGuesses - 1)).default([]),

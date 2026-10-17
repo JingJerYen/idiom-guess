@@ -33,10 +33,22 @@ function requireIdiom(id: string): Idiom {
   return idiom;
 }
 
+/** The client echoes the forbidden words it was shown; accept only words from the item's own list. */
+function verifiedForbidden(words: string[], idiom: Idiom): string[] {
+  const allowed = new Map(idiom.taboo.map((w) => [w.toLowerCase(), w]));
+  const out: string[] = [];
+  for (const w of words) {
+    const hit = allowed.get(w.trim().toLowerCase());
+    if (!hit) throw new AppError("BAD_REQUEST", "禁用詞與題目不符。");
+    if (!out.includes(hit)) out.push(hit);
+  }
+  return out;
+}
+
 /** Re-check every description server-side; earlier ones were checked before but never trust the client. */
-function checkDescriptions(descriptions: string[], idiom: Idiom) {
+function checkDescriptions(descriptions: string[], idiom: Idiom, forbidden: string[]) {
   for (const d of descriptions) {
-    const v = validateDescription(d, idiom);
+    const v = validateDescription(d, idiom, { forbidden });
     if (!v.ok) return v;
   }
   return null;
@@ -59,7 +71,8 @@ api.post("/guess", modelLimiter, async (req, res) => {
   const body = parseBody(req, GuessBodySchema);
   const idiom = requireIdiom(body.idiomId);
 
-  const bad = checkDescriptions(body.descriptions, idiom);
+  const forbidden = body.level === "hard" ? verifiedForbidden(body.forbidden, idiom) : [];
+  const bad = checkDescriptions(body.descriptions, idiom, forbidden);
   if (bad) {
     // Rule violation: no model call, no attempt consumed.
     res.status(422).json({ ok: false, violations: bad.violations });

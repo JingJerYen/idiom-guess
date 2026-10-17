@@ -110,6 +110,8 @@ button, input, textarea { font: inherit; color: inherit; }
 .chip.word { cursor: pointer; transition: transform 0.15s, background 0.15s; min-width: 44px; }
 .chip.word:active { transform: rotateX(90deg); }
 .chip.word.zh { background: var(--accent-soft); color: var(--accent); font-family: inherit; }
+.chips.hard .chip.word { background: var(--accent-soft); color: var(--accent); text-decoration: line-through; }
+.chips.hard .chip.word.zh { background: var(--accent); color: #fff; text-decoration: none; }
 .chips.easy .chip.word { background: var(--ok-soft); color: var(--ok); }
 .chips.easy .chip.word.zh { background: var(--ok); color: #fff; }
 

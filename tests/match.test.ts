@@ -73,6 +73,11 @@ test("public question never leaks pinyin or reference; reverse hides the idiom",
   assert.deepEqual(fwd.tags, it.tags);
   const hard = toPublic(it, "forward", "hard") as Record<string, unknown>;
   assert.deepEqual(hard.hintWords, [], "hard level sends no hint words");
+  const forb = hard.forbiddenWords as { en: string; zh: string }[];
+  assert.equal(forb.length, 2, "hard level draws two forbidden words");
+  assert.ok(forb.every((w) => it.taboo.includes(w.en) && w.zh.length > 0));
+  assert.notEqual(forb[0].en, forb[1].en);
+  assert.deepEqual((fwd as { forbiddenWords: unknown[] }).forbiddenWords, [], "easy level forbids nothing");
   assert.equal("pinyin" in fwd, false);
   assert.equal("reference_english" in fwd, false);
   const rev = toPublic(it, "reverse") as Record<string, unknown>;
@@ -80,6 +85,7 @@ test("public question never leaks pinyin or reference; reverse hides the idiom",
   assert.deepEqual(rev.tags, it.tags, "reverse mode shows the kind so the player knows what to guess");
   assert.equal(rev.length, Array.from(it.idiom).length, "reverse mode shows the answer length as a hint");
   assert.deepEqual(rev.hintWords, [], "direct-translation words must not leak in reverse mode");
+  assert.deepEqual(rev.forbiddenWords, []);
 });
 
 test("positionMatches reports right-character-right-position only", () => {

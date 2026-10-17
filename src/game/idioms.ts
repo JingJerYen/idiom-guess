@@ -30,6 +30,8 @@ export interface PublicQuestion {
   difficulty: 1 | 2 | 3;
   /** Hint word cards (direct translations). Sent only for forward mode at the easy level. */
   hintWords: TabooWord[];
+  /** Hard level: FORBIDDEN_COUNT words picked at random from the item's list; the server enforces them. */
+  forbiddenWords: TabooWord[];
 }
 
 export type GameMode = "forward" | "reverse";
@@ -121,14 +123,23 @@ export function pickRound(
   return chosen.sort((a, b) => a.difficulty - b.difficulty).slice(0, size);
 }
 
-export function toPublic(idiom: Idiom, mode: GameMode, level: GameLevel = "hard"): PublicQuestion {
+export const FORBIDDEN_COUNT = 2;
+
+/** Pick `n` distinct random words from the item's list (hard level). */
+export function pickForbidden(idiom: Idiom, n: number = FORBIDDEN_COUNT, rng: () => number = Math.random): string[] {
+  return shuffle(idiom.taboo, rng).slice(0, n);
+}
+
+export function toPublic(idiom: Idiom, mode: GameMode, level: GameLevel = "hard", rng: () => number = Math.random): PublicQuestion {
   const glossary = loadGlossary();
-  const showHints = mode === "forward" && level === "easy";
+  const card = (en: string): TabooWord => ({ en, zh: glossary[en.toLowerCase()] ?? "" });
+  const forward = mode === "forward";
   const q: PublicQuestion = {
     id: idiom.id,
     tags: idiom.tags,
     difficulty: idiom.difficulty,
-    hintWords: showHints ? idiom.taboo.map((en) => ({ en, zh: glossary[en.toLowerCase()] ?? "" })) : [],
+    hintWords: forward && level === "easy" ? idiom.taboo.map(card) : [],
+    forbiddenWords: forward && level === "hard" ? pickForbidden(idiom, FORBIDDEN_COUNT, rng).map(card) : [],
   };
   if (mode === "forward") {
     q.idiom = idiom.idiom;
