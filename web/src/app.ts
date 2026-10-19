@@ -87,7 +87,7 @@ function slots(length: number, confirmed: (string | null)[], draft: string): str
 
 // ---------- speech (browser TTS, no API cost) ----------
 
-const canSpeak = typeof window !== "undefined" && "speechSynthesis" in window;
+const canSpeak = typeof window !== "undefined" && Boolean(window.speechSynthesis) && typeof window.speechSynthesis.speak === "function";
 
 function pickVoice(): SpeechSynthesisVoice | null {
   const voices = window.speechSynthesis.getVoices();
@@ -254,7 +254,8 @@ function renderPlay(game: Game) {
       ? `<div class="speakers">${qs.clues
           .map((c, i) => `<button class="speaker" data-i="${i}" aria-label="播放第 ${i + 1} 句">🔊<small>${i + 1}</small></button>`)
           .join("")}</div>`
-      : qs.clues.map((c, i) => `<div class="clue shown"><span class="cluetext">${i + 1}. ${esc(c)}</span></div>`).join("");
+      : `<div class="alert warn small">這個瀏覽器不支援語音播放，改以文字顯示。用 Chrome 或 Safari 開啟才有聲音。</div>` +
+        qs.clues.map((c, i) => `<div class="clue plain">${i + 1}. ${esc(c)}</div>`).join("");
     const confirmed = knownChars(qs);
     if (!qs.done) body += slots(q.length ?? 4, confirmed, ui.draft);
   }
