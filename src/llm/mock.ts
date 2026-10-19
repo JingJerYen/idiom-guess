@@ -1,3 +1,4 @@
+import { config } from "../config.js";
 import { loadIdioms, type Idiom } from "../game/idioms.js";
 import type { GuessResult, FeedbackResult, DescribeResult } from "./types.js";
 
@@ -78,6 +79,11 @@ export function mockFeedback(_idiom: Idiom, descriptions: string[]): FeedbackRes
 }
 
 export function mockDescribe(idiom: Idiom, attempt: number, previous: string[]): DescribeResult {
+  if (attempt >= config.maxGuesses) {
+    const digit = idiom.idiom.match(/[一二三四五六七八九十百千萬0-9]/);
+    const literal = digit ? `It has the number "${digit[0]}" in it.` : `One of the characters means "${idiom.taboo[0] ?? "something"}".`;
+    return { description: `[MOCK last clue] ${literal} ${idiom.reference_english}` };
+  }
   const extras = [
     `Think of a situation where ${idiom.reference_english.charAt(0).toLowerCase()}${idiom.reference_english.slice(1).replace(/\.$/, "")}. People usually say this as a warning or a comment.`,
     `[MOCK hint ${attempt}] Think about where you would hear or see this in daily life in Taiwan. Difficulty level ${idiom.difficulty}.`,

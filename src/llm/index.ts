@@ -107,6 +107,7 @@ export async function describeIdiom(idiom: Idiom, attempt: number, previousClues
       referenceEnglish: idiom.reference_english,
       forbidden: idiom.taboo,
       attempt,
+      isLast: attempt >= config.maxGuesses,
       previousClues,
     }),
     maxTokens: config.maxTokens.describe,
