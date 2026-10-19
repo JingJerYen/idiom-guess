@@ -336,7 +336,9 @@ function renderPlay(game: Game) {
     const texts: string[] = [];
     const ref = qs.referenceEnglish ?? qs.feedback?.reference_english;
     if (ref) texts.push(ref);
-    qs.turns.forEach((t, i) => texts.push(qs.feedback?.corrections[i]?.corrected || t.you));
+    // Only forward mode has English sentences from the player; in listening mode the turns are
+    // Chinese guesses and must not be fed to the English voice.
+    if (game.mode === "forward") qs.turns.forEach((t, i) => texts.push(qs.feedback?.corrections[i]?.corrected || t.you));
     speakAll(texts);
   });
   root.querySelectorAll<HTMLButtonElement>(".eye2").forEach((b) =>
