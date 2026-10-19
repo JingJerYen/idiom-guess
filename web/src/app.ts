@@ -106,6 +106,10 @@ let ttsSpeed = TTS_SPEED.hard;
 let useWhisper = false;
 let whisperRec: Recording | null = null;
 let whisperBusy = false;
+/** Whisper is billed per second of audio, so a single clip is capped; it auto-submits at the limit. */
+const WHISPER_MAX_SECONDS = 60;
+let whisperTimer: number | null = null;
+let whisperStartedAt = 0;
 
 /**
  * Fetch the server voice for a clue once and keep it as an object URL on the question, so every
@@ -727,6 +731,7 @@ function setMicStatus(text: string) {
 async function toggleWhisper(game: Game) {
   if (whisperBusy) return;
   if (whisperRec) {
+    if (whisperTimer !== null) { clearTimeout(whisperTimer); whisperTimer = null; }
     const rec = whisperRec;
     whisperRec = null;
     whisperBusy = true;
@@ -754,7 +759,15 @@ async function toggleWhisper(game: Game) {
   const rec = await startRecording();
   if (!rec) { ui.error = "無法使用麥克風，請允許權限後再試。"; render(); return; }
   whisperRec = rec;
-  setMicStatus("錄音中，說完再按一次 ⏹");
+  whisperStartedAt = Date.now();
+  const tick = () => {
+    if (!whisperRec) return;
+    const left = WHISPER_MAX_SECONDS - Math.floor((Date.now() - whisperStartedAt) / 1000);
+    if (left <= 0) { whisperTimer = null; void toggleWhisper(game); return; } // auto-stop and transcribe
+    setMicStatus(`錄音中，說完再按一次 ⏹（剩 ${left} 秒）`);
+    whisperTimer = window.setTimeout(tick, 1000);
+  };
+  tick();
   render();
 }
 
@@ -873,6 +886,7 @@ function syncDraftBox() {
 }
 
 function clearDraft(game: Game) {
+  if (whisperTimer !== null) { clearTimeout(whisperTimer); whisperTimer = null; }
   if (whisperRec) { const r = whisperRec; whisperRec = null; void r.stop(); }
   const wasListening = Boolean(listener);
   if (wasListening) { micUserStopped = true; listener?.stop(); listener = null; }
@@ -888,6 +902,7 @@ function clearDraft(game: Game) {
 
 function resetUi() {
   stopMic();
+  if (whisperTimer !== null) { clearTimeout(whisperTimer); whisperTimer = null; }
   if (whisperRec) { const r = whisperRec; whisperRec = null; void r.stop(); }
   whisperBusy = false;
   clips = [];
