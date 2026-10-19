@@ -26,9 +26,14 @@ let currentAudio: HTMLAudioElement | null = null;
  * detected we stop recording on this device and replay guesses with speech synthesis instead.
  */
 const RECORD_BLOCK_KEY = "idiom.recordBlocked";
-let recordBlocked = false;
-try { recordBlocked = localStorage.getItem(RECORD_BLOCK_KEY) === "1"; } catch { /* storage unavailable */ }
+// Android hands the microphone to the system speech service; a second consumer breaks dictation
+// outright, so recording is off there from the start. Elsewhere it is on until a conflict is seen.
+let recordBlocked = /Android/i.test(navigator.userAgent);
+try { if (localStorage.getItem(RECORD_BLOCK_KEY) === "1") recordBlocked = true; } catch { /* storage unavailable */ }
 let emptySessions = 0;
+let micWatchdog: number | null = null;
+/** One-line diagnostic shown under the box while dictating (state and last error code). */
+let micStatus = "";
 
 const MODE_LABEL: Record<Mode, string> = { forward: "口說", reverse: "聽力" };
 
@@ -278,7 +283,8 @@ function renderPlay(game: Game) {
         </div>`;
       }
       body += `<textarea id="draft" class="${listener ? "listening" : ""}" placeholder="${listener ? "Listening…" : "Describe it in simple English…"}" maxlength="${MAX_CHARS + 50}" ${ui.busy ? "disabled" : ""}>${esc(ui.draft)}${listener && micInterim ? esc((ui.draft && !/\s$/.test(ui.draft) ? " " : "") + micInterim) : ""}</textarea>
-        <div class="counter">${wordDots(countWords(ui.draft))}<span class="chars"></span></div>`;
+        <div class="counter">${wordDots(countWords(ui.draft))}<span class="chars"></span></div>
+        ${listener ? `<div id="micstatus" class="small muted micstatus">${esc(micStatus)}</div>` : ""}`;
     } else {
       body += `<input id="draft" class="guess" type="text" maxlength="20" value="${esc(ui.draft)}" ${ui.busy ? "disabled" : ""} autocomplete="off" placeholder="…" />`;
     }
@@ -535,15 +541,26 @@ async function takeRecording(): Promise<string | undefined> {
   return all ? URL.createObjectURL(all) : undefined;
 }
 
-function blockRecording(reason: string) {
-  if (recordBlocked) return;
+/** Give up on recording for this device; resolves once the microphone stream is released. */
+async function blockRecording(reason: string): Promise<string> {
+  const notice = `這台裝置無法在辨識時同時錄音（${reason}），已改為用語音念出你的句子。`;
   recordBlocked = true;
   try { localStorage.setItem(RECORD_BLOCK_KEY, "1"); } catch { /* ignore */ }
   const rec = recording;
   recording = null;
-  if (rec) void rec.stop();
   clips = [];
-  ui.error = `這台裝置無法在辨識時同時錄音（${reason}），已改為用語音念出你的句子。`;
+  if (rec) await rec.stop();
+  return notice;
+}
+
+function clearWatchdog() {
+  if (micWatchdog !== null) { clearTimeout(micWatchdog); micWatchdog = null; }
+}
+
+function setMicStatus(text: string) {
+  micStatus = text;
+  const el = root.querySelector("#micstatus");
+  if (el) el.textContent = text;
 }
 
 function toggleMic(game: Game) {
@@ -552,19 +569,40 @@ function toggleMic(game: Game) {
   micInterim = "";
   ui.error = "";
   emptySessions = 0;
-  const l = startListening({
+  let l: Listener | null = null;
+  const restartWithoutRecording = async (reason: string) => {
+    if (listener) { listener.stop(); listener = null; }
+    clearWatchdog();
+    const notice = await blockRecording(reason); // wait until the mic is actually free
+    if (screen.name !== "play" || screen.game !== game) return;
+    toggleMic(game);
+    ui.error = notice;
+    render();
+  };
+  // Watchdog, re-armed at the start of every session while recording: a session that produces
+  // nothing (no result, no end) within 6 s means the recorder is starving recognition.
+  const armWatchdog = () => {
+    clearWatchdog();
+    if (recordBlocked) return;
+    micWatchdog = window.setTimeout(() => {
+      micWatchdog = null;
+      if (listener === l && listener) void restartWithoutRecording("6 秒內沒有辨識結果");
+    }, 6000);
+  };
+  l = startListening({
     onSessionEnd({ hadResult, error }) {
+      setMicStatus(error ? `辨識段落結束（${error}）` : hadResult ? "辨識段落結束，繼續聆聽…" : "沒聽到聲音，繼續聆聽…");
+      armWatchdog();
       if (!recording) return;
       // Microphone-related failures while we hold the stream mean the two consumers conflict.
       const micError = error === "audio-capture" || error === "aborted" || error === "network";
       emptySessions = hadResult ? 0 : emptySessions + 1;
-      if (micError || emptySessions >= 2) {
-        blockRecording(micError ? `錯誤 ${error}` : "沒有辨識到聲音");
-        render();
-      }
+      if (micError || emptySessions >= 2) void restartWithoutRecording(micError ? `錯誤 ${error}` : "沒有辨識到聲音");
     },
     onText(committedText, interim) {
       emptySessions = 0;
+      clearWatchdog();
+      setMicStatus("辨識中…");
       const joined = joinText(micPrefix, committedText);
       ui.draft = joined;
       micInterim = interim;
@@ -577,11 +615,13 @@ function toggleMic(game: Game) {
     },
     onEnd() {
       // Dictation finished (player pressed stop).
+      clearWatchdog();
       listener = null;
       micInterim = "";
       if (screen.name === "play" && screen.game === game) render();
     },
     onError(message) {
+      clearWatchdog();
       ui.error = message;
       listener = null;
       micInterim = "";
@@ -590,6 +630,8 @@ function toggleMic(game: Game) {
   });
   if (!l) { ui.error = "無法啟動語音輸入。"; render(); return; }
   listener = l;
+  setMicStatus(recordBlocked ? "聆聽中…" : "聆聽中（含錄音）…");
+  armWatchdog();
   // Capture the real voice too, so the guess row can replay it. Skipped on devices where this
   // was seen to starve recognition (see recordBlocked); otherwise best effort.
   if (!recordBlocked) {
