@@ -112,6 +112,8 @@ export function startListening(h: ListenHandlers): Listener | null {
   };
   rec.onerror = (ev) => {
     lastError = ev.error;
+    // no-speech / aborted just end the session; onend decides whether to keep listening.
+    if (ev.error === "no-speech" || ev.error === "aborted") return;
     const msg = ERROR_TEXT[ev.error] ?? `語音辨識錯誤（${ev.error}）`;
     if (msg) h.onError(msg);
   };

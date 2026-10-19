@@ -32,6 +32,11 @@ let recordBlocked = /Android/i.test(navigator.userAgent);
 try { if (localStorage.getItem(RECORD_BLOCK_KEY) === "1") recordBlocked = true; } catch { /* storage unavailable */ }
 let emptySessions = 0;
 let micWatchdog: number | null = null;
+/** True between the player pressing ⏹ and the recogniser confirming it ended. */
+let micUserStopped = false;
+/** Consecutive browser-ended sessions without any text; dictation stops itself after MAX_SILENT. */
+let silentSessions = 0;
+const MAX_SILENT = 5;
 /** One-line diagnostic shown under the box while dictating (state and last error code). */
 let micStatus = "";
 
@@ -282,7 +287,8 @@ function renderPlay(game: Game) {
           ${startersFor(q.tags).map((s) => `<button class="starter" data-s="${esc(s)}">${esc(s.trim())}…</button>`).join("")}
         </div>`;
       }
-      body += `<textarea id="draft" class="${listener ? "listening" : ""}" placeholder="${listener ? "Listening…" : "Describe it in simple English…"}" maxlength="${MAX_CHARS + 50}" ${ui.busy ? "disabled" : ""}>${esc(ui.draft)}${listener && micInterim ? esc((ui.draft && !/\s$/.test(ui.draft) ? " " : "") + micInterim) : ""}</textarea>
+      body += `<div class="draftwrap"><textarea id="draft" class="${listener ? "listening" : ""}" placeholder="${listener ? "Listening…" : "Describe it in simple English…"}" maxlength="${MAX_CHARS + 50}" ${ui.busy ? "disabled" : ""}>${esc(ui.draft)}${listener && micInterim ? esc((ui.draft && !/\s$/.test(ui.draft) ? " " : "") + micInterim) : ""}</textarea>
+        ${ui.draft || micInterim ? `<button id="clear" class="clearbtn" aria-label="清除全部" ${ui.busy ? "disabled" : ""}>✕</button>` : ""}</div>
         <div class="counter">${wordDots(countWords(ui.draft))}<span class="chars"></span></div>
         ${listener ? `<div id="micstatus" class="small muted micstatus">${esc(micStatus)}</div>` : ""}`;
     } else {
@@ -307,6 +313,17 @@ function renderPlay(game: Game) {
     draft.addEventListener("input", () => {
       // While listening, interim words are shown in the box but are not yet part of the draft.
       if (!(listener && micInterim && draft.value.endsWith(micInterim))) ui.draft = draft.value;
+      const wrap = draft.parentElement;
+      if (wrap && forward) {
+        const has = draft.value.trim().length > 0;
+        const btn = wrap.querySelector("#clear");
+        if (has && !btn) {
+          const b = document.createElement("button");
+          b.id = "clear"; b.className = "clearbtn"; b.setAttribute("aria-label", "清除全部"); b.textContent = "✕";
+          b.addEventListener("click", () => clearDraft(game));
+          wrap.appendChild(b);
+        } else if (!has && btn) btn.remove();
+      }
       if (forward) {
         const n = countWords(ui.draft);
         const c = ui.draft.trim().length;
@@ -322,7 +339,11 @@ function renderPlay(game: Game) {
       const e = ev as KeyboardEvent;
       if (e.key === "Enter" && (!forward || e.metaKey || e.ctrlKey)) { e.preventDefault(); void submit(game); }
     });
-    if (!ui.busy) draft.focus();
+    if (!ui.busy) {
+      draft.focus();
+      const end = draft.value.length;
+      try { draft.setSelectionRange(end, end); } catch { /* inputs of some types refuse */ }
+    }
   }
   root.querySelectorAll<HTMLButtonElement>(".speak, .speaker").forEach((b) =>
     b.addEventListener("click", () => speak(qs.clues[Number(b.dataset.i)] ?? "")),
@@ -369,6 +390,7 @@ function renderPlay(game: Game) {
     }),
   );
   root.querySelector("#mic")?.addEventListener("click", () => toggleMic(game));
+  root.querySelector("#clear")?.addEventListener("click", () => clearDraft(game));
   root.querySelector("#starters")?.addEventListener("click", () => { qs.showStarters = !qs.showStarters; render(); });
   root.querySelectorAll<HTMLButtonElement>(".starter").forEach((b) =>
     b.addEventListener("click", () => {
@@ -520,6 +542,7 @@ function joinText(a: string, b: string): string {
 function stopMic() {
   // Keep whatever was still interim when the player stops: it is usually the last word or two.
   if (listener && micInterim) ui.draft = joinOverlap(ui.draft.trim(), micInterim);
+  micUserStopped = true;
   if (listener) listener.stop();
   listener = null;
   micInterim = "";
@@ -565,11 +588,23 @@ function setMicStatus(text: string) {
 
 function toggleMic(game: Game) {
   if (listener) { stopMic(); render(); return; }
-  micPrefix = ui.draft.trim();
-  micInterim = "";
   ui.error = "";
   emptySessions = 0;
+  silentSessions = 0;
+  micUserStopped = false;
+  startMicSession(game);
+  render();
+}
+
+/**
+ * One browser recognition session. The browser ends a session after a few seconds of silence;
+ * unless the player pressed ⏹ we start the next one at once, carrying the text so far as prefix.
+ */
+function startMicSession(game: Game) {
+  micPrefix = ui.draft.trim();
+  micInterim = "";
   let l: Listener | null = null;
+  let sessionHadText = false;
   const restartWithoutRecording = async (reason: string) => {
     if (listener) { listener.stop(); listener = null; }
     clearWatchdog();
@@ -601,6 +636,8 @@ function toggleMic(game: Game) {
     },
     onText(committedText, interim) {
       emptySessions = 0;
+      silentSessions = 0;
+      sessionHadText = true;
       clearWatchdog();
       setMicStatus("辨識中…");
       const joined = joinOverlap(micPrefix, committedText);
@@ -614,11 +651,23 @@ function toggleMic(game: Game) {
       }
     },
     onEnd() {
-      // Dictation finished (player pressed stop).
       clearWatchdog();
-      listener = null;
+      // Never lose the last interim words, whoever ended the session.
+      if (micInterim) ui.draft = joinOverlap(ui.draft.trim(), micInterim);
       micInterim = "";
-      if (screen.name === "play" && screen.game === game) render();
+      const stillHere = screen.name === "play" && screen.game === game && !game.questions[game.index].done;
+      if (!micUserStopped && stillHere && listener === l) {
+        // Browser timed out on silence: keep going until the player presses ⏹.
+        silentSessions = sessionHadText ? 0 : silentSessions + 1;
+        if (silentSessions < MAX_SILENT) {
+          listener = null;
+          startMicSession(game);
+          if (listener) { setMicStatus("繼續聆聽…"); syncDraftBox(); return; }
+        }
+        setMicStatus("太久沒有聲音，已停止");
+      }
+      listener = null;
+      if (stillHere) render();
     },
     onError(message) {
       clearWatchdog();
@@ -641,6 +690,26 @@ function toggleMic(game: Game) {
       else void rec.stop().then((blob) => { if (blob && !recordBlocked) clips.push(blob); });
     });
   }
+}
+
+/** Push ui.draft into the textarea without re-rendering (keeps focus and caret at the end). */
+function syncDraftBox() {
+  const ta = root.querySelector<HTMLTextAreaElement>("#draft");
+  if (!ta) return;
+  ta.value = ui.draft;
+  ta.scrollTop = ta.scrollHeight;
+}
+
+function clearDraft(game: Game) {
+  const wasListening = Boolean(listener);
+  if (wasListening) { micUserStopped = true; listener?.stop(); listener = null; }
+  ui.draft = "";
+  micInterim = "";
+  micPrefix = "";
+  clips = [];
+  const rec = recording; recording = null; if (rec) void rec.stop();
+  ui.violations = [];
+  if (wasListening) { micUserStopped = false; silentSessions = 0; startMicSession(game); }
   render();
 }
 

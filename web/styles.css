@@ -177,6 +177,10 @@ input.guess:focus { outline: none; border-color: var(--accent); }
 .mic.on { background: var(--accent); border-color: var(--accent); color: #fff; animation: pulse 1.2s ease-in-out infinite; }
 @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(217, 83, 79, 0.45); } 50% { box-shadow: 0 0 0 10px rgba(217, 83, 79, 0); } }
 textarea.listening { border-color: var(--accent); }
+.draftwrap { position: relative; }
+.clearbtn { position: absolute; top: 18px; right: 8px; width: 28px; height: 28px; border-radius: 50%; border: 0; background: var(--chip); color: var(--muted); font-size: 14px; font-weight: 700; cursor: pointer; }
+.clearbtn:active { background: var(--accent-soft); color: var(--accent); }
+.draftwrap textarea { padding-right: 40px; }
 .micstatus { margin-top: 2px; min-height: 16px; font-size: 12px; }
 
 /* ---- history ---- */
