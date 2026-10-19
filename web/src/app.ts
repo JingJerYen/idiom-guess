@@ -1,5 +1,5 @@
 import { api, ApiError, type Level, type Mode, type Violation } from "./api.js";
-import { canListen, startListening, type Listener } from "./speech.js";
+import { canListen, joinOverlap, startListening, type Listener } from "./speech.js";
 import { joinClips, startRecording, type Recording } from "./recorder.js";
 import { MAX_ATTEMPTS, MAX_CHARS, MIN_WORDS, SENTENCE_BONUS, countWords, getBest, recordScore, scoreFor, type Game, type QuestionState, type Screen } from "./state.js";
 
@@ -519,7 +519,7 @@ function joinText(a: string, b: string): string {
 
 function stopMic() {
   // Keep whatever was still interim when the player stops: it is usually the last word or two.
-  if (listener && micInterim) ui.draft = joinText(ui.draft, micInterim);
+  if (listener && micInterim) ui.draft = joinOverlap(ui.draft.trim(), micInterim);
   if (listener) listener.stop();
   listener = null;
   micInterim = "";
@@ -603,7 +603,7 @@ function toggleMic(game: Game) {
       emptySessions = 0;
       clearWatchdog();
       setMicStatus("辨識中…");
-      const joined = joinText(micPrefix, committedText);
+      const joined = joinOverlap(micPrefix, committedText);
       ui.draft = joined;
       micInterim = interim;
       const ta = root.querySelector<HTMLTextAreaElement>("#draft");
