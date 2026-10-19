@@ -107,36 +107,39 @@ let useWhisper = false;
 let whisperRec: Recording | null = null;
 let whisperBusy = false;
 
-/** Speak a clue or sentence: server TTS when enabled (natural voice), else the browser voice. */
-function say(text: string) {
-  const clean = text.replace(/^\[MOCK[^\]]*\]\s*/, "");
-  if (useServerTts) {
-    if (currentAudio) { currentAudio.pause(); currentAudio = null; }
-    try { window.speechSynthesis?.cancel(); } catch { /* ignore */ }
-    const a = new Audio(ttsUrl(clean, ttsSpeed));
-    currentAudio = a;
-    a.onerror = () => { currentAudio = null; speak(clean); }; // server hiccup: fall back to browser voice
-    void a.play().catch(() => speak(clean));
-    return;
+/**
+ * Fetch the server voice for a clue once and keep it as an object URL on the question, so every
+ * replay is local: no request to our server and no OpenAI call. Resolves to null on failure.
+ */
+async function fetchClueAudio(qs: QuestionState, index: number, text: string): Promise<string | null> {
+  const have = qs.clueAudio?.[index];
+  if (have) return have;
+  try {
+    const res = await fetch(ttsUrl(text.replace(/^\[MOCK[^\]]*\]\s*/, ""), ttsSpeed));
+    if (!res.ok) return null;
+    const url = URL.createObjectURL(await res.blob());
+    qs.clueAudio = { ...(qs.clueAudio ?? {}), [index]: url };
+    return url;
+  } catch {
+    return null;
   }
-  speak(clean);
 }
 
-/** Say several texts in order (server TTS plays them one after another). */
-function sayAll(texts: string[]) {
-  const list = texts.map((t) => t.replace(/^\[MOCK[^\]]*\]\s*/, "")).filter((t) => t.trim());
-  if (!useServerTts) { speakAll(list); return; }
+/** Play a clue: cached server audio when available, otherwise the browser voice. */
+async function playClue(qs: QuestionState, index: number) {
+  const text = qs.clues[index] ?? "";
+  if (!text) return;
   if (currentAudio) { currentAudio.pause(); currentAudio = null; }
-  let i = 0;
-  const next = () => {
-    if (i >= list.length) { currentAudio = null; return; }
-    const a = new Audio(ttsUrl(list[i++], ttsSpeed));
+  try { window.speechSynthesis?.cancel(); } catch { /* ignore */ }
+  const url = useServerTts ? await fetchClueAudio(qs, index, text) : null;
+  if (url) {
+    const a = new Audio(url);
     currentAudio = a;
-    a.onended = next;
-    a.onerror = next;
-    void a.play().catch(next);
-  };
-  next();
+    a.onerror = () => { currentAudio = null; speak(text); };
+    void a.play().catch(() => speak(text));
+    return;
+  }
+  speak(text);
 }
 
 function speak(text: string) {
@@ -386,7 +389,7 @@ function renderPlay(game: Game) {
     }
   }
   root.querySelectorAll<HTMLButtonElement>(".speak, .speaker").forEach((b) =>
-    b.addEventListener("click", () => say(qs.clues[Number(b.dataset.i)] ?? "")),
+    b.addEventListener("click", () => void playClue(qs, Number(b.dataset.i))),
   );
   root.querySelectorAll<HTMLButtonElement>(".chip.word").forEach((b) =>
     b.addEventListener("click", () => {
@@ -412,7 +415,7 @@ function renderPlay(game: Game) {
     // Only forward mode has English sentences from the player; in listening mode the turns are
     // Chinese guesses and must not be fed to the English voice.
     if (game.mode === "forward") qs.turns.forEach((t, i) => texts.push(qs.feedback?.corrections[i]?.corrected || t.you));
-    sayAll(texts);
+    speakAll(texts); // feedback stays on the browser voice; only clues use server TTS
   });
   root.querySelectorAll<HTMLButtonElement>(".eye2").forEach((b) =>
     b.addEventListener("click", () => {
@@ -526,7 +529,7 @@ function renderResult(game: Game, qs: QuestionState): string {
   const toggle = detailsHtml
     ? `<button id="details" class="btn ghost sm details ${qs.showDetails ? "open" : ""}" aria-expanded="${qs.showDetails ? "true" : "false"}">${loading ? '<span class="spinner"></span>' : qs.showDetails ? "收起 ▴" : "📖 回饋 ▾"}</button>`
     : "";
-  const speakBtn = qs.showDetails && (canSpeak || useServerTts) && !loading
+  const speakBtn = qs.showDetails && canSpeak && !loading
     ? `<button id="fb-speak" class="iconbtn fbspeak" aria-label="朗讀回饋">🔊</button>`
     : "";
   return `<section class="card result center">${head}${answer}${game.mode === "reverse" ? transcript : ""}
@@ -615,7 +618,10 @@ async function startGame() {
     // Whisper needs a recorder; devices without MediaRecorder keep the browser recogniser.
     useWhisper = features.stt && canRecord;
     modelBadge = r.mock ? "MOCK" : "Haiku";
-    for (const old of game.questions) old.turns.forEach((t) => t.audioUrl && URL.revokeObjectURL(t.audioUrl));
+    for (const old of game.questions) {
+      old.turns.forEach((t) => t.audioUrl && URL.revokeObjectURL(t.audioUrl));
+      Object.values(old.clueAudio ?? {}).forEach((u) => URL.revokeObjectURL(u));
+    }
     resetUi();
     setScreen({ name: "play", game });
     if (game.mode === "reverse") await loadClue(game, game.questions[0]);
@@ -898,7 +904,7 @@ async function loadClue(game: Game, qs: QuestionState) {
     qs.clues.push(r.description);
     if (r.reveal) qs.revealed = { ...(qs.revealed ?? {}), [r.reveal.index]: r.reveal.char };
     qs.shownClue = undefined;
-    say(r.description);
+    void playClue(qs, qs.clues.length - 1);
   } catch (e) {
     ui.error = e instanceof Error ? e.message : "無法取得描述";
   }

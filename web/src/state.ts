@@ -25,6 +25,8 @@ export interface QuestionState {
   clues: string[];
   /** Reverse mode: characters revealed by the last clue, by position. */
   revealed?: Record<number, string>;
+  /** Reverse mode: object URLs of server-synthesised clue audio, by clue index (fetched once, replayed locally). */
+  clueAudio?: Record<number, string>;
   /** Reverse mode: index of the clue whose text is currently revealed, if any. */
   shownClue?: number;
   /** Forward mode: index of the AI turn whose reason/description text is expanded, if any. */

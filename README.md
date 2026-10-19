@@ -179,7 +179,8 @@ AI 的描述用瀏覽器內建的 Web Speech API（`speechSynthesis`）朗讀，
 - **口說**：🎤 變成「按一下錄音、再按一下停止並送出辨識」，音檔經 `POST /api/transcribe` 轉給 Whisper（`whisper-1`，可用 `STT_MODEL` 換），
   文字在停止後一兩秒一次出現；錄音同時保留給猜測列的 🔊 回放，所有裝置行為一致。
 - **聽力**：線索改由 `GET /api/tts?text=&speed=` 以 OpenAI TTS（`tts-1`、聲音 `nova`，可用 `TTS_MODEL`、`TTS_VOICE` 換）合成 mp3，
-  簡單模式語速 0.8、困難 1.0；伺服器記憶體快取同一句，重播不重複計費。
+  簡單模式語速 0.8、困難 1.0。每句線索的音檔前端只抓一次並存成本地物件 URL，重播不再向伺服器請求；伺服器另有記憶體快取，同一句不會重複呼叫 OpenAI。
+  回饋區與猜測列的 🔊 維持瀏覽器內建語音，不用 OpenAI。
 - 成本量級（請以 OpenAI 定價頁為準）：Whisper 約每分鐘 US$0.006，tts-1 每百萬字元 US$15，一輪約 US$0.05。
 - `DISABLE_STT=1`、`DISABLE_TTS=1` 可個別關閉。音檔上限 8 MB，TTS 文字上限 400 字元，兩者都受模型端點的限流。
 - 日誌有 `stt usage`／`tts usage` 兩種紀錄（位元組數、字元數、耗時）方便估算費用。
