@@ -14,6 +14,8 @@ export interface Turn {
   grammarNote?: string;
   /** The AI reply was unreadable; this guess is a rule-based stand-in. */
   fallback?: boolean;
+  /** Object URL of the player's own recording for this description, when they used the mic. */
+  audioUrl?: string;
 }
 
 export interface QuestionState {

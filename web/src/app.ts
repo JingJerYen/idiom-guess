@@ -1,9 +1,11 @@
 import { api, ApiError, type Level, type Mode, type Violation } from "./api.js";
 import { canListen, startListening, type Listener } from "./speech.js";
+import { joinClips, startRecording, type Recording } from "./recorder.js";
 import { MAX_ATTEMPTS, MAX_CHARS, MIN_WORDS, SCORES, SENTENCE_BONUS, countWords, maxScore, scoreFor, type Game, type QuestionState, type Screen } from "./state.js";
 
 const root = document.getElementById("app") as HTMLElement;
-const badge = document.getElementById("mode-badge") as HTMLElement;
+const topbar = document.getElementById("topbar") as HTMLElement;
+let modelBadge = "";
 
 let screen: Screen = { name: "start" };
 let chosenMode: Mode = "forward";
@@ -14,6 +16,10 @@ const ui = { draft: "", busy: false, error: "", violations: [] as Violation[], c
 let listener: Listener | null = null;
 let micPrefix = "";
 let micInterim = "";
+/** Voice clips captured for the current description (one per mic session). */
+let recording: Recording | null = null;
+let clips: Blob[] = [];
+let currentAudio: HTMLAudioElement | null = null;
 
 const MODE_LABEL: Record<Mode, string> = { forward: "口說", reverse: "聽力" };
 
@@ -59,11 +65,7 @@ function slots(length: number, confirmed: (string | null)[], draft: string): str
   }
   return `<div class="tiles lg center" aria-label="${length} 個字">${cells.join("")}</div>`;
 }
-/** Score ladder: 5 · 3 · 1, dimming the points already lost; the next attempt's value is highlighted. */
-function ladder(level: Level, used: number, done: boolean): string {
-  const scores = SCORES[level];
-  return `<span class="ladder" aria-label="這題可得 ${done ? 0 : scores[used] ?? 0} 分">${scores.map((s, i) => `<i class="${i < used || done ? "lost" : i === used ? "now" : ""}">${s}</i>`).join("")}</span>`;
-}
+
 // ---------- speech (browser TTS, no API cost) ----------
 
 const canSpeak = typeof window !== "undefined" && "speechSynthesis" in window;
@@ -94,6 +96,36 @@ function speak(text: string) {
 }
 if (canSpeak) window.speechSynthesis.onvoiceschanged = () => pickVoice();
 
+/** Read several English texts one after another (used by the feedback speaker). */
+function speakAll(texts: string[]) {
+  if (!canSpeak) return;
+  try {
+    window.speechSynthesis.cancel();
+    for (const t of texts.filter((x) => x.trim())) {
+      const u = new SpeechSynthesisUtterance(t.replace(/^\[MOCK[^\]]*\]\s*/, ""));
+      u.lang = "en-US";
+      u.rate = speechRate;
+      const v = pickVoice();
+      if (v) u.voice = v;
+      window.speechSynthesis.speak(u);
+    }
+  } catch { /* best effort */ }
+}
+
+/** Play the player's own recording when there is one, otherwise read the text aloud. */
+function playTurn(audioUrl: string | undefined, text: string) {
+  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+  if (audioUrl) {
+    try {
+      window.speechSynthesis?.cancel();
+      currentAudio = new Audio(audioUrl);
+      void currentAudio.play();
+      return;
+    } catch { /* fall through to TTS */ }
+  }
+  speak(text);
+}
+
 function setScreen(s: Screen) {
   screen = s;
   render();
@@ -101,7 +133,25 @@ function setScreen(s: Screen) {
 
 // ---------- rendering ----------
 
+function renderHeader() {
+  const badge = modelBadge ? `<span class="badge ${modelBadge === "MOCK" ? "" : "live"}">${modelBadge}</span>` : "";
+  if (screen.name !== "play") {
+    topbar.innerHTML = `<a class="brand" href="./">繞著<span>說</span></a>${badge}`;
+    return;
+  }
+  const game = screen.game;
+  const done = game.questions.slice(0, game.index + 1).filter((q) => q.done);
+  const ok = done.filter((q) => q.solved).length;
+  const no = done.length - ok;
+  const total = game.questions.reduce((n, q) => n + q.score, 0);
+  topbar.innerHTML = `
+    <a class="brand" href="./">繞著<span>說</span><small>${game.level === "easy" ? "🌱" : "🔥"}</small></a>
+    <div class="mid"><span class="num ok" aria-label="答對">${ok}</span><span class="num no" aria-label="答錯">${no}</span><span class="muted small">${game.index + 1}/${game.questions.length}</span></div>
+    <span class="score">${total}<small>分</small></span>`;
+}
+
 function render() {
+  renderHeader();
   switch (screen.name) {
     case "start": return renderStart();
     case "loading": root.innerHTML = `<section class="card center pad"><span class="spinner"></span>${esc(screen.text)}</section>`; return;
@@ -139,18 +189,6 @@ function renderStart() {
   (root.querySelector("#start") as HTMLButtonElement).addEventListener("click", () => void startGame());
 }
 
-function renderTop(game: Game): string {
-  const n = game.index + 1;
-  const total = game.questions.length;
-  const qs = game.questions[game.index];
-  return `<div class="top">
-      <span class="muted">${MODE_LABEL[game.mode]} ${game.level === "easy" ? "🌱" : "🔥"}</span>
-      <span class="dots">${game.questions.map((q, i) => `<i class="${i < game.index ? (q.solved ? "ok" : "no") : i === game.index ? "now" : ""}"></i>`).join("")}</span>
-      <span class="muted">${n}/${total}</span>
-    </div>
-    <div class="row between" style="margin-top:8px">${ladder(game.level, qs.turns.length, qs.done)}<span class="muted small">${game.questions.reduce((n, q) => n + q.score, 0)} 分</span>${stars(qs.q.difficulty)}</div>`;
-}
-
 function violationText(v: Violation): string {
   switch (v.type) {
     case "chinese": return `🚫 中文：${v.chars.join(" ")}`;
@@ -176,7 +214,7 @@ function renderPlay(game: Game) {
     const len = Array.from(q.idiom ?? "").length;
     const sizeClass = len <= 4 ? "" : len <= 6 ? "md" : "sm";
     const cards = game.level === "easy" ? q.hintWords : q.forbiddenWords;
-    body += `<div class="tagrow">${q.tags.map((t) => `<span class="kind">${esc(t)}</span>`).join("")}</div>
+    body += `<div class="tagrow">${q.tags.map((t) => `<span class="kind">${esc(t)}</span>`).join("")}${stars(q.difficulty)}</div>
       <div class="idiom ${sizeClass}">${esc(q.idiom ?? "")}</div>
       ${cards.length ? `<div class="chips ${game.level}"><span class="chip ban">${game.level === "easy" ? "💡" : "🚫"}</span>${cards
         .map((w, i) => {
@@ -185,7 +223,7 @@ function renderPlay(game: Game) {
         })
         .join("")}</div>` : ""}`;
   } else {
-    body += `<div class="tagrow">${q.tags.map((t) => `<span class="kind">${esc(t)}</span>`).join("")}</div>`;
+    body += `<div class="tagrow">${q.tags.map((t) => `<span class="kind">${esc(t)}</span>`).join("")}${stars(q.difficulty)}</div>`;
     // While guessing, a clue is only something you can replay. Text appears after the question ends.
     body += canSpeak
       ? `<div class="speakers">${qs.clues
@@ -202,15 +240,15 @@ function renderPlay(game: Game) {
       .map((t, i) => {
         if (!forward) return `<div class="turn ${t.correct ? "hit" : "miss"}">${tiles(t.you, t.positions)}</div>`;
         const open = qs.shownTurn === i;
-        const badge = t.fallback ? `<span class="gbadge" title="AI 回覆無法解析，這是盲猜">🎲</span>` : t.perfect === undefined ? "" : t.perfect ? `<span class="gbadge ok" title="完整正確的句子">✅</span>` : `<span class="gbadge" title="句子有問題">✏️</span>`;
+        const dice = t.fallback ? `<span class="gbadge" title="AI 回覆無法解析，這是盲猜">🎲</span>` : "";
         return `<div class="turn ${t.correct ? "hit" : "miss"}">
-          <div class="ai">${tiles(t.guess ?? "", t.positions)}${badge}
+          <div class="ai">${tiles(t.guess ?? "", t.positions)}${dice}
             <span class="turnbtns">
-              ${canSpeak ? `<button class="iconbtn sm say" data-i="${i}" aria-label="聽理由">🔊</button>` : ""}
-              <button class="iconbtn sm eye2" data-i="${i}" aria-pressed="${open}" aria-label="看理由">${open ? "🙈" : "👁"}</button>
+              ${canSpeak || t.audioUrl ? `<button class="iconbtn sm say" data-i="${i}" aria-label="${t.audioUrl ? "播放我的錄音" : "聽我的句子"}">🔊</button>` : ""}
+              <button class="iconbtn sm eye2" data-i="${i}" aria-pressed="${open}" aria-label="看我的句子">${open ? "🙈" : "👁"}</button>
             </span>
           </div>
-          ${open ? `<div class="detail small"><div class="muted">${esc(t.reason ?? "")}</div>${t.grammarNote ? `<div class="gnote">✏️ ${esc(t.grammarNote)}</div>` : ""}<div class="you">“${esc(t.you)}”</div></div>` : ""}
+          ${open ? `<div class="detail small"><div class="you">“${esc(t.you)}”</div></div>` : ""}
         </div>`;
       })
       .join("")}</div>`;
@@ -241,7 +279,7 @@ function renderPlay(game: Game) {
     <button id="giveup" class="giveup ${ui.confirmGiveUp ? "confirm" : ""}" ${ui.busy ? "disabled" : ""}>${ui.confirmGiveUp ? "確定放棄？0 分" : "放棄"}</button>`;
   }
 
-  root.innerHTML = `<section class="card">${renderTop(game)}</section><section class="card">${body}</section>${qs.done ? renderResult(game, qs) : ""}`;
+  root.innerHTML = `<section class="card">${body}</section>${qs.done ? renderResult(game, qs) : ""}`;
 
   const draft = root.querySelector<HTMLTextAreaElement | HTMLInputElement>("#draft");
   if (draft) {
@@ -280,8 +318,18 @@ function renderPlay(game: Game) {
     }),
   );
   root.querySelectorAll<HTMLButtonElement>(".say").forEach((b) =>
-    b.addEventListener("click", () => speak(qs.turns[Number(b.dataset.i)]?.reason ?? "")),
+    b.addEventListener("click", () => {
+      const t = qs.turns[Number(b.dataset.i)];
+      if (t) playTurn(t.audioUrl, t.you);
+    }),
   );
+  root.querySelector("#fb-speak")?.addEventListener("click", () => {
+    const texts: string[] = [];
+    const ref = qs.referenceEnglish ?? qs.feedback?.reference_english;
+    if (ref) texts.push(ref);
+    qs.turns.forEach((t, i) => texts.push(qs.feedback?.corrections[i]?.corrected || t.you));
+    speakAll(texts);
+  });
   root.querySelectorAll<HTMLButtonElement>(".eye2").forEach((b) =>
     b.addEventListener("click", () => {
       const i = Number(b.dataset.i);
@@ -354,7 +402,7 @@ function renderResult(game: Game, qs: QuestionState): string {
     ? `<div class="answer">${tiles(qs.answer ?? "", chars(qs.answer ?? "").map(() => qs.solved), "lg")}<div class="tagrow">${(qs.answerTags ?? []).map((t) => `<span class="kind">${esc(t)}</span>`).join("")}</div></div>`
     : "";
   const ref = qs.referenceEnglish ?? qs.feedback?.reference_english;
-  const refHtml = ref ? `<div class="ref">📖 ${esc(ref)}</div>` : "";
+  const refHtml = ref ? `<div class="ref"><div class="lbl">📖 參考答案</div>${esc(ref)}</div>` : "";
   const transcript = game.mode === "reverse" && qs.clues.length
     ? `<div class="transcript">${qs.clues.map((c, i) => `<div class="small"><button class="iconbtn speak sm" data-i="${i}" aria-label="播放">🔊</button> ${esc(c)}</div>`).join("")}</div>`
     : "";
@@ -384,8 +432,11 @@ function renderResult(game: Game, qs: QuestionState): string {
   const toggle = detailsHtml
     ? `<button id="details" class="btn ghost sm details ${qs.showDetails ? "open" : ""}" aria-expanded="${qs.showDetails ? "true" : "false"}">${loading ? '<span class="spinner"></span>' : qs.showDetails ? "收起 ▴" : "📖 回饋 ▾"}</button>`
     : "";
+  const speakBtn = qs.showDetails && canSpeak && !loading
+    ? `<button id="fb-speak" class="iconbtn fbspeak" aria-label="朗讀回饋">🔊</button>`
+    : "";
   return `<section class="card result center">${head}${answer}${game.mode === "reverse" ? transcript : ""}
-    <div class="row" style="justify-content:center;margin-top:8px">${toggle}</div>
+    <div class="row" style="justify-content:center;margin-top:8px;gap:8px">${toggle}${speakBtn}</div>
     ${qs.showDetails ? `<div class="details-body">${detailsHtml}</div>` : ""}
     <button id="next" class="btn lg block" style="margin-top:16px">${last ? "總結" : "下一題 →"}</button></section>`;
 }
@@ -422,9 +473,8 @@ async function startGame() {
       index: 0,
     };
     speechRate = SPEECH_RATE[chosenLevel];
-    badge.hidden = false;
-    badge.textContent = r.mock ? "MOCK" : "Haiku";
-    badge.className = r.mock ? "badge" : "badge live";
+    modelBadge = r.mock ? "MOCK" : "Haiku";
+    for (const old of game.questions) old.turns.forEach((t) => t.audioUrl && URL.revokeObjectURL(t.audioUrl));
     resetUi();
     setScreen({ name: "play", game });
     if (game.mode === "reverse") await loadClue(game, game.questions[0]);
@@ -444,6 +494,22 @@ function stopMic() {
   if (listener) listener.stop();
   listener = null;
   micInterim = "";
+  const rec = recording;
+  recording = null;
+  if (rec) void rec.stop().then((blob) => { if (blob) clips.push(blob); });
+}
+
+/** Called when a description is submitted: hand over the clips captured for it. */
+async function takeRecording(): Promise<string | undefined> {
+  const rec = recording;
+  recording = null;
+  if (rec) {
+    const blob = await rec.stop();
+    if (blob) clips.push(blob);
+  }
+  const all = joinClips(clips);
+  clips = [];
+  return all ? URL.createObjectURL(all) : undefined;
 }
 
 function toggleMic(game: Game) {
@@ -478,11 +544,19 @@ function toggleMic(game: Game) {
   });
   if (!l) { ui.error = "無法啟動語音輸入。"; render(); return; }
   listener = l;
+  // Capture the real voice too, so the guess row can replay it. Best effort: if the browser
+  // refuses a second microphone consumer, dictation still works and playback uses TTS.
+  void startRecording().then((rec) => {
+    if (!rec) return;
+    if (listener === l) recording = rec;
+    else void rec.stop().then((blob) => { if (blob) clips.push(blob); });
+  });
   render();
 }
 
 function resetUi() {
   stopMic();
+  clips = [];
   ui.draft = "";
   ui.busy = false;
   ui.error = "";
@@ -572,13 +646,15 @@ async function submit(game: Game) {
     ui.busy = true;
     render();
     const descriptions = [...qs.turns.map((t) => t.you), text];
+    const audioUrl = await takeRecording();
     try {
       const previousGuesses = qs.turns.map((t) => t.guess ?? "").filter(Boolean);
       const r = await api.guess(qs.q.id, game.level, q.forbiddenWords.map((w) => w.en), descriptions, previousGuesses);
       if (!r.ok) {
         ui.violations = r.violations;
+        if (audioUrl) URL.revokeObjectURL(audioUrl);
       } else {
-        qs.turns.push({ you: text, guess: r.guess, reason: r.reason, correct: r.correct, positions: r.positions, perfect: r.perfectSentence, grammarNote: r.grammarNote, fallback: r.fallback });
+        qs.turns.push({ you: text, guess: r.guess, reason: r.reason, correct: r.correct, positions: r.positions, perfect: r.perfectSentence, grammarNote: r.grammarNote, fallback: r.fallback, audioUrl });
         ui.draft = "";
         if (r.correct || qs.turns.length >= game.maxGuesses) {
           qs.done = true;
