@@ -39,6 +39,8 @@ export interface ListenHandlers {
   onText(committedText: string, interimText: string): void;
   onEnd(): void;
   onError(message: string): void;
+  /** Diagnostics after each one-utterance session: whether it produced text and which error (if any) ended it. */
+  onSessionEnd?(info: { hadResult: boolean; error: string | null }): void;
 }
 
 export interface Listener {
@@ -74,7 +76,10 @@ export function startListening(h: ListenHandlers): Listener | null {
     rec.maxAlternatives = 1;
 
     let sessionFinal = "";
+    let hadResult = false;
+    let lastError: string | null = null;
     rec.onresult = (ev) => {
+      hadResult = true;
       // One session = one utterance, so the final transcript is the whole thing. Some engines
       // list the same final entry more than once: take the last one, never concatenate.
       let fin = "";
@@ -89,6 +94,7 @@ export function startListening(h: ListenHandlers): Listener | null {
       h.onText(join(committed, sessionFinal), sessionFinal ? "" : interim.trim());
     };
     rec.onerror = (ev) => {
+      lastError = ev.error;
       const msg = FATAL[ev.error];
       if (msg) {
         fatal = true;
@@ -99,6 +105,7 @@ export function startListening(h: ListenHandlers): Listener | null {
     };
     rec.onend = () => {
       if (sessionFinal) committed = join(committed, sessionFinal);
+      h.onSessionEnd?.({ hadResult, error: lastError });
       if (stopped) {
         if (!fatal) h.onEnd();
         return;

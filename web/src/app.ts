@@ -20,6 +20,15 @@ let micInterim = "";
 let recording: Recording | null = null;
 let clips: Blob[] = [];
 let currentAudio: HTMLAudioElement | null = null;
+/**
+ * Some devices (Android Chrome in particular) hand the microphone to the system speech service
+ * and refuse a second consumer: holding a MediaRecorder stream starves recognition. Once that is
+ * detected we stop recording on this device and replay guesses with speech synthesis instead.
+ */
+const RECORD_BLOCK_KEY = "idiom.recordBlocked";
+let recordBlocked = false;
+try { recordBlocked = localStorage.getItem(RECORD_BLOCK_KEY) === "1"; } catch { /* storage unavailable */ }
+let emptySessions = 0;
 
 const MODE_LABEL: Record<Mode, string> = { forward: "口說", reverse: "聽力" };
 
@@ -513,13 +522,36 @@ async function takeRecording(): Promise<string | undefined> {
   return all ? URL.createObjectURL(all) : undefined;
 }
 
+function blockRecording(reason: string) {
+  if (recordBlocked) return;
+  recordBlocked = true;
+  try { localStorage.setItem(RECORD_BLOCK_KEY, "1"); } catch { /* ignore */ }
+  const rec = recording;
+  recording = null;
+  if (rec) void rec.stop();
+  clips = [];
+  ui.error = `這台裝置無法在辨識時同時錄音（${reason}），已改為用語音念出你的句子。`;
+}
+
 function toggleMic(game: Game) {
   if (listener) { stopMic(); render(); return; }
   micPrefix = ui.draft.trim();
   micInterim = "";
   ui.error = "";
+  emptySessions = 0;
   const l = startListening({
+    onSessionEnd({ hadResult, error }) {
+      if (!recording) return;
+      // Microphone-related failures while we hold the stream mean the two consumers conflict.
+      const micError = error === "audio-capture" || error === "aborted" || error === "network";
+      emptySessions = hadResult ? 0 : emptySessions + 1;
+      if (micError || emptySessions >= 2) {
+        blockRecording(micError ? `錯誤 ${error}` : "沒有辨識到聲音");
+        render();
+      }
+    },
     onText(committedText, interim) {
+      emptySessions = 0;
       const joined = joinText(micPrefix, committedText);
       ui.draft = joined;
       micInterim = interim;
@@ -545,13 +577,15 @@ function toggleMic(game: Game) {
   });
   if (!l) { ui.error = "無法啟動語音輸入。"; render(); return; }
   listener = l;
-  // Capture the real voice too, so the guess row can replay it. Best effort: if the browser
-  // refuses a second microphone consumer, dictation still works and playback uses TTS.
-  void startRecording().then((rec) => {
-    if (!rec) return;
-    if (listener === l) recording = rec;
-    else void rec.stop().then((blob) => { if (blob) clips.push(blob); });
-  });
+  // Capture the real voice too, so the guess row can replay it. Skipped on devices where this
+  // was seen to starve recognition (see recordBlocked); otherwise best effort.
+  if (!recordBlocked) {
+    void startRecording().then((rec) => {
+      if (!rec) return;
+      if (listener === l && !recordBlocked) recording = rec;
+      else void rec.stop().then((blob) => { if (blob && !recordBlocked) clips.push(blob); });
+    });
+  }
   render();
 }
 
