@@ -511,5 +511,4627 @@
     ],
     "difficulty": 1,
     "reference_english": "The tallest building in Taiwan, a green skyscraper in the capital shaped like a stalk of bamboo, famous for its New Year fireworks."
+  },
+  {
+    "id": "yi-fei-chong-tian",
+    "idiom": "一飛沖天",
+    "aliases": [
+      "一飞冲天"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "yi fei chong tian",
+    "taboo": [
+      "fly",
+      "sky",
+      "soar",
+      "rise",
+      "heaven"
+    ],
+    "difficulty": 2,
+    "reference_english": "Suddenly achieving great success after a long quiet time."
+  },
+  {
+    "id": "san-cong-si-de",
+    "idiom": "三從四德",
+    "aliases": [
+      "三从四德"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "san cong si de",
+    "taboo": [
+      "three",
+      "four",
+      "obey",
+      "follow",
+      "virtue",
+      "wife",
+      "woman"
+    ],
+    "difficulty": 3,
+    "reference_english": "Old rules saying a traditional woman must obey her father, husband and son and behave well."
+  },
+  {
+    "id": "wu-hua-ba-men",
+    "idiom": "五花八門",
+    "aliases": [
+      "五花八门"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "wu hua ba men",
+    "taboo": [
+      "five",
+      "eight",
+      "flower",
+      "door",
+      "gate",
+      "variety"
+    ],
+    "difficulty": 2,
+    "reference_english": "Having many different kinds of things all mixed together."
+  },
+  {
+    "id": "da-xie-ba-kuai",
+    "idiom": "大卸八塊",
+    "aliases": [
+      "大卸八块"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "da xie ba kuai",
+    "taboo": [
+      "eight",
+      "piece",
+      "cut",
+      "chop",
+      "apart"
+    ],
+    "difficulty": 2,
+    "reference_english": "Cutting or taking something apart into many pieces."
+  },
+  {
+    "id": "yi-ju-liang-de",
+    "idiom": "一舉兩得",
+    "aliases": [
+      "一举两得"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "yi ju liang de",
+    "taboo": [
+      "two",
+      "both",
+      "gain",
+      "benefit"
+    ],
+    "difficulty": 1,
+    "reference_english": "Doing one thing and getting two good results from it."
+  },
+  {
+    "id": "yi-mu-shi-hang",
+    "idiom": "一目十行",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "yi mu shi hang",
+    "taboo": [
+      "eye",
+      "ten",
+      "line",
+      "read",
+      "fast"
+    ],
+    "difficulty": 1,
+    "reference_english": "Reading extremely fast."
+  },
+  {
+    "id": "yi-xin-er-yong",
+    "idiom": "一心二用",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "yi xin er yong",
+    "taboo": [
+      "heart",
+      "mind",
+      "two",
+      "multitask",
+      "focus"
+    ],
+    "difficulty": 1,
+    "reference_english": "Trying to do two things at once and not focusing well on either."
+  },
+  {
+    "id": "san-xin-er-yi",
+    "idiom": "三心二意",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "san xin er yi",
+    "taboo": [
+      "heart",
+      "mind",
+      "three",
+      "two",
+      "decide"
+    ],
+    "difficulty": 1,
+    "reference_english": "Unable to make up your mind and not focused on one thing."
+  },
+  {
+    "id": "qi-shang-ba-xia",
+    "idiom": "七上八下",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "qi shang ba xia",
+    "taboo": [
+      "seven",
+      "eight",
+      "up",
+      "down",
+      "nervous"
+    ],
+    "difficulty": 2,
+    "reference_english": "Feeling very nervous and uneasy inside."
+  },
+  {
+    "id": "luan-qi-ba-zao",
+    "idiom": "亂七八糟",
+    "aliases": [
+      "乱七八糟"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "luan qi ba zao",
+    "taboo": [
+      "mess",
+      "messy",
+      "seven",
+      "eight",
+      "chaos"
+    ],
+    "difficulty": 1,
+    "reference_english": "Very messy and disorganized."
+  },
+  {
+    "id": "yi-qing-er-chu",
+    "idiom": "一清二楚",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "yi qing er chu",
+    "taboo": [
+      "clear",
+      "clearly",
+      "two",
+      "detail"
+    ],
+    "difficulty": 1,
+    "reference_english": "Completely clear, understood in every detail."
+  },
+  {
+    "id": "shi-quan-shi-mei",
+    "idiom": "十全十美",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "shi quan shi mei",
+    "taboo": [
+      "perfect",
+      "ten",
+      "beautiful",
+      "complete"
+    ],
+    "difficulty": 1,
+    "reference_english": "Perfect in every way, with no faults at all."
+  },
+  {
+    "id": "si-mian-ba-fang",
+    "idiom": "四面八方",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "si mian ba fang",
+    "taboo": [
+      "four",
+      "eight",
+      "direction",
+      "side",
+      "everywhere"
+    ],
+    "difficulty": 1,
+    "reference_english": "From or in every direction."
+  },
+  {
+    "id": "qian-shan-wan-shui",
+    "idiom": "千山萬水",
+    "aliases": [
+      "千山万水"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "qian shan wan shui",
+    "taboo": [
+      "mountain",
+      "water",
+      "river",
+      "thousand",
+      "journey"
+    ],
+    "difficulty": 2,
+    "reference_english": "A long and difficult journey across great distances."
+  },
+  {
+    "id": "qian-fang-bai-ji",
+    "idiom": "千方百計",
+    "aliases": [
+      "千方百计"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "qian fang bai ji",
+    "taboo": [
+      "thousand",
+      "hundred",
+      "plan",
+      "method"
+    ],
+    "difficulty": 2,
+    "reference_english": "Trying every possible way to get something done."
+  },
+  {
+    "id": "yi-mo-yi-yang",
+    "idiom": "一模一樣",
+    "aliases": [
+      "一模一样"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "yi mo yi yang",
+    "taboo": [
+      "same",
+      "identical",
+      "exactly",
+      "copy",
+      "twin"
+    ],
+    "difficulty": 1,
+    "reference_english": "Exactly the same, with no difference at all."
+  },
+  {
+    "id": "yi-gan-er-jing",
+    "idiom": "一乾二淨",
+    "aliases": [
+      "一干二净"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "yi gan er jing",
+    "taboo": [
+      "clean",
+      "dry",
+      "completely",
+      "nothing"
+    ],
+    "difficulty": 1,
+    "reference_english": "Completely, with nothing left at all."
+  },
+  {
+    "id": "san-yan-liang-yu",
+    "idiom": "三言兩語",
+    "aliases": [
+      "三言两语"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "san yan liang yu",
+    "taboo": [
+      "three",
+      "two",
+      "word",
+      "short"
+    ],
+    "difficulty": 1,
+    "reference_english": "Just a few words; said very briefly."
+  },
+  {
+    "id": "yi-dao-liang-duan",
+    "idiom": "一刀兩斷",
+    "aliases": [
+      "一刀两断"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "yi dao liang duan",
+    "taboo": [
+      "knife",
+      "cut",
+      "two",
+      "break",
+      "sword"
+    ],
+    "difficulty": 2,
+    "reference_english": "Ending a relationship completely and cleanly."
+  },
+  {
+    "id": "jiu-niu-yi-mao",
+    "idiom": "九牛一毛",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "jiu niu yi mao",
+    "taboo": [
+      "cow",
+      "ox",
+      "nine",
+      "hair",
+      "tiny"
+    ],
+    "difficulty": 2,
+    "reference_english": "A tiny amount compared with a huge total."
+  },
+  {
+    "id": "du-yi-wu-er",
+    "idiom": "獨一無二",
+    "aliases": [
+      "独一无二"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "du yi wu er",
+    "taboo": [
+      "only",
+      "unique",
+      "one",
+      "two"
+    ],
+    "difficulty": 1,
+    "reference_english": "The only one of its kind."
+  },
+  {
+    "id": "yi-nian-si-ji",
+    "idiom": "一年四季",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "yi nian si ji",
+    "taboo": [
+      "year",
+      "four",
+      "season",
+      "spring",
+      "summer",
+      "winter"
+    ],
+    "difficulty": 1,
+    "reference_english": "All year round, in every season."
+  },
+  {
+    "id": "si-ji-ru-chun",
+    "idiom": "四季如春",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "si ji ru chun",
+    "taboo": [
+      "season",
+      "spring",
+      "four",
+      "warm",
+      "weather"
+    ],
+    "difficulty": 2,
+    "reference_english": "Mild and pleasant like spring all year round."
+  },
+  {
+    "id": "wu-yan-liu-se",
+    "idiom": "五顏六色",
+    "aliases": [
+      "五颜六色"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "wu yan liu se",
+    "taboo": [
+      "color",
+      "colour",
+      "colorful",
+      "five",
+      "six"
+    ],
+    "difficulty": 1,
+    "reference_english": "Having many bright colors."
+  },
+  {
+    "id": "qi-zui-ba-she",
+    "idiom": "七嘴八舌",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "qi zui ba she",
+    "taboo": [
+      "mouth",
+      "tongue",
+      "seven",
+      "eight",
+      "talk"
+    ],
+    "difficulty": 1,
+    "reference_english": "Many people all talking at the same time."
+  },
+  {
+    "id": "yi-wu-yi-shi",
+    "idiom": "一五一十",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "yi wu yi shi",
+    "taboo": [
+      "five",
+      "ten",
+      "everything",
+      "count",
+      "detail"
+    ],
+    "difficulty": 2,
+    "reference_english": "Telling everything in full detail without leaving anything out."
+  },
+  {
+    "id": "yi-lu-shun-feng",
+    "idiom": "一路順風",
+    "aliases": [
+      "一路顺风"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "yi lu shun feng",
+    "taboo": [
+      "road",
+      "wind",
+      "trip",
+      "journey",
+      "smooth"
+    ],
+    "difficulty": 1,
+    "reference_english": "Have a smooth and pleasant trip."
+  },
+  {
+    "id": "yi-fan-shun-feng",
+    "idiom": "一帆風順",
+    "aliases": [
+      "一帆风顺"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "yi fan shun feng",
+    "taboo": [
+      "sail",
+      "wind",
+      "boat",
+      "smooth",
+      "ship"
+    ],
+    "difficulty": 1,
+    "reference_english": "Everything goes smoothly without any problems."
+  },
+  {
+    "id": "yi-jian-zhong-qing",
+    "idiom": "一見鍾情",
+    "aliases": [
+      "一见钟情"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "yi jian zhong qing",
+    "taboo": [
+      "love",
+      "sight",
+      "crush",
+      "meet",
+      "instant"
+    ],
+    "difficulty": 1,
+    "reference_english": "Falling in love the very first time you see someone."
+  },
+  {
+    "id": "yi-zhi-ban-jie",
+    "idiom": "一知半解",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "yi zhi ban jie",
+    "taboo": [
+      "half",
+      "understand",
+      "partly",
+      "knowledge"
+    ],
+    "difficulty": 2,
+    "reference_english": "Only partly understanding something."
+  },
+  {
+    "id": "ban-tu-er-fei",
+    "idiom": "半途而廢",
+    "aliases": [
+      "半途而废"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "ban tu er fei",
+    "taboo": [
+      "half",
+      "quit",
+      "give up",
+      "road"
+    ],
+    "difficulty": 2,
+    "reference_english": "Giving up before the job is finished."
+  },
+  {
+    "id": "yi-shi-wu-cheng",
+    "idiom": "一事無成",
+    "aliases": [
+      "一事无成"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "yi shi wu cheng",
+    "taboo": [
+      "nothing",
+      "succeed",
+      "achieve",
+      "success"
+    ],
+    "difficulty": 2,
+    "reference_english": "Achieving nothing at all."
+  },
+  {
+    "id": "yi-yan-wei-ding",
+    "idiom": "一言為定",
+    "aliases": [
+      "一言为定"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "yi yan wei ding",
+    "taboo": [
+      "word",
+      "deal",
+      "promise",
+      "agree"
+    ],
+    "difficulty": 1,
+    "reference_english": "It's a deal; we both promise to keep our word."
+  },
+  {
+    "id": "yi-ri-qian-li",
+    "idiom": "一日千里",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "yi ri qian li",
+    "taboo": [
+      "day",
+      "thousand",
+      "mile",
+      "fast",
+      "progress"
+    ],
+    "difficulty": 2,
+    "reference_english": "Making extremely fast progress."
+  },
+  {
+    "id": "san-fan-liang-ci",
+    "idiom": "三番兩次",
+    "aliases": [
+      "三番两次"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "san fan liang ci",
+    "taboo": [
+      "three",
+      "two",
+      "again",
+      "repeat"
+    ],
+    "difficulty": 1,
+    "reference_english": "Again and again, many times."
+  },
+  {
+    "id": "san-wu-cheng-qun",
+    "idiom": "三五成群",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "san wu cheng qun",
+    "taboo": [
+      "group",
+      "three",
+      "five",
+      "crowd"
+    ],
+    "difficulty": 1,
+    "reference_english": "Gathering in small groups of a few people."
+  },
+  {
+    "id": "si-fen-wu-lie",
+    "idiom": "四分五裂",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "si fen wu lie",
+    "taboo": [
+      "four",
+      "five",
+      "split",
+      "break",
+      "piece",
+      "apart"
+    ],
+    "difficulty": 2,
+    "reference_english": "Broken into many pieces or badly divided."
+  },
+  {
+    "id": "jiu-si-yi-sheng",
+    "idiom": "九死一生",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "jiu si yi sheng",
+    "taboo": [
+      "die",
+      "death",
+      "nine",
+      "live",
+      "survive",
+      "life"
+    ],
+    "difficulty": 2,
+    "reference_english": "Barely escaping death in a very dangerous situation."
+  },
+  {
+    "id": "bai-fa-bai-zhong",
+    "idiom": "百發百中",
+    "aliases": [
+      "百发百中"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "bai fa bai zhong",
+    "taboo": [
+      "hundred",
+      "shoot",
+      "hit",
+      "target",
+      "miss"
+    ],
+    "difficulty": 1,
+    "reference_english": "Hitting the target every single time."
+  },
+  {
+    "id": "bai-zhan-bai-sheng",
+    "idiom": "百戰百勝",
+    "aliases": [
+      "百战百胜"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "bai zhan bai sheng",
+    "taboo": [
+      "hundred",
+      "battle",
+      "fight",
+      "win",
+      "war"
+    ],
+    "difficulty": 1,
+    "reference_english": "Winning every battle you fight."
+  },
+  {
+    "id": "qian-yan-wan-yu",
+    "idiom": "千言萬語",
+    "aliases": [
+      "千言万语"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "qian yan wan yu",
+    "taboo": [
+      "thousand",
+      "word",
+      "talk"
+    ],
+    "difficulty": 1,
+    "reference_english": "So many words; having a great deal to say."
+  },
+  {
+    "id": "qian-jun-wan-ma",
+    "idiom": "千軍萬馬",
+    "aliases": [
+      "千军万马"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "qian jun wan ma",
+    "taboo": [
+      "thousand",
+      "army",
+      "soldier",
+      "horse"
+    ],
+    "difficulty": 2,
+    "reference_english": "A huge army or a huge crowd moving with great force."
+  },
+  {
+    "id": "wan-zhong-yi-xin",
+    "idiom": "萬眾一心",
+    "aliases": [
+      "万众一心"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "wan zhong yi xin",
+    "taboo": [
+      "heart",
+      "everyone",
+      "together",
+      "unite"
+    ],
+    "difficulty": 2,
+    "reference_english": "Everyone united with one shared purpose."
+  },
+  {
+    "id": "yi-xin-yi-yi",
+    "idiom": "一心一意",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "yi xin yi yi",
+    "taboo": [
+      "heart",
+      "mind",
+      "focus"
+    ],
+    "difficulty": 1,
+    "reference_english": "With all your heart and complete focus."
+  },
+  {
+    "id": "yi-sheng-yi-shi",
+    "idiom": "一生一世",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "yi sheng yi shi",
+    "taboo": [
+      "life",
+      "lifetime",
+      "forever"
+    ],
+    "difficulty": 1,
+    "reference_english": "For a whole lifetime."
+  },
+  {
+    "id": "yi-wen-san-bu-zhi",
+    "idiom": "一問三不知",
+    "aliases": [
+      "一问三不知"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "yi wen san bu zhi",
+    "taboo": [
+      "ask",
+      "question",
+      "three",
+      "answer"
+    ],
+    "difficulty": 1,
+    "reference_english": "Knowing nothing at all when asked about something."
+  },
+  {
+    "id": "san-chang-liang-duan",
+    "idiom": "三長兩短",
+    "aliases": [
+      "三长两短"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "san chang liang duan",
+    "taboo": [
+      "long",
+      "short",
+      "three",
+      "two",
+      "accident"
+    ],
+    "difficulty": 3,
+    "reference_english": "An unexpected accident or disaster, especially death."
+  },
+  {
+    "id": "diu-san-la-si",
+    "idiom": "丟三落四",
+    "aliases": [
+      "丢三落四"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "diu san la si",
+    "taboo": [
+      "forget",
+      "lose",
+      "three",
+      "four",
+      "careless"
+    ],
+    "difficulty": 1,
+    "reference_english": "Always forgetting or losing things."
+  },
+  {
+    "id": "jie-er-lian-san",
+    "idiom": "接二連三",
+    "aliases": [
+      "接二连三"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "jie er lian san",
+    "taboo": [
+      "two",
+      "three",
+      "continue",
+      "row"
+    ],
+    "difficulty": 1,
+    "reference_english": "One after another, again and again."
+  },
+  {
+    "id": "yi-zhen-jian-xue",
+    "idiom": "一針見血",
+    "aliases": [
+      "一针见血"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "yi zhen jian xue",
+    "taboo": [
+      "needle",
+      "blood",
+      "point",
+      "sharp"
+    ],
+    "difficulty": 2,
+    "reference_english": "Getting straight to the most important point."
+  },
+  {
+    "id": "yi-bi-zhi-li",
+    "idiom": "一臂之力",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "yi bi zhi li",
+    "taboo": [
+      "arm",
+      "help",
+      "hand",
+      "strength"
+    ],
+    "difficulty": 2,
+    "reference_english": "A helping hand."
+  },
+  {
+    "id": "yi-mao-bu-ba",
+    "idiom": "一毛不拔",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "yi mao bu ba",
+    "taboo": [
+      "hair",
+      "pull",
+      "stingy",
+      "cheap",
+      "money"
+    ],
+    "difficulty": 2,
+    "reference_english": "Extremely stingy, unwilling to give even a little."
+  },
+  {
+    "id": "yi-wu-suo-you",
+    "idiom": "一無所有",
+    "aliases": [
+      "一无所有"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "yi wu suo you",
+    "taboo": [
+      "nothing",
+      "poor",
+      "empty"
+    ],
+    "difficulty": 1,
+    "reference_english": "Having nothing at all."
+  },
+  {
+    "id": "yi-ying-ju-quan",
+    "idiom": "一應俱全",
+    "aliases": [
+      "一应俱全"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "yi ying ju quan",
+    "taboo": [
+      "everything",
+      "complete",
+      "available",
+      "supply"
+    ],
+    "difficulty": 2,
+    "reference_english": "Having everything you could need."
+  },
+  {
+    "id": "yi-wang-wu-ji",
+    "idiom": "一望無際",
+    "aliases": [
+      "一望无际"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "yi wang wu ji",
+    "taboo": [
+      "endless",
+      "edge",
+      "end"
+    ],
+    "difficulty": 2,
+    "reference_english": "So wide that you cannot see where it ends."
+  },
+  {
+    "id": "yi-dong-bu-dong",
+    "idiom": "一動不動",
+    "aliases": [
+      "一动不动"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "yi dong bu dong",
+    "taboo": [
+      "move",
+      "still",
+      "motion"
+    ],
+    "difficulty": 1,
+    "reference_english": "Not moving at all."
+  },
+  {
+    "id": "yi-dian-yi-di",
+    "idiom": "一點一滴",
+    "aliases": [
+      "一点一滴"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "yi dian yi di",
+    "taboo": [
+      "drop",
+      "dot",
+      "bit"
+    ],
+    "difficulty": 1,
+    "reference_english": "Little by little."
+  },
+  {
+    "id": "yi-zi-yi-ju",
+    "idiom": "一字一句",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "yi zi yi ju",
+    "taboo": [
+      "word",
+      "sentence",
+      "character",
+      "single"
+    ],
+    "difficulty": 1,
+    "reference_english": "Every single word and sentence."
+  },
+  {
+    "id": "da-yu-da-rou",
+    "idiom": "大魚大肉",
+    "aliases": [
+      "大鱼大肉"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "da yu da rou",
+    "taboo": [
+      "fish",
+      "meat",
+      "big",
+      "feast"
+    ],
+    "difficulty": 1,
+    "reference_english": "Rich meals with lots of meat and fish."
+  },
+  {
+    "id": "da-tong-xiao-yi",
+    "idiom": "大同小異",
+    "aliases": [
+      "大同小异"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "da tong xiao yi",
+    "taboo": [
+      "same",
+      "different",
+      "big",
+      "small",
+      "similar"
+    ],
+    "difficulty": 2,
+    "reference_english": "Mostly the same, with only small differences."
+  },
+  {
+    "id": "da-jing-xiao-guai",
+    "idiom": "大驚小怪",
+    "aliases": [
+      "大惊小怪"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "da jing xiao guai",
+    "taboo": [
+      "surprise",
+      "shock",
+      "big",
+      "small",
+      "fuss"
+    ],
+    "difficulty": 2,
+    "reference_english": "Making a big fuss over something small."
+  },
+  {
+    "id": "da-jie-xiao-xiang",
+    "idiom": "大街小巷",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "da jie xiao xiang",
+    "taboo": [
+      "street",
+      "road",
+      "alley",
+      "big",
+      "small"
+    ],
+    "difficulty": 1,
+    "reference_english": "Every street and alley; all over town."
+  },
+  {
+    "id": "da-chi-yi-jing",
+    "idiom": "大吃一驚",
+    "aliases": [
+      "大吃一惊"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "da chi yi jing",
+    "taboo": [
+      "shock",
+      "surprise",
+      "eat",
+      "big"
+    ],
+    "difficulty": 1,
+    "reference_english": "Being very surprised."
+  },
+  {
+    "id": "da-gong-wu-si",
+    "idiom": "大公無私",
+    "aliases": [
+      "大公无私"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "da gong wu si",
+    "taboo": [
+      "fair",
+      "selfish",
+      "public",
+      "private"
+    ],
+    "difficulty": 2,
+    "reference_english": "Completely fair and unselfish."
+  },
+  {
+    "id": "da-ming-ding-ding",
+    "idiom": "大名鼎鼎",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "da ming ding ding",
+    "taboo": [
+      "famous",
+      "name",
+      "big",
+      "known"
+    ],
+    "difficulty": 2,
+    "reference_english": "Very famous; everyone knows the name."
+  },
+  {
+    "id": "xiao-ti-da-zuo",
+    "idiom": "小題大作",
+    "aliases": [
+      "小题大作"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "xiao ti da zuo",
+    "taboo": [
+      "small",
+      "big",
+      "fuss",
+      "topic",
+      "deal"
+    ],
+    "difficulty": 2,
+    "reference_english": "Making a big deal out of a small matter."
+  },
+  {
+    "id": "xiao-xin-yi-yi",
+    "idiom": "小心翼翼",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "xiao xin yi yi",
+    "taboo": [
+      "careful",
+      "small",
+      "heart",
+      "wing"
+    ],
+    "difficulty": 1,
+    "reference_english": "Very carefully."
+  },
+  {
+    "id": "da-yao-da-bai",
+    "idiom": "大搖大擺",
+    "aliases": [
+      "大摇大摆"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "da yao da bai",
+    "taboo": [
+      "swing",
+      "walk",
+      "proud",
+      "big"
+    ],
+    "difficulty": 2,
+    "reference_english": "Walking in a proud, confident way."
+  },
+  {
+    "id": "zuo-you-wei-nan",
+    "idiom": "左右為難",
+    "aliases": [
+      "左右为难"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "zuo you wei nan",
+    "taboo": [
+      "left",
+      "right",
+      "difficult",
+      "choose"
+    ],
+    "difficulty": 2,
+    "reference_english": "Stuck between two difficult choices."
+  },
+  {
+    "id": "dong-zhang-xi-wang",
+    "idiom": "東張西望",
+    "aliases": [
+      "东张西望"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "dong zhang xi wang",
+    "taboo": [
+      "east",
+      "west",
+      "around"
+    ],
+    "difficulty": 1,
+    "reference_english": "Looking around in all directions."
+  },
+  {
+    "id": "dong-ben-xi-pao",
+    "idiom": "東奔西跑",
+    "aliases": [
+      "东奔西跑"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "dong ben xi pao",
+    "taboo": [
+      "east",
+      "west",
+      "run",
+      "busy"
+    ],
+    "difficulty": 1,
+    "reference_english": "Running around busily here and there."
+  },
+  {
+    "id": "dong-dao-xi-wai",
+    "idiom": "東倒西歪",
+    "aliases": [
+      "东倒西歪"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "dong dao xi wai",
+    "taboo": [
+      "east",
+      "west",
+      "fall",
+      "lean"
+    ],
+    "difficulty": 1,
+    "reference_english": "Leaning or falling all over the place."
+  },
+  {
+    "id": "dong-pin-xi-cou",
+    "idiom": "東拼西湊",
+    "aliases": [
+      "东拼西凑"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "dong pin xi cou",
+    "taboo": [
+      "east",
+      "west",
+      "piece",
+      "patch",
+      "together"
+    ],
+    "difficulty": 2,
+    "reference_english": "Hastily putting something together from bits and pieces."
+  },
+  {
+    "id": "nan-lai-bei-wang",
+    "idiom": "南來北往",
+    "aliases": [
+      "南来北往"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "nan lai bei wang",
+    "taboo": [
+      "south",
+      "north",
+      "travel"
+    ],
+    "difficulty": 2,
+    "reference_english": "People coming and going in every direction."
+  },
+  {
+    "id": "shang-shang-xia-xia",
+    "idiom": "上上下下",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "shang shang xia xia",
+    "taboo": [
+      "up",
+      "down",
+      "top",
+      "bottom",
+      "everyone"
+    ],
+    "difficulty": 1,
+    "reference_english": "Everyone, from top to bottom."
+  },
+  {
+    "id": "qian-yin-hou-guo",
+    "idiom": "前因後果",
+    "aliases": [
+      "前因后果"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "qian yin hou guo",
+    "taboo": [
+      "cause",
+      "result",
+      "reason"
+    ],
+    "difficulty": 2,
+    "reference_english": "The whole story from cause to result."
+  },
+  {
+    "id": "qian-suo-wei-you",
+    "idiom": "前所未有",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "qian suo wei you",
+    "taboo": [
+      "never",
+      "history",
+      "new",
+      "record"
+    ],
+    "difficulty": 2,
+    "reference_english": "Never seen or done before."
+  },
+  {
+    "id": "tian-nan-di-bei",
+    "idiom": "天南地北",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "tian nan di bei",
+    "taboo": [
+      "sky",
+      "earth",
+      "south",
+      "north",
+      "far"
+    ],
+    "difficulty": 2,
+    "reference_english": "Very far apart, or chatting about all kinds of topics."
+  },
+  {
+    "id": "tian-chang-di-jiu",
+    "idiom": "天長地久",
+    "aliases": [
+      "天长地久"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "tian chang di jiu",
+    "taboo": [
+      "sky",
+      "earth",
+      "long",
+      "forever"
+    ],
+    "difficulty": 2,
+    "reference_english": "Lasting forever."
+  },
+  {
+    "id": "tian-fan-di-fu",
+    "idiom": "天翻地覆",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "tian fan di fu",
+    "taboo": [
+      "sky",
+      "earth",
+      "upside down",
+      "turn",
+      "flip"
+    ],
+    "difficulty": 2,
+    "reference_english": "A huge, dramatic change or complete chaos."
+  },
+  {
+    "id": "tian-zhen-wu-xie",
+    "idiom": "天真無邪",
+    "aliases": [
+      "天真无邪"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "tian zhen wu xie",
+    "taboo": [
+      "innocent",
+      "child",
+      "pure",
+      "sky"
+    ],
+    "difficulty": 1,
+    "reference_english": "Innocent and pure like a child."
+  },
+  {
+    "id": "you-tou-you-wei",
+    "idiom": "有頭有尾",
+    "aliases": [
+      "有头有尾"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "you tou you wei",
+    "taboo": [
+      "head",
+      "tail",
+      "start",
+      "end",
+      "finish"
+    ],
+    "difficulty": 1,
+    "reference_english": "Finishing what you start."
+  },
+  {
+    "id": "you-shuo-you-xiao",
+    "idiom": "有說有笑",
+    "aliases": [
+      "有说有笑"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "you shuo you xiao",
+    "taboo": [
+      "talk",
+      "laugh",
+      "speak",
+      "smile",
+      "chat"
+    ],
+    "difficulty": 1,
+    "reference_english": "Chatting and laughing together happily."
+  },
+  {
+    "id": "you-sheng-you-se",
+    "idiom": "有聲有色",
+    "aliases": [
+      "有声有色"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "you sheng you se",
+    "taboo": [
+      "sound",
+      "color",
+      "colour",
+      "vivid"
+    ],
+    "difficulty": 2,
+    "reference_english": "Vivid and lively."
+  },
+  {
+    "id": "wu-ying-wu-zong",
+    "idiom": "無影無蹤",
+    "aliases": [
+      "无影无踪"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "wu ying wu zong",
+    "taboo": [
+      "shadow",
+      "trace",
+      "disappear",
+      "vanish"
+    ],
+    "difficulty": 2,
+    "reference_english": "Vanished without a trace."
+  },
+  {
+    "id": "wu-you-wu-lu",
+    "idiom": "無憂無慮",
+    "aliases": [
+      "无忧无虑"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "wu you wu lu",
+    "taboo": [
+      "worry",
+      "care",
+      "free",
+      "happy"
+    ],
+    "difficulty": 1,
+    "reference_english": "Free from all worries."
+  },
+  {
+    "id": "wu-yuan-wu-gu",
+    "idiom": "無緣無故",
+    "aliases": [
+      "无缘无故"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "wu yuan wu gu",
+    "taboo": [
+      "reason",
+      "cause",
+      "explanation"
+    ],
+    "difficulty": 2,
+    "reference_english": "For no reason at all."
+  },
+  {
+    "id": "wu-bian-wu-ji",
+    "idiom": "無邊無際",
+    "aliases": [
+      "无边无际"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "wu bian wu ji",
+    "taboo": [
+      "edge",
+      "end",
+      "endless",
+      "border"
+    ],
+    "difficulty": 2,
+    "reference_english": "With no end or limit at all."
+  },
+  {
+    "id": "bu-zhi-bu-jue",
+    "idiom": "不知不覺",
+    "aliases": [
+      "不知不觉"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "bu zhi bu jue",
+    "taboo": [
+      "notice",
+      "realize",
+      "aware"
+    ],
+    "difficulty": 1,
+    "reference_english": "Without noticing it happening."
+  },
+  {
+    "id": "zi-yan-zi-yu",
+    "idiom": "自言自語",
+    "aliases": [
+      "自言自语"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "zi yan zi yu",
+    "taboo": [
+      "talk",
+      "self",
+      "word",
+      "alone"
+    ],
+    "difficulty": 1,
+    "reference_english": "Talking to yourself."
+  },
+  {
+    "id": "zi-you-zi-zai",
+    "idiom": "自由自在",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "zi you zi zai",
+    "taboo": [
+      "free",
+      "freedom",
+      "relax"
+    ],
+    "difficulty": 1,
+    "reference_english": "Completely free and relaxed."
+  },
+  {
+    "id": "zi-zuo-zi-shou",
+    "idiom": "自作自受",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "zi zuo zi shou",
+    "taboo": [
+      "self",
+      "suffer",
+      "fault"
+    ],
+    "difficulty": 2,
+    "reference_english": "Suffering because of your own mistakes."
+  },
+  {
+    "id": "ban-xin-ban-yi",
+    "idiom": "半信半疑",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "ban xin ban yi",
+    "taboo": [
+      "half",
+      "believe",
+      "doubt",
+      "trust"
+    ],
+    "difficulty": 1,
+    "reference_english": "Not sure whether to believe something."
+  },
+  {
+    "id": "san-geng-ban-ye",
+    "idiom": "三更半夜",
+    "aliases": [
+      "半夜三更"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "san geng ban ye",
+    "taboo": [
+      "midnight",
+      "night",
+      "half",
+      "three"
+    ],
+    "difficulty": 2,
+    "reference_english": "In the middle of the night."
+  },
+  {
+    "id": "ni-zhui-wo-gan",
+    "idiom": "你追我趕",
+    "aliases": [
+      "你追我赶"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "ni zhui wo gan",
+    "taboo": [
+      "chase",
+      "catch",
+      "race"
+    ],
+    "difficulty": 2,
+    "reference_english": "Racing hard to catch up with each other."
+  },
+  {
+    "id": "qi-ling-ba-luo",
+    "idiom": "七零八落",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "qi ling ba luo",
+    "taboo": [
+      "seven",
+      "eight",
+      "scatter",
+      "fall",
+      "broken"
+    ],
+    "difficulty": 2,
+    "reference_english": "Scattered all over the place in a mess."
+  },
+  {
+    "id": "heng-qi-shu-ba",
+    "idiom": "橫七豎八",
+    "aliases": [
+      "横七竖八"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "heng qi shu ba",
+    "taboo": [
+      "seven",
+      "eight",
+      "messy",
+      "cross",
+      "lie"
+    ],
+    "difficulty": 2,
+    "reference_english": "Lying around every which way in a mess."
+  },
+  {
+    "id": "san-san-liang-liang",
+    "idiom": "三三兩兩",
+    "aliases": [
+      "三三两两"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "san san liang liang",
+    "taboo": [
+      "three",
+      "two",
+      "group"
+    ],
+    "difficulty": 1,
+    "reference_english": "In twos and threes."
+  },
+  {
+    "id": "shou-mang-jiao-luan",
+    "idiom": "手忙腳亂",
+    "aliases": [
+      "手忙脚乱"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "shou mang jiao luan",
+    "taboo": [
+      "hand",
+      "foot",
+      "feet",
+      "busy",
+      "panic",
+      "mess"
+    ],
+    "difficulty": 1,
+    "reference_english": "Rushing around in a panicked mess."
+  },
+  {
+    "id": "mei-kai-yan-xiao",
+    "idiom": "眉開眼笑",
+    "aliases": [
+      "眉开眼笑"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "mei kai yan xiao",
+    "taboo": [
+      "eyebrow",
+      "eye",
+      "smile",
+      "laugh",
+      "happy"
+    ],
+    "difficulty": 1,
+    "reference_english": "Beaming with joy."
+  },
+  {
+    "id": "yan-ming-shou-kuai",
+    "idiom": "眼明手快",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "yan ming shou kuai",
+    "taboo": [
+      "eye",
+      "hand",
+      "quick",
+      "fast",
+      "sharp"
+    ],
+    "difficulty": 1,
+    "reference_english": "Quick to see and quick to act."
+  },
+  {
+    "id": "mu-deng-kou-dai",
+    "idiom": "目瞪口呆",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "mu deng kou dai",
+    "taboo": [
+      "eye",
+      "mouth",
+      "stare",
+      "shock",
+      "stunned"
+    ],
+    "difficulty": 1,
+    "reference_english": "So shocked that you just stare and cannot speak."
+  },
+  {
+    "id": "mian-hong-er-chi",
+    "idiom": "面紅耳赤",
+    "aliases": [
+      "面红耳赤"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "mian hong er chi",
+    "taboo": [
+      "face",
+      "ear",
+      "red",
+      "blush",
+      "angry"
+    ],
+    "difficulty": 1,
+    "reference_english": "Red in the face from anger or embarrassment."
+  },
+  {
+    "id": "xin-hua-nu-fang",
+    "idiom": "心花怒放",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "xin hua nu fang",
+    "taboo": [
+      "heart",
+      "flower",
+      "bloom",
+      "happy",
+      "joy"
+    ],
+    "difficulty": 2,
+    "reference_english": "Bursting with happiness."
+  },
+  {
+    "id": "xin-ping-qi-he",
+    "idiom": "心平氣和",
+    "aliases": [
+      "心平气和"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "xin ping qi he",
+    "taboo": [
+      "heart",
+      "calm",
+      "peace",
+      "air"
+    ],
+    "difficulty": 2,
+    "reference_english": "Calm and peaceful."
+  },
+  {
+    "id": "xin-zhi-kou-kuai",
+    "idiom": "心直口快",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "xin zhi kou kuai",
+    "taboo": [
+      "heart",
+      "mouth",
+      "straight",
+      "honest",
+      "quick"
+    ],
+    "difficulty": 2,
+    "reference_english": "Saying whatever you think, frankly and quickly."
+  },
+  {
+    "id": "kou-shi-xin-fei",
+    "idiom": "口是心非",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "kou shi xin fei",
+    "taboo": [
+      "mouth",
+      "heart",
+      "mean",
+      "lie"
+    ],
+    "difficulty": 2,
+    "reference_english": "Saying one thing but meaning another."
+  },
+  {
+    "id": "xin-man-yi-zu",
+    "idiom": "心滿意足",
+    "aliases": [
+      "心满意足"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "xin man yi zu",
+    "taboo": [
+      "heart",
+      "full",
+      "satisfied",
+      "happy"
+    ],
+    "difficulty": 1,
+    "reference_english": "Completely satisfied."
+  },
+  {
+    "id": "xin-jing-dan-tiao",
+    "idiom": "心驚膽跳",
+    "aliases": [
+      "心惊胆跳"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "xin jing dan tiao",
+    "taboo": [
+      "heart",
+      "scared",
+      "fear",
+      "jump"
+    ],
+    "difficulty": 2,
+    "reference_english": "Very frightened."
+  },
+  {
+    "id": "tou-zhong-jiao-qing",
+    "idiom": "頭重腳輕",
+    "aliases": [
+      "头重脚轻"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "tou zhong jiao qing",
+    "taboo": [
+      "head",
+      "foot",
+      "feet",
+      "heavy",
+      "light",
+      "dizzy"
+    ],
+    "difficulty": 2,
+    "reference_english": "Feeling dizzy, or being top-heavy."
+  },
+  {
+    "id": "tou-po-xue-liu",
+    "idiom": "頭破血流",
+    "aliases": [
+      "头破血流"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "tou po xue liu",
+    "taboo": [
+      "head",
+      "blood",
+      "break",
+      "bleed"
+    ],
+    "difficulty": 2,
+    "reference_english": "Badly beaten; suffering a crushing defeat."
+  },
+  {
+    "id": "shou-wu-zu-dao",
+    "idiom": "手舞足蹈",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "shou wu zu dao",
+    "taboo": [
+      "hand",
+      "foot",
+      "feet",
+      "dance",
+      "happy"
+    ],
+    "difficulty": 1,
+    "reference_english": "Dancing for joy."
+  },
+  {
+    "id": "pai-shou-jiao-hao",
+    "idiom": "拍手叫好",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "pai shou jiao hao",
+    "taboo": [
+      "clap",
+      "hand",
+      "cheer",
+      "good"
+    ],
+    "difficulty": 1,
+    "reference_english": "Clapping and cheering."
+  },
+  {
+    "id": "ju-shou-zhi-lao",
+    "idiom": "舉手之勞",
+    "aliases": [
+      "举手之劳"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "ju shou zhi lao",
+    "taboo": [
+      "hand",
+      "raise",
+      "lift",
+      "easy",
+      "effort"
+    ],
+    "difficulty": 1,
+    "reference_english": "Something very easy to do; no trouble at all."
+  },
+  {
+    "id": "shou-zu-wu-cuo",
+    "idiom": "手足無措",
+    "aliases": [
+      "手足无措"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "shou zu wu cuo",
+    "taboo": [
+      "hand",
+      "foot",
+      "feet",
+      "panic"
+    ],
+    "difficulty": 2,
+    "reference_english": "Not knowing what to do."
+  },
+  {
+    "id": "jiao-tou-jie-er",
+    "idiom": "交頭接耳",
+    "aliases": [
+      "交头接耳"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "jiao tou jie er",
+    "taboo": [
+      "head",
+      "ear",
+      "whisper"
+    ],
+    "difficulty": 1,
+    "reference_english": "Whispering to each other."
+  },
+  {
+    "id": "mo-quan-ca-zhang",
+    "idiom": "摩拳擦掌",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "mo quan ca zhang",
+    "taboo": [
+      "fist",
+      "hand",
+      "rub",
+      "palm",
+      "ready",
+      "eager"
+    ],
+    "difficulty": 2,
+    "reference_english": "Eagerly getting ready for action."
+  },
+  {
+    "id": "peng-fu-da-xiao",
+    "idiom": "捧腹大笑",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "peng fu da xiao",
+    "taboo": [
+      "laugh",
+      "belly",
+      "stomach"
+    ],
+    "difficulty": 1,
+    "reference_english": "Laughing very hard while holding your belly."
+  },
+  {
+    "id": "chou-mei-ku-lian",
+    "idiom": "愁眉苦臉",
+    "aliases": [
+      "愁眉苦脸"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "chou mei ku lian",
+    "taboo": [
+      "face",
+      "eyebrow",
+      "sad",
+      "worry",
+      "bitter"
+    ],
+    "difficulty": 1,
+    "reference_english": "Looking worried and miserable."
+  },
+  {
+    "id": "chui-tou-sang-qi",
+    "idiom": "垂頭喪氣",
+    "aliases": [
+      "垂头丧气"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "chui tou sang qi",
+    "taboo": [
+      "head",
+      "sad",
+      "down",
+      "hang",
+      "lose"
+    ],
+    "difficulty": 1,
+    "reference_english": "Discouraged and depressed."
+  },
+  {
+    "id": "yao-ya-qie-chi",
+    "idiom": "咬牙切齒",
+    "aliases": [
+      "咬牙切齿"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "yao ya qie chi",
+    "taboo": [
+      "teeth",
+      "tooth",
+      "bite",
+      "angry",
+      "hate"
+    ],
+    "difficulty": 2,
+    "reference_english": "Gnashing your teeth in anger."
+  },
+  {
+    "id": "yao-tou-bai-wei",
+    "idiom": "搖頭擺尾",
+    "aliases": [
+      "摇头摆尾"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "yao tou bai wei",
+    "taboo": [
+      "head",
+      "tail",
+      "shake",
+      "wag",
+      "dog"
+    ],
+    "difficulty": 2,
+    "reference_english": "Wagging head and tail; looking very pleased with yourself."
+  },
+  {
+    "id": "lang-tun-hu-yan",
+    "idiom": "狼吞虎嚥",
+    "aliases": [
+      "狼吞虎咽"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "lang tun hu yan",
+    "taboo": [
+      "wolf",
+      "tiger",
+      "swallow",
+      "eat",
+      "fast"
+    ],
+    "difficulty": 1,
+    "reference_english": "Eating very fast and greedily."
+  },
+  {
+    "id": "ji-fei-gou-tiao",
+    "idiom": "雞飛狗跳",
+    "aliases": [
+      "鸡飞狗跳"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "ji fei gou tiao",
+    "taboo": [
+      "chicken",
+      "dog",
+      "fly",
+      "jump",
+      "chaos"
+    ],
+    "difficulty": 1,
+    "reference_english": "A noisy, chaotic scene."
+  },
+  {
+    "id": "ji-mao-suan-pi",
+    "idiom": "雞毛蒜皮",
+    "aliases": [
+      "鸡毛蒜皮"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "ji mao suan pi",
+    "taboo": [
+      "chicken",
+      "feather",
+      "garlic",
+      "skin"
+    ],
+    "difficulty": 2,
+    "reference_english": "Trivial, unimportant little things."
+  },
+  {
+    "id": "niao-yu-hua-xiang",
+    "idiom": "鳥語花香",
+    "aliases": [
+      "鸟语花香"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "niao yu hua xiang",
+    "taboo": [
+      "bird",
+      "flower",
+      "smell",
+      "sing",
+      "spring"
+    ],
+    "difficulty": 1,
+    "reference_english": "Birds singing and flowers smelling sweet; a lovely spring scene."
+  },
+  {
+    "id": "hu-tou-she-wei",
+    "idiom": "虎頭蛇尾",
+    "aliases": [
+      "虎头蛇尾"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "hu tou she wei",
+    "taboo": [
+      "tiger",
+      "snake",
+      "head",
+      "tail",
+      "start",
+      "end"
+    ],
+    "difficulty": 2,
+    "reference_english": "Starting strong but finishing weakly."
+  },
+  {
+    "id": "ma-ma-hu-hu",
+    "idiom": "馬馬虎虎",
+    "aliases": [
+      "马马虎虎"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "ma ma hu hu",
+    "taboo": [
+      "horse",
+      "tiger",
+      "careless",
+      "okay"
+    ],
+    "difficulty": 1,
+    "reference_english": "Careless, or just so-so."
+  },
+  {
+    "id": "long-fei-feng-wu",
+    "idiom": "龍飛鳳舞",
+    "aliases": [
+      "龙飞凤舞"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "long fei feng wu",
+    "taboo": [
+      "dragon",
+      "phoenix",
+      "fly",
+      "dance",
+      "handwriting"
+    ],
+    "difficulty": 2,
+    "reference_english": "Lively, flowing handwriting."
+  },
+  {
+    "id": "long-zheng-hu-dou",
+    "idiom": "龍爭虎鬥",
+    "aliases": [
+      "龙争虎斗"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "long zheng hu dou",
+    "taboo": [
+      "dragon",
+      "tiger",
+      "fight",
+      "battle"
+    ],
+    "difficulty": 2,
+    "reference_english": "A fierce fight between strong rivals."
+  },
+  {
+    "id": "sheng-long-huo-hu",
+    "idiom": "生龍活虎",
+    "aliases": [
+      "生龙活虎"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "sheng long huo hu",
+    "taboo": [
+      "dragon",
+      "tiger",
+      "alive",
+      "energy",
+      "lively"
+    ],
+    "difficulty": 2,
+    "reference_english": "Full of energy and life."
+  },
+  {
+    "id": "ru-yu-de-shui",
+    "idiom": "如魚得水",
+    "aliases": [
+      "如鱼得水"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "ru yu de shui",
+    "taboo": [
+      "fish",
+      "water",
+      "swim",
+      "comfortable"
+    ],
+    "difficulty": 2,
+    "reference_english": "Feeling completely at home in a situation."
+  },
+  {
+    "id": "ji-quan-bu-ning",
+    "idiom": "雞犬不寧",
+    "aliases": [
+      "鸡犬不宁"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "ji quan bu ning",
+    "taboo": [
+      "chicken",
+      "dog",
+      "peace",
+      "quiet"
+    ],
+    "difficulty": 2,
+    "reference_english": "So much chaos that even the animals get no peace."
+  },
+  {
+    "id": "he-li-ji-qun",
+    "idiom": "鶴立雞群",
+    "aliases": [
+      "鹤立鸡群"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "he li ji qun",
+    "taboo": [
+      "crane",
+      "chicken",
+      "stand",
+      "group",
+      "crowd"
+    ],
+    "difficulty": 2,
+    "reference_english": "Standing out clearly from the crowd."
+  },
+  {
+    "id": "yi-ma-dang-xian",
+    "idiom": "一馬當先",
+    "aliases": [
+      "一马当先"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "yi ma dang xian",
+    "taboo": [
+      "horse",
+      "lead",
+      "front"
+    ],
+    "difficulty": 2,
+    "reference_english": "Taking the lead ahead of everyone else."
+  },
+  {
+    "id": "zou-ma-kan-hua",
+    "idiom": "走馬看花",
+    "aliases": [
+      "走马看花"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "zou ma kan hua",
+    "taboo": [
+      "horse",
+      "flower",
+      "ride"
+    ],
+    "difficulty": 2,
+    "reference_english": "Looking at things quickly without paying real attention."
+  },
+  {
+    "id": "ma-dao-cheng-gong",
+    "idiom": "馬到成功",
+    "aliases": [
+      "马到成功"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "ma dao cheng gong",
+    "taboo": [
+      "horse",
+      "success",
+      "arrive",
+      "win"
+    ],
+    "difficulty": 1,
+    "reference_english": "Succeeding right away."
+  },
+  {
+    "id": "yang-ru-hu-kou",
+    "idiom": "羊入虎口",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "yang ru hu kou",
+    "taboo": [
+      "sheep",
+      "goat",
+      "tiger",
+      "mouth",
+      "danger"
+    ],
+    "difficulty": 2,
+    "reference_english": "Walking right into danger."
+  },
+  {
+    "id": "gou-ji-tiao-qiang",
+    "idiom": "狗急跳牆",
+    "aliases": [
+      "狗急跳墙"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "gou ji tiao qiang",
+    "taboo": [
+      "dog",
+      "wall",
+      "jump",
+      "desperate"
+    ],
+    "difficulty": 2,
+    "reference_english": "Doing something crazy when you are desperate."
+  },
+  {
+    "id": "hu-si-luan-xiang",
+    "idiom": "胡思亂想",
+    "aliases": [
+      "胡思乱想"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "hu si luan xiang",
+    "taboo": [
+      "think",
+      "imagine",
+      "wild",
+      "crazy"
+    ],
+    "difficulty": 1,
+    "reference_english": "Letting your mind run wild with silly thoughts."
+  },
+  {
+    "id": "feng-he-ri-li",
+    "idiom": "風和日麗",
+    "aliases": [
+      "风和日丽"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "feng he ri li",
+    "taboo": [
+      "wind",
+      "sun",
+      "sunny",
+      "weather",
+      "breeze"
+    ],
+    "difficulty": 1,
+    "reference_english": "Sunny with a gentle breeze."
+  },
+  {
+    "id": "feng-ping-lang-jing",
+    "idiom": "風平浪靜",
+    "aliases": [
+      "风平浪静"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "feng ping lang jing",
+    "taboo": [
+      "wind",
+      "wave",
+      "calm",
+      "sea",
+      "quiet"
+    ],
+    "difficulty": 1,
+    "reference_english": "Calm and peaceful, with no trouble."
+  },
+  {
+    "id": "kuang-feng-bao-yu",
+    "idiom": "狂風暴雨",
+    "aliases": [
+      "狂风暴雨"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "kuang feng bao yu",
+    "taboo": [
+      "wind",
+      "rain",
+      "storm"
+    ],
+    "difficulty": 1,
+    "reference_english": "A violent storm."
+  },
+  {
+    "id": "feng-chui-yu-da",
+    "idiom": "風吹雨打",
+    "aliases": [
+      "风吹雨打"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "feng chui yu da",
+    "taboo": [
+      "wind",
+      "rain",
+      "blow",
+      "hit"
+    ],
+    "difficulty": 2,
+    "reference_english": "Being battered by wind and rain; going through hardships."
+  },
+  {
+    "id": "yu-guo-tian-qing",
+    "idiom": "雨過天晴",
+    "aliases": [
+      "雨过天晴"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "yu guo tian qing",
+    "taboo": [
+      "rain",
+      "sky",
+      "sun",
+      "sunny",
+      "clear"
+    ],
+    "difficulty": 1,
+    "reference_english": "Sunny again after rain; things get better after trouble."
+  },
+  {
+    "id": "chun-nuan-hua-kai",
+    "idiom": "春暖花開",
+    "aliases": [
+      "春暖花开"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "chun nuan hua kai",
+    "taboo": [
+      "spring",
+      "warm",
+      "flower",
+      "bloom"
+    ],
+    "difficulty": 1,
+    "reference_english": "Warm spring days with flowers blooming."
+  },
+  {
+    "id": "shan-qing-shui-xiu",
+    "idiom": "山清水秀",
+    "aliases": [
+      "山明水秀"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "shan qing shui xiu",
+    "taboo": [
+      "mountain",
+      "water",
+      "river",
+      "beautiful",
+      "scenery"
+    ],
+    "difficulty": 2,
+    "reference_english": "Beautiful scenery with green hills and clear water."
+  },
+  {
+    "id": "bing-tian-xue-di",
+    "idiom": "冰天雪地",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "bing tian xue di",
+    "taboo": [
+      "ice",
+      "snow",
+      "cold",
+      "sky",
+      "ground"
+    ],
+    "difficulty": 1,
+    "reference_english": "A freezing world of ice and snow."
+  },
+  {
+    "id": "hua-hao-yue-yuan",
+    "idiom": "花好月圓",
+    "aliases": [
+      "花好月圆"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "hua hao yue yuan",
+    "taboo": [
+      "flower",
+      "moon",
+      "full",
+      "round",
+      "love"
+    ],
+    "difficulty": 2,
+    "reference_english": "Perfect happiness, especially for a married couple."
+  },
+  {
+    "id": "ri-ji-yue-lei",
+    "idiom": "日積月累",
+    "aliases": [
+      "日积月累"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "ri ji yue lei",
+    "taboo": [
+      "day",
+      "month",
+      "sun",
+      "moon",
+      "add",
+      "collect"
+    ],
+    "difficulty": 2,
+    "reference_english": "Building up little by little over a long time."
+  },
+  {
+    "id": "ri-xin-yue-yi",
+    "idiom": "日新月異",
+    "aliases": [
+      "日新月异"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "ri xin yue yi",
+    "taboo": [
+      "day",
+      "month",
+      "new",
+      "change"
+    ],
+    "difficulty": 2,
+    "reference_english": "Changing and improving very quickly."
+  },
+  {
+    "id": "ri-yi-ji-ye",
+    "idiom": "日以繼夜",
+    "aliases": [
+      "日以继夜",
+      "夜以繼日",
+      "夜以继日"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "ri yi ji ye",
+    "taboo": [
+      "day",
+      "night",
+      "nonstop",
+      "continue"
+    ],
+    "difficulty": 2,
+    "reference_english": "Working day and night without stopping."
+  },
+  {
+    "id": "zao-chu-wan-gui",
+    "idiom": "早出晚歸",
+    "aliases": [
+      "早出晚归"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "zao chu wan gui",
+    "taboo": [
+      "morning",
+      "early",
+      "late",
+      "night",
+      "leave",
+      "return",
+      "home"
+    ],
+    "difficulty": 1,
+    "reference_english": "Leaving home early and coming back late."
+  },
+  {
+    "id": "shui-luo-shi-chu",
+    "idiom": "水落石出",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "shui luo shi chu",
+    "taboo": [
+      "water",
+      "stone",
+      "rock",
+      "fall",
+      "truth"
+    ],
+    "difficulty": 2,
+    "reference_english": "The truth finally comes out."
+  },
+  {
+    "id": "shui-shen-huo-re",
+    "idiom": "水深火熱",
+    "aliases": [
+      "水深火热"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "shui shen huo re",
+    "taboo": [
+      "water",
+      "fire",
+      "deep",
+      "hot",
+      "suffer"
+    ],
+    "difficulty": 3,
+    "reference_english": "Living in terrible suffering."
+  },
+  {
+    "id": "huo-shang-jia-you",
+    "idiom": "火上加油",
+    "aliases": [
+      "火上澆油",
+      "火上浇油"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "huo shang jia you",
+    "taboo": [
+      "fire",
+      "oil",
+      "add",
+      "worse",
+      "fuel"
+    ],
+    "difficulty": 2,
+    "reference_english": "Making a bad situation even worse."
+  },
+  {
+    "id": "ren-shan-ren-hai",
+    "idiom": "人山人海",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "ren shan ren hai",
+    "taboo": [
+      "people",
+      "person",
+      "mountain",
+      "sea",
+      "crowd"
+    ],
+    "difficulty": 1,
+    "reference_english": "A huge crowd of people."
+  },
+  {
+    "id": "feng-yu-wu-zu",
+    "idiom": "風雨無阻",
+    "aliases": [
+      "风雨无阻"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "feng yu wu zu",
+    "taboo": [
+      "wind",
+      "rain",
+      "stop",
+      "weather"
+    ],
+    "difficulty": 1,
+    "reference_english": "Going ahead no matter what the weather."
+  },
+  {
+    "id": "hua-yan-qiao-yu",
+    "idiom": "花言巧語",
+    "aliases": [
+      "花言巧语"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "hua yan qiao yu",
+    "taboo": [
+      "flower",
+      "word",
+      "sweet",
+      "talk",
+      "lie"
+    ],
+    "difficulty": 2,
+    "reference_english": "Sweet-sounding but insincere words."
+  },
+  {
+    "id": "yi-shi-zhu-xing",
+    "idiom": "衣食住行",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "yi shi zhu xing",
+    "taboo": [
+      "clothes",
+      "food",
+      "live",
+      "travel",
+      "eat",
+      "house"
+    ],
+    "difficulty": 2,
+    "reference_english": "The basic needs of daily life."
+  },
+  {
+    "id": "chai-mi-you-yan",
+    "idiom": "柴米油鹽",
+    "aliases": [
+      "柴米油盐"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "chai mi you yan",
+    "taboo": [
+      "rice",
+      "oil",
+      "salt",
+      "wood",
+      "firewood"
+    ],
+    "difficulty": 2,
+    "reference_english": "The everyday necessities of life."
+  },
+  {
+    "id": "chi-he-wan-le",
+    "idiom": "吃喝玩樂",
+    "aliases": [
+      "吃喝玩乐"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "chi he wan le",
+    "taboo": [
+      "eat",
+      "drink",
+      "play",
+      "fun"
+    ],
+    "difficulty": 1,
+    "reference_english": "Just eating, drinking and having fun."
+  },
+  {
+    "id": "cu-cha-dan-fan",
+    "idiom": "粗茶淡飯",
+    "aliases": [
+      "粗茶淡饭"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "cu cha dan fan",
+    "taboo": [
+      "tea",
+      "rice",
+      "food",
+      "simple",
+      "meal"
+    ],
+    "difficulty": 2,
+    "reference_english": "Simple, plain meals."
+  },
+  {
+    "id": "shan-zhen-hai-wei",
+    "idiom": "山珍海味",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "shan zhen hai wei",
+    "taboo": [
+      "mountain",
+      "sea",
+      "food",
+      "delicacy",
+      "rare"
+    ],
+    "difficulty": 2,
+    "reference_english": "Rare and expensive delicious foods."
+  },
+  {
+    "id": "jia-jia-hu-hu",
+    "idiom": "家家戶戶",
+    "aliases": [
+      "家家户户"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "jia jia hu hu",
+    "taboo": [
+      "home",
+      "house",
+      "family",
+      "door"
+    ],
+    "difficulty": 1,
+    "reference_english": "Every single household."
+  },
+  {
+    "id": "nan-nu-lao-shao",
+    "idiom": "男女老少",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "nan nu lao shao",
+    "taboo": [
+      "man",
+      "men",
+      "woman",
+      "women",
+      "old",
+      "young"
+    ],
+    "difficulty": 1,
+    "reference_english": "Everyone, men and women, young and old."
+  },
+  {
+    "id": "huan-tian-xi-di",
+    "idiom": "歡天喜地",
+    "aliases": [
+      "欢天喜地"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "huan tian xi di",
+    "taboo": [
+      "happy",
+      "joy",
+      "sky",
+      "earth"
+    ],
+    "difficulty": 1,
+    "reference_english": "Extremely happy and delighted."
+  },
+  {
+    "id": "xing-gao-cai-lie",
+    "idiom": "興高采烈",
+    "aliases": [
+      "兴高采烈"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "xing gao cai lie",
+    "taboo": [
+      "happy",
+      "excited",
+      "high",
+      "joy"
+    ],
+    "difficulty": 1,
+    "reference_english": "In very high spirits."
+  },
+  {
+    "id": "yi-yi-bu-she",
+    "idiom": "依依不捨",
+    "aliases": [
+      "依依不舍"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "yi yi bu she",
+    "taboo": [
+      "leave",
+      "goodbye",
+      "miss"
+    ],
+    "difficulty": 1,
+    "reference_english": "Not wanting to say goodbye."
+  },
+  {
+    "id": "jin-jin-you-wei",
+    "idiom": "津津有味",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "jin jin you wei",
+    "taboo": [
+      "taste",
+      "delicious",
+      "enjoy",
+      "flavor"
+    ],
+    "difficulty": 2,
+    "reference_english": "With great enjoyment."
+  },
+  {
+    "id": "quan-shen-guan-zhu",
+    "idiom": "全神貫注",
+    "aliases": [
+      "全神贯注"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "quan shen guan zhu",
+    "taboo": [
+      "focus",
+      "attention",
+      "concentrate"
+    ],
+    "difficulty": 1,
+    "reference_english": "Fully focused on something."
+  },
+  {
+    "id": "shu-neng-sheng-qiao",
+    "idiom": "熟能生巧",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "shu neng sheng qiao",
+    "taboo": [
+      "practice",
+      "skill",
+      "perfect",
+      "skillful"
+    ],
+    "difficulty": 1,
+    "reference_english": "Practice makes perfect."
+  },
+  {
+    "id": "you-bei-wu-huan",
+    "idiom": "有備無患",
+    "aliases": [
+      "有备无患"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "you bei wu huan",
+    "taboo": [
+      "prepare",
+      "ready",
+      "worry",
+      "danger"
+    ],
+    "difficulty": 2,
+    "reference_english": "Being prepared prevents trouble."
+  },
+  {
+    "id": "hao-chi-lan-zuo",
+    "idiom": "好吃懶做",
+    "aliases": [
+      "好吃懒做"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "hao chi lan zuo",
+    "taboo": [
+      "eat",
+      "lazy",
+      "work",
+      "food"
+    ],
+    "difficulty": 1,
+    "reference_english": "Loving to eat but too lazy to work."
+  },
+  {
+    "id": "you-shou-hao-xian",
+    "idiom": "游手好閒",
+    "aliases": [
+      "游手好闲"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "you shou hao xian",
+    "taboo": [
+      "hand",
+      "lazy",
+      "idle",
+      "free"
+    ],
+    "difficulty": 2,
+    "reference_english": "Lazy and doing nothing useful."
+  },
+  {
+    "id": "bu-huang-bu-mang",
+    "idiom": "不慌不忙",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "bu huang bu mang",
+    "taboo": [
+      "calm",
+      "hurry",
+      "rush",
+      "busy",
+      "panic"
+    ],
+    "difficulty": 1,
+    "reference_english": "Calm and unhurried."
+  },
+  {
+    "id": "ji-ji-mang-mang",
+    "idiom": "急急忙忙",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "ji ji mang mang",
+    "taboo": [
+      "hurry",
+      "rush",
+      "busy",
+      "quick"
+    ],
+    "difficulty": 1,
+    "reference_english": "In a great hurry."
+  },
+  {
+    "id": "jing-jing-you-tiao",
+    "idiom": "井井有條",
+    "aliases": [
+      "井井有条"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "jing jing you tiao",
+    "taboo": [
+      "order",
+      "neat",
+      "tidy",
+      "organized"
+    ],
+    "difficulty": 2,
+    "reference_english": "In perfect order."
+  },
+  {
+    "id": "yi-chen-bu-ran",
+    "idiom": "一塵不染",
+    "aliases": [
+      "一尘不染"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "yi chen bu ran",
+    "taboo": [
+      "dust",
+      "clean",
+      "spotless",
+      "dirt"
+    ],
+    "difficulty": 2,
+    "reference_english": "Spotlessly clean."
+  },
+  {
+    "id": "zuo-gu-you-pan",
+    "idiom": "左顧右盼",
+    "aliases": [
+      "左顾右盼"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "zuo gu you pan",
+    "taboo": [
+      "left",
+      "right",
+      "around"
+    ],
+    "difficulty": 2,
+    "reference_english": "Looking left and right all around."
+  },
+  {
+    "id": "zuo-lin-you-she",
+    "idiom": "左鄰右舍",
+    "aliases": [
+      "左邻右舍"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "zuo lin you she",
+    "taboo": [
+      "left",
+      "right",
+      "neighbor",
+      "neighbour",
+      "house"
+    ],
+    "difficulty": 1,
+    "reference_english": "The neighbors living around you."
+  },
+  {
+    "id": "qi-chuan-xu-xu",
+    "idiom": "氣喘吁吁",
+    "aliases": [
+      "气喘吁吁"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "qi chuan xu xu",
+    "taboo": [
+      "breath",
+      "breathe",
+      "pant",
+      "tired"
+    ],
+    "difficulty": 1,
+    "reference_english": "Out of breath and panting."
+  },
+  {
+    "id": "man-tou-da-han",
+    "idiom": "滿頭大汗",
+    "aliases": [
+      "满头大汗"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "man tou da han",
+    "taboo": [
+      "sweat",
+      "head",
+      "hot"
+    ],
+    "difficulty": 1,
+    "reference_english": "Sweating all over your head."
+  },
+  {
+    "id": "jin-pi-li-jin",
+    "idiom": "筋疲力盡",
+    "aliases": [
+      "筋疲力尽",
+      "精疲力盡",
+      "精疲力尽"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "jin pi li jin",
+    "taboo": [
+      "tired",
+      "exhausted",
+      "energy",
+      "strength"
+    ],
+    "difficulty": 1,
+    "reference_english": "Completely worn out."
+  },
+  {
+    "id": "jing-shen-bai-bei",
+    "idiom": "精神百倍",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "jing shen bai bei",
+    "taboo": [
+      "energy",
+      "spirit",
+      "hundred",
+      "full"
+    ],
+    "difficulty": 2,
+    "reference_english": "Full of energy."
+  },
+  {
+    "id": "huo-beng-luan-tiao",
+    "idiom": "活蹦亂跳",
+    "aliases": [
+      "活蹦乱跳"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "huo beng luan tiao",
+    "taboo": [
+      "jump",
+      "alive",
+      "lively",
+      "energy"
+    ],
+    "difficulty": 1,
+    "reference_english": "Lively and jumping around."
+  },
+  {
+    "id": "yi-kou-tong-sheng",
+    "idiom": "異口同聲",
+    "aliases": [
+      "异口同声"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "yi kou tong sheng",
+    "taboo": [
+      "mouth",
+      "voice",
+      "same",
+      "together"
+    ],
+    "difficulty": 1,
+    "reference_english": "Everyone saying the same thing at the same time."
+  },
+  {
+    "id": "tong-xin-xie-li",
+    "idiom": "同心協力",
+    "aliases": [
+      "同心协力",
+      "齊心協力",
+      "齐心协力"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "tong xin xie li",
+    "taboo": [
+      "heart",
+      "together",
+      "team",
+      "work",
+      "help"
+    ],
+    "difficulty": 1,
+    "reference_english": "Working together as one."
+  },
+  {
+    "id": "zhu-ren-wei-le",
+    "idiom": "助人為樂",
+    "aliases": [
+      "助人为乐"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "zhu ren wei le",
+    "taboo": [
+      "help",
+      "happy",
+      "people",
+      "joy"
+    ],
+    "difficulty": 1,
+    "reference_english": "Finding joy in helping others."
+  },
+  {
+    "id": "jian-yi-yong-wei",
+    "idiom": "見義勇為",
+    "aliases": [
+      "见义勇为"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "jian yi yong wei",
+    "taboo": [
+      "brave",
+      "help",
+      "right",
+      "courage"
+    ],
+    "difficulty": 2,
+    "reference_english": "Bravely doing the right thing to help others."
+  },
+  {
+    "id": "shi-jin-bu-mei",
+    "idiom": "拾金不昧",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "shi jin bu mei",
+    "taboo": [
+      "gold",
+      "money",
+      "find",
+      "pick",
+      "return",
+      "honest"
+    ],
+    "difficulty": 2,
+    "reference_english": "Honestly returning money or things you found."
+  },
+  {
+    "id": "yan-er-you-xin",
+    "idiom": "言而有信",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "yan er you xin",
+    "taboo": [
+      "word",
+      "promise",
+      "trust",
+      "keep"
+    ],
+    "difficulty": 2,
+    "reference_english": "Keeping your word."
+  },
+  {
+    "id": "shuo-dao-zuo-dao",
+    "idiom": "說到做到",
+    "aliases": [
+      "说到做到"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "shuo dao zuo dao",
+    "taboo": [
+      "promise",
+      "word",
+      "keep",
+      "action"
+    ],
+    "difficulty": 1,
+    "reference_english": "Doing exactly what you said you would do."
+  },
+  {
+    "id": "jin-xin-jin-li",
+    "idiom": "盡心盡力",
+    "aliases": [
+      "尽心尽力"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "jin xin jin li",
+    "taboo": [
+      "heart",
+      "effort",
+      "best",
+      "try"
+    ],
+    "difficulty": 1,
+    "reference_english": "Doing your very best."
+  },
+  {
+    "id": "ben-niao-xian-fei",
+    "idiom": "笨鳥先飛",
+    "aliases": [
+      "笨鸟先飞"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "ben niao xian fei",
+    "taboo": [
+      "bird",
+      "fly",
+      "slow",
+      "stupid",
+      "early"
+    ],
+    "difficulty": 1,
+    "reference_english": "Someone less able starting early to make up for it."
+  },
+  {
+    "id": "yi-bu-yi-jiao-yin",
+    "idiom": "一步一腳印",
+    "aliases": [
+      "一步一脚印"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "yi bu yi jiao yin",
+    "taboo": [
+      "step",
+      "foot",
+      "feet",
+      "footprint"
+    ],
+    "difficulty": 1,
+    "reference_english": "Making steady progress one careful step at a time."
+  },
+  {
+    "id": "jiao-ta-shi-di",
+    "idiom": "腳踏實地",
+    "aliases": [
+      "脚踏实地"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "jiao ta shi di",
+    "taboo": [
+      "foot",
+      "feet",
+      "ground",
+      "step",
+      "real"
+    ],
+    "difficulty": 2,
+    "reference_english": "Down-to-earth and practical."
+  },
+  {
+    "id": "yan-gao-shou-di",
+    "idiom": "眼高手低",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "yan gao shou di",
+    "taboo": [
+      "eye",
+      "hand",
+      "high",
+      "low"
+    ],
+    "difficulty": 2,
+    "reference_english": "Having high standards but little real ability."
+  },
+  {
+    "id": "you-kou-wu-xin",
+    "idiom": "有口無心",
+    "aliases": [
+      "有口无心"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "you kou wu xin",
+    "taboo": [
+      "mouth",
+      "heart",
+      "mean"
+    ],
+    "difficulty": 2,
+    "reference_english": "Saying things without really meaning them."
+  },
+  {
+    "id": "bu-wen-bu-wen",
+    "idiom": "不聞不問",
+    "aliases": [
+      "不闻不问"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "bu wen bu wen",
+    "taboo": [
+      "hear",
+      "ask",
+      "ignore",
+      "care"
+    ],
+    "difficulty": 2,
+    "reference_english": "Not caring about something at all."
+  },
+  {
+    "id": "bu-guan-san-qi-er-shi-yi",
+    "idiom": "不管三七二十一",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "bu guan san qi er shi yi",
+    "taboo": [
+      "three",
+      "seven",
+      "twenty",
+      "one",
+      "care",
+      "whatever"
+    ],
+    "difficulty": 2,
+    "reference_english": "Doing something no matter what, without thinking about the consequences."
+  },
+  {
+    "id": "xi-chu-wang-wai",
+    "idiom": "喜出望外",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "xi chu wang wai",
+    "taboo": [
+      "happy",
+      "surprise",
+      "expect",
+      "joy"
+    ],
+    "difficulty": 1,
+    "reference_english": "Happily surprised by something unexpected."
+  },
+  {
+    "id": "xi-nu-ai-le",
+    "idiom": "喜怒哀樂",
+    "aliases": [
+      "喜怒哀乐"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "xi nu ai le",
+    "taboo": [
+      "happy",
+      "angry",
+      "sad",
+      "joy",
+      "feeling",
+      "emotion"
+    ],
+    "difficulty": 1,
+    "reference_english": "All kinds of human feelings."
+  },
+  {
+    "id": "bei-huan-li-he",
+    "idiom": "悲歡離合",
+    "aliases": [
+      "悲欢离合"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "bei huan li he",
+    "taboo": [
+      "sad",
+      "happy",
+      "leave",
+      "meet",
+      "together"
+    ],
+    "difficulty": 2,
+    "reference_english": "The sad and happy times of partings and reunions in life."
+  },
+  {
+    "id": "suan-tian-ku-la",
+    "idiom": "酸甜苦辣",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "suan tian ku la",
+    "taboo": [
+      "sour",
+      "sweet",
+      "bitter",
+      "spicy",
+      "taste",
+      "hot"
+    ],
+    "difficulty": 1,
+    "reference_english": "All the different flavors, or all the ups and downs of life."
+  },
+  {
+    "id": "leng-yan-leng-yu",
+    "idiom": "冷言冷語",
+    "aliases": [
+      "冷言冷语"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "leng yan leng yu",
+    "taboo": [
+      "cold",
+      "word",
+      "mean",
+      "sarcastic"
+    ],
+    "difficulty": 2,
+    "reference_english": "Cold, sarcastic remarks."
+  },
+  {
+    "id": "tian-yan-mi-yu",
+    "idiom": "甜言蜜語",
+    "aliases": [
+      "甜言蜜语"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "tian yan mi yu",
+    "taboo": [
+      "sweet",
+      "honey",
+      "word",
+      "talk"
+    ],
+    "difficulty": 1,
+    "reference_english": "Sweet words, often used to please or trick someone."
+  },
+  {
+    "id": "ku-kou-po-xin",
+    "idiom": "苦口婆心",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "ku kou po xin",
+    "taboo": [
+      "bitter",
+      "mouth",
+      "grandma",
+      "heart",
+      "advice"
+    ],
+    "difficulty": 2,
+    "reference_english": "Patiently and kindly giving advice again and again."
+  },
+  {
+    "id": "zi-gao-zi-da",
+    "idiom": "自高自大",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "zi gao zi da",
+    "taboo": [
+      "proud",
+      "arrogant",
+      "big",
+      "high",
+      "self"
+    ],
+    "difficulty": 2,
+    "reference_english": "Thinking far too highly of yourself."
+  },
+  {
+    "id": "mu-zhong-wu-ren",
+    "idiom": "目中無人",
+    "aliases": [
+      "目中无人"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "mu zhong wu ren",
+    "taboo": [
+      "eye",
+      "people",
+      "arrogant",
+      "look down"
+    ],
+    "difficulty": 2,
+    "reference_english": "So arrogant that you look down on everyone."
+  },
+  {
+    "id": "nian-nian-you-yu",
+    "idiom": "年年有餘",
+    "aliases": [
+      "年年有余"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "nian nian you yu",
+    "taboo": [
+      "year",
+      "fish",
+      "extra",
+      "surplus"
+    ],
+    "difficulty": 1,
+    "reference_english": "Having more than enough every year."
+  },
+  {
+    "id": "gong-xi-fa-cai",
+    "idiom": "恭喜發財",
+    "aliases": [
+      "恭喜发财"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "gong xi fa cai",
+    "taboo": [
+      "rich",
+      "money",
+      "wealth",
+      "new year",
+      "congratulations"
+    ],
+    "difficulty": 1,
+    "reference_english": "Wishing you wealth and prosperity."
+  },
+  {
+    "id": "wan-shi-ru-yi",
+    "idiom": "萬事如意",
+    "aliases": [
+      "万事如意"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "wan shi ru yi",
+    "taboo": [
+      "everything",
+      "wish",
+      "luck",
+      "lucky"
+    ],
+    "difficulty": 1,
+    "reference_english": "May everything go the way you wish."
+  },
+  {
+    "id": "xin-xiang-shi-cheng",
+    "idiom": "心想事成",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "xin xiang shi cheng",
+    "taboo": [
+      "heart",
+      "wish",
+      "dream",
+      "come true",
+      "think"
+    ],
+    "difficulty": 1,
+    "reference_english": "May all your wishes come true."
+  },
+  {
+    "id": "bu-bu-gao-sheng",
+    "idiom": "步步高升",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "bu bu gao sheng",
+    "taboo": [
+      "step",
+      "high",
+      "rise",
+      "promotion",
+      "up"
+    ],
+    "difficulty": 1,
+    "reference_english": "Rising higher and higher, especially in your career."
+  },
+  {
+    "id": "sui-sui-ping-an",
+    "idiom": "歲歲平安",
+    "aliases": [
+      "岁岁平安"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "sui sui ping an",
+    "taboo": [
+      "year",
+      "safe",
+      "peace"
+    ],
+    "difficulty": 2,
+    "reference_english": "Safe and peaceful every year."
+  },
+  {
+    "id": "chu-ru-ping-an",
+    "idiom": "出入平安",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "chu ru ping an",
+    "taboo": [
+      "safe",
+      "peace",
+      "trip",
+      "leave",
+      "return"
+    ],
+    "difficulty": 1,
+    "reference_english": "Stay safe wherever you go."
+  },
+  {
+    "id": "yi-lu-ping-an",
+    "idiom": "一路平安",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "yi lu ping an",
+    "taboo": [
+      "road",
+      "safe",
+      "trip",
+      "journey"
+    ],
+    "difficulty": 1,
+    "reference_english": "Have a safe trip."
+  },
+  {
+    "id": "da-ji-da-li",
+    "idiom": "大吉大利",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "da ji da li",
+    "taboo": [
+      "luck",
+      "lucky",
+      "big",
+      "good"
+    ],
+    "difficulty": 1,
+    "reference_english": "Great luck and good fortune."
+  },
+  {
+    "id": "wu-fu-lin-men",
+    "idiom": "五福臨門",
+    "aliases": [
+      "五福临门"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "wu fu lin men",
+    "taboo": [
+      "five",
+      "luck",
+      "door",
+      "blessing",
+      "happiness"
+    ],
+    "difficulty": 2,
+    "reference_english": "All kinds of good fortune coming to your home."
+  },
+  {
+    "id": "liu-liu-da-shun",
+    "idiom": "六六大順",
+    "aliases": [
+      "六六大顺"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "liu liu da shun",
+    "taboo": [
+      "six",
+      "smooth",
+      "luck",
+      "big"
+    ],
+    "difficulty": 2,
+    "reference_english": "Everything going smoothly."
+  },
+  {
+    "id": "shi-na-jiu-wen",
+    "idiom": "十拿九穩",
+    "aliases": [
+      "十拿九稳"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "shi na jiu wen",
+    "taboo": [
+      "ten",
+      "nine",
+      "sure",
+      "certain",
+      "hold"
+    ],
+    "difficulty": 2,
+    "reference_english": "Almost completely certain to succeed."
+  },
+  {
+    "id": "jiu-xiao-yun-wai",
+    "idiom": "九霄雲外",
+    "aliases": [
+      "九霄云外"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "jiu xiao yun wai",
+    "taboo": [
+      "nine",
+      "cloud",
+      "sky",
+      "forget",
+      "far"
+    ],
+    "difficulty": 3,
+    "reference_english": "Far, far away; completely forgotten."
+  },
+  {
+    "id": "bai-wen-bu-ru-yi-jian",
+    "idiom": "百聞不如一見",
+    "aliases": [
+      "百闻不如一见"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "bai wen bu ru yi jian",
+    "taboo": [
+      "hundred",
+      "hear",
+      "eye"
+    ],
+    "difficulty": 1,
+    "reference_english": "Seeing something once is better than hearing about it a hundred times."
+  },
+  {
+    "id": "qian-zhen-wan-que",
+    "idiom": "千真萬確",
+    "aliases": [
+      "千真万确"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "qian zhen wan que",
+    "taboo": [
+      "true",
+      "thousand",
+      "sure",
+      "real"
+    ],
+    "difficulty": 1,
+    "reference_english": "Absolutely true."
+  },
+  {
+    "id": "wan-wu-yi-shi",
+    "idiom": "萬無一失",
+    "aliases": [
+      "万无一失"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "wan wu yi shi",
+    "taboo": [
+      "mistake",
+      "safe",
+      "sure",
+      "lose",
+      "miss"
+    ],
+    "difficulty": 2,
+    "reference_english": "Completely safe; there is no chance of failure."
+  },
+  {
+    "id": "wan-zi-qian-hong",
+    "idiom": "萬紫千紅",
+    "aliases": [
+      "万紫千红"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "wan zi qian hong",
+    "taboo": [
+      "purple",
+      "red",
+      "flower",
+      "color",
+      "colour",
+      "thousand"
+    ],
+    "difficulty": 2,
+    "reference_english": "Flowers of every color blooming everywhere."
+  },
+  {
+    "id": "qian-qi-bai-guai",
+    "idiom": "千奇百怪",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "qian qi bai guai",
+    "taboo": [
+      "strange",
+      "weird",
+      "thousand",
+      "hundred"
+    ],
+    "difficulty": 1,
+    "reference_english": "All kinds of strange and odd things."
+  },
+  {
+    "id": "qian-bian-wan-hua",
+    "idiom": "千變萬化",
+    "aliases": [
+      "千变万化"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "qian bian wan hua",
+    "taboo": [
+      "change",
+      "thousand",
+      "different"
+    ],
+    "difficulty": 1,
+    "reference_english": "Always changing in countless ways."
+  },
+  {
+    "id": "qian-jia-wan-hu",
+    "idiom": "千家萬戶",
+    "aliases": [
+      "千家万户"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "qian jia wan hu",
+    "taboo": [
+      "family",
+      "home",
+      "house",
+      "thousand"
+    ],
+    "difficulty": 2,
+    "reference_english": "Thousands of households; everyone."
+  },
+  {
+    "id": "qian-xin-wan-ku",
+    "idiom": "千辛萬苦",
+    "aliases": [
+      "千辛万苦"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "qian xin wan ku",
+    "taboo": [
+      "hard",
+      "bitter",
+      "thousand",
+      "difficult"
+    ],
+    "difficulty": 1,
+    "reference_english": "Going through all kinds of hardships."
+  },
+  {
+    "id": "bai-hua-qi-fang",
+    "idiom": "百花齊放",
+    "aliases": [
+      "百花齐放"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "bai hua qi fang",
+    "taboo": [
+      "hundred",
+      "flower",
+      "bloom",
+      "together"
+    ],
+    "difficulty": 2,
+    "reference_english": "All kinds of flowers, or ideas, blooming together."
+  },
+  {
+    "id": "bai-nian-hao-he",
+    "idiom": "百年好合",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "bai nian hao he",
+    "taboo": [
+      "hundred",
+      "year",
+      "marriage",
+      "wedding",
+      "together"
+    ],
+    "difficulty": 2,
+    "reference_english": "A wish for a long and happy marriage."
+  },
+  {
+    "id": "yi-ju-yi-dong",
+    "idiom": "一舉一動",
+    "aliases": [
+      "一举一动"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "yi ju yi dong",
+    "taboo": [
+      "move",
+      "action",
+      "behavior",
+      "behaviour"
+    ],
+    "difficulty": 1,
+    "reference_english": "Every single move someone makes."
+  },
+  {
+    "id": "yi-zhao-yi-xi",
+    "idiom": "一朝一夕",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "yi zhao yi xi",
+    "taboo": [
+      "morning",
+      "evening",
+      "day",
+      "night",
+      "short"
+    ],
+    "difficulty": 2,
+    "reference_english": "A very short time."
+  },
+  {
+    "id": "yi-hu-bai-ying",
+    "idiom": "一呼百應",
+    "aliases": [
+      "一呼百应"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "yi hu bai ying",
+    "taboo": [
+      "call",
+      "hundred",
+      "answer",
+      "shout",
+      "respond"
+    ],
+    "difficulty": 2,
+    "reference_english": "Calling once and getting a response from many people."
+  },
+  {
+    "id": "liang-quan-qi-mei",
+    "idiom": "兩全其美",
+    "aliases": [
+      "两全其美"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "liang quan qi mei",
+    "taboo": [
+      "two",
+      "both",
+      "perfect",
+      "side"
+    ],
+    "difficulty": 2,
+    "reference_english": "A solution that is good for both sides."
+  },
+  {
+    "id": "liang-mian-san-dao",
+    "idiom": "兩面三刀",
+    "aliases": [
+      "两面三刀"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "liang mian san dao",
+    "taboo": [
+      "two",
+      "face",
+      "three",
+      "knife"
+    ],
+    "difficulty": 3,
+    "reference_english": "Two-faced and scheming."
+  },
+  {
+    "id": "san-tian-liang-tou",
+    "idiom": "三天兩頭",
+    "aliases": [
+      "三天两头"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "san tian liang tou",
+    "taboo": [
+      "three",
+      "two",
+      "day",
+      "often"
+    ],
+    "difficulty": 1,
+    "reference_english": "Very often, almost every day."
+  },
+  {
+    "id": "si-ping-ba-wen",
+    "idiom": "四平八穩",
+    "aliases": [
+      "四平八稳"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "si ping ba wen",
+    "taboo": [
+      "four",
+      "eight",
+      "steady",
+      "stable",
+      "safe"
+    ],
+    "difficulty": 2,
+    "reference_english": "Very steady and safe."
+  },
+  {
+    "id": "si-tong-ba-da",
+    "idiom": "四通八達",
+    "aliases": [
+      "四通八达"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "si tong ba da",
+    "taboo": [
+      "four",
+      "eight",
+      "road",
+      "direction",
+      "connect"
+    ],
+    "difficulty": 2,
+    "reference_english": "Connected in every direction."
+  },
+  {
+    "id": "wu-guang-shi-se",
+    "idiom": "五光十色",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "wu guang shi se",
+    "taboo": [
+      "five",
+      "ten",
+      "light",
+      "color",
+      "colour",
+      "bright"
+    ],
+    "difficulty": 2,
+    "reference_english": "Bright and colorful, full of variety."
+  },
+  {
+    "id": "wu-hu-si-hai",
+    "idiom": "五湖四海",
+    "aliases": [],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "wu hu si hai",
+    "taboo": [
+      "five",
+      "four",
+      "lake",
+      "sea",
+      "everywhere"
+    ],
+    "difficulty": 2,
+    "reference_english": "Every corner of the country or the world."
+  },
+  {
+    "id": "shi-wan-huo-ji",
+    "idiom": "十萬火急",
+    "aliases": [
+      "十万火急"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "shi wan huo ji",
+    "taboo": [
+      "fire",
+      "urgent",
+      "emergency",
+      "hurry"
+    ],
+    "difficulty": 1,
+    "reference_english": "Extremely urgent."
+  },
+  {
+    "id": "yi-wo-feng",
+    "idiom": "一窩蜂",
+    "aliases": [
+      "一窝蜂"
+    ],
+    "tags": [
+      "成語"
+    ],
+    "pinyin": "yi wo feng",
+    "taboo": [
+      "bee",
+      "hive",
+      "crowd",
+      "rush",
+      "swarm"
+    ],
+    "difficulty": 1,
+    "reference_english": "A crowd of people all rushing to do the same thing."
   }
 ]
