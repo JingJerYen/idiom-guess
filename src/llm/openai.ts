@@ -48,7 +48,7 @@ export async function transcribe(audio: Buffer, mimeType: string): Promise<strin
 
 // Small in-memory cache so replays of the same clue cost nothing.
 const ttsCache = new Map<string, Buffer>();
-const TTS_CACHE_MAX = 300;
+const TTS_CACHE_MAX = 100; // ~150 KB each -> at most ~15 MB of server memory
 
 export async function synthesize(text: string, speed: number): Promise<Buffer> {
   const key = createHash("sha1").update(`${TTS_MODEL}|${TTS_VOICE}|${speed}|${text}`).digest("hex");

@@ -663,10 +663,7 @@ async function startGame() {
     // Whisper needs a recorder; devices without MediaRecorder keep the browser recogniser.
     useWhisper = features.stt && canRecord;
     modelBadge = r.mock ? "MOCK" : "Haiku";
-    for (const old of game.questions) {
-      old.turns.forEach((t) => t.audioUrl && URL.revokeObjectURL(t.audioUrl));
-      Object.values(old.clueAudio ?? {}).forEach((u) => { decodedClips.delete(u); URL.revokeObjectURL(u); });
-    }
+    for (const old of game.questions) releaseQuestionAudio(old);
     resetUi();
     setScreen({ name: "play", game });
     if (game.mode === "reverse") await loadClue(game, game.questions[0]);
@@ -1070,7 +1067,18 @@ async function loadFeedback(game: Game, qs: QuestionState) {
   if (screen.name === "play" && screen.game === game && game.questions[game.index] === qs) render();
 }
 
+/** Free every audio resource of a question: clue clips, their decoded PCM, and the player's recordings. */
+function releaseQuestionAudio(qs: QuestionState) {
+  if (boostedSource) { try { boostedSource.stop(); } catch { /* ignore */ } boostedSource = null; }
+  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+  for (const u of Object.values(qs.clueAudio ?? {})) { decodedClips.delete(u); URL.revokeObjectURL(u); }
+  qs.clueAudio = undefined;
+  for (const t of qs.turns) { if (t.audioUrl) { URL.revokeObjectURL(t.audioUrl); t.audioUrl = undefined; } }
+}
+
 async function nextQuestion(game: Game) {
+  // The finished question's audio is never played again: drop it before moving on.
+  releaseQuestionAudio(game.questions[game.index]);
   if (game.index + 1 >= game.questions.length) {
     const total = game.questions.reduce((n, q) => n + q.score, 0);
     setScreen({ name: "summary", game, record: recordScore(game.mode, game.level, total) });
