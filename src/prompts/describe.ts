@@ -8,7 +8,7 @@ RULES
 - Write like a native speaker explaining it to a friend. Do NOT say the name, do NOT translate its characters, do NOT tell the origin story of an idiom, and do NOT use any word in the forbidden list (or its inflections).
 - Never include Chinese characters or pinyin.
 - If asked for another clue, take a different angle (an example situation, a well-known detail, the feeling involved, the lesson) and do not repeat earlier clues. Later clues may be more direct than the first one.
-- FINAL CLUE (when the message says this is the last clue): be concrete. Give exactly one literal hint about the written term itself, in one short sentence, then one more sentence about the meaning. The literal hint must be one of: (a) a number that appears in the term, e.g. "It has the number three in it."; (b) the plain English meaning of ONE concrete, picturable character (an animal, a thing, a body part, a colour, a direction), e.g. "One of the characters means tiger." For this one word only, you may use a word from the forbidden list. Never give more than one character, never the whole term, never pinyin or Chinese characters.
+- FINAL CLUE (when the message says this is the last clue): the message states a LITERAL FACT about one character of the term, chosen by the game. Say that fact in one short plain sentence (e.g. "One of the characters means tiger." / "It has the number three in it."), then one more sentence about the meaning. Use exactly the fact given: never add a number, colour, animal or anything else that is not stated, and never give the whole term, pinyin or Chinese characters. If the message says there is no literal fact, give only a more direct meaning clue and do not mention numbers.
 
 OUTPUT
 Reply with exactly one JSON object and nothing else, no code fences:
@@ -23,7 +23,23 @@ export interface DescribePromptInput {
   attempt: number;
   /** True for the last clue of the question: the prompt then asks for a literal hint. */
   isLast: boolean;
+  /** Server-chosen literal fact for the last clue; null when no character of the term is in the dictionary. */
+  literal?: { position: number; category: string; english: string } | null;
+  /** Numbers that actually appear in the term, so the model never invents one. */
+  numbers?: string[];
   previousClues: string[];
+}
+
+const ORD = ["1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th"];
+
+function literalFact(input: DescribePromptInput): string {
+  const nums = input.numbers ?? [];
+  const numberLine = nums.length
+    ? `The term contains the number(s): ${nums.join(" ")}.`
+    : "The term contains NO number: do not mention any number.";
+  if (!input.literal) return `LITERAL FACT: none (no picturable character). ${numberLine} Give only a more direct meaning clue.\n`;
+  const l = input.literal;
+  return `LITERAL FACT: the ${ORD[l.position] ?? l.position + 1} character means "${l.english}" (${l.category}). State exactly this. ${numberLine}\n`;
 }
 
 export function buildDescribeUserMessage(input: DescribePromptInput): string {
@@ -34,7 +50,7 @@ export function buildDescribeUserMessage(input: DescribePromptInput): string {
 Kind: ${input.tags.join("、")}
 Reference description: ${input.referenceEnglish}
 Forbidden words: ${input.forbidden.join(", ")}
-This is clue number ${input.attempt}${input.isLast ? " and it is the LAST clue: include one literal hint (a number in the term, or the meaning of one picturable character)" : ""}.
-${prev}
+This is clue number ${input.attempt}${input.isLast ? " and it is the LAST clue." : "."}
+${input.isLast ? literalFact(input) : ""}${prev}
 Reply with the JSON object only.`;
 }

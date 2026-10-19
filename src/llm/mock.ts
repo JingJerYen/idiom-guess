@@ -81,11 +81,12 @@ export function mockFeedback(_idiom: Idiom, descriptions: string[]): FeedbackRes
   };
 }
 
-export function mockDescribe(idiom: Idiom, attempt: number, previous: string[]): DescribeResult {
+export function mockDescribe(idiom: Idiom, attempt: number, previous: string[], literal: { position: number; category: string; english: string } | null = null): DescribeResult {
   if (attempt >= config.maxGuesses) {
-    const digit = idiom.idiom.match(/[一二三四五六七八九十百千萬0-9]/);
-    const literal = digit ? `It has the number "${digit[0]}" in it.` : `One of the characters means "${idiom.taboo[0] ?? "something"}".`;
-    return { description: `[MOCK last clue] ${literal} ${idiom.reference_english}` };
+    const fact = literal
+      ? literal.category === "number" ? `It has the number ${literal.english} in it.` : `One of the characters means ${literal.english}.`
+      : "";
+    return { description: `[MOCK last clue] ${fact} ${idiom.reference_english}`.replace(/\s+/g, " ") };
   }
   const extras = [
     `Think of a situation where ${idiom.reference_english.charAt(0).toLowerCase()}${idiom.reference_english.slice(1).replace(/\.$/, "")}. People usually say this as a warning or a comment.`,

@@ -99,8 +99,14 @@ async function withFallback<T>(kind: string, fallback: () => T, call: () => Prom
   }
 }
 
-export async function describeIdiom(idiom: Idiom, attempt: number, previousClues: string[]): Promise<DescribeResult> {
-  if (config.mockMode) return mockDescribe(idiom, attempt, previousClues);
+export interface DescribeOptions {
+  /** Literal fact for the last clue, chosen by the route (so it can differ from the revealed tile). */
+  literal?: { position: number; category: string; english: string } | null;
+  numbers?: string[];
+}
+
+export async function describeIdiom(idiom: Idiom, attempt: number, previousClues: string[], opts: DescribeOptions = {}): Promise<DescribeResult> {
+  if (config.mockMode) return mockDescribe(idiom, attempt, previousClues, opts.literal ?? null);
   return withFallback("describe", () => mockDescribe(idiom, attempt, previousClues), () => callJson({
     kind: "describe",
     system: DESCRIBE_SYSTEM_PROMPT,
@@ -111,6 +117,8 @@ export async function describeIdiom(idiom: Idiom, attempt: number, previousClues
       forbidden: idiom.taboo,
       attempt,
       isLast: attempt >= config.maxGuesses,
+      literal: opts.literal ?? null,
+      numbers: opts.numbers ?? [],
       previousClues,
     }),
     maxTokens: config.maxTokens.describe,

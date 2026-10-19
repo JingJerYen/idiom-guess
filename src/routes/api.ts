@@ -4,6 +4,7 @@ import { config } from "../config.js";
 import { AppError } from "../errors.js";
 import { getIdiomById, loadIdioms, pickRound, toPublic, type Idiom } from "../game/idioms.js";
 import { isCorrectGuess, normalizeIdiom, positionMatches } from "../game/match.js";
+import { CATEGORY_LABEL, numbersIn, pickLiteralHint } from "../game/literal.js";
 import { validateDescription } from "../game/validate.js";
 import { describeIdiom, getFeedback, guessIdiom } from "../llm/index.js";
 import { sttEnabled, synthesize, transcribe, ttsEnabled } from "../llm/openai.js";
@@ -157,14 +158,22 @@ api.post("/give-up", lightLimiter, (req, res) => {
 api.post("/describe", modelLimiter, async (req, res) => {
   const body = parseBody(req, DescribeBodySchema);
   const idiom = requireIdiom(body.idiomId);
-  const out = await describeIdiom(idiom, body.attempt, body.previousClues);
-  // Last clue: also reveal one character (the first the player does not have yet).
+  const last = body.attempt >= config.maxGuesses;
+  // Last clue: reveal one character (the first the player does not have yet) AND give the model a
+  // literal fact about a different character when possible, so the player gets two distinct hints.
   let reveal: { index: number; char: string } | null = null;
-  if (body.attempt >= config.maxGuesses) {
-    const chars = Array.from(normalizeIdiom(idiom.idiom));
+  let literal: { position: number; category: string; english: string } | null = null;
+  const term = normalizeIdiom(idiom.idiom);
+  if (last) {
+    const chars = Array.from(term);
     const idx = chars.findIndex((_, i) => !body.knownPositions.includes(i));
     if (idx >= 0) reveal = { index: idx, char: chars[idx] };
+    // Character glosses are literal in idioms (兔 = rabbit) but misleading in compounds
+    // (節目's 目 is not an eye), so only idioms get a literal fact.
+    const hint = idiom.tags.includes("成語") ? pickLiteralHint(term, [...body.knownPositions, ...(reveal ? [reveal.index] : [])]) : null;
+    if (hint) literal = { position: hint.index, category: CATEGORY_LABEL[hint.category], english: hint.english };
   }
+  const out = await describeIdiom(idiom, body.attempt, body.previousClues, last ? { literal, numbers: numbersIn(term) } : {});
   res.json({ ok: true, description: out.description, attempt: body.attempt, reveal });
 });
 
