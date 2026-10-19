@@ -76,6 +76,29 @@ function describePrevious(prev: PreviousGuess[]): string {
   return `Your earlier guesses:\n${lines.join("\n")}\n\n`;
 }
 
+/** Characters confirmed in place across all earlier guesses: position -> character. */
+export function confirmedMap(prev: PreviousGuess[]): Map<number, string> {
+  const m = new Map<number, string>();
+  for (const p of prev) p.confirmed.forEach((ch, i) => { if (ch) m.set(i, ch); });
+  return m;
+}
+
+/** True when `guess` keeps every confirmed character at its position. */
+export function respectsConfirmed(guess: string, prev: PreviousGuess[]): boolean {
+  const chars = Array.from(guess.replace(/[\s\p{P}\p{S}]/gu, ""));
+  for (const [i, ch] of confirmedMap(prev)) if (chars[i] !== ch) return false;
+  return true;
+}
+
+function constraintText(prev: PreviousGuess[]): string {
+  const m = confirmedMap(prev);
+  if (!m.size) return "";
+  const parts = Array.from(m.entries())
+    .sort((a, b) => a[0] - b[0])
+    .map(([i, ch]) => `the ${ORDINAL[i] ?? i + 1} character MUST be ${ch}`);
+  return `HARD CONSTRAINT: ${parts.join(", ")}. Any guess that breaks this is wrong; check your guess character by character before answering.\n\n`;
+}
+
 export function buildGuessUserMessage(input: GuessPromptInput): string {
   const parts = input.descriptions.map(
     (d, i) => `<description n="${i + 1}">\n${d}\n</description>`,
@@ -86,5 +109,5 @@ export function buildGuessUserMessage(input: GuessPromptInput): string {
       ? `The player has described the same term ${input.descriptions.length} times. Later descriptions add detail to earlier ones; your previous guesses were wrong, so pick a different answer than one that matched only the first description.`
       : "The player's description:";
   const history = prev.length ? describePrevious(prev) : "";
-  return `${intro}\n\n${parts.join("\n\n")}\n\n${history}Reply with the JSON object only.`;
+  return `${intro}\n\n${parts.join("\n\n")}\n\n${history}${constraintText(prev)}Reply with the JSON object only.`;
 }

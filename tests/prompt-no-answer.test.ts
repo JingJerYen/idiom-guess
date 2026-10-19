@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { buildGuessSystemPrompt, buildGuessUserMessage } from "../src/prompts/guess.js";
+import { buildGuessSystemPrompt, buildGuessUserMessage, respectsConfirmed } from "../src/prompts/guess.js";
 import { allTags, loadIdioms } from "../src/game/idioms.js";
 
 const idioms = loadIdioms();
@@ -47,6 +47,16 @@ test("with earlier guesses, the prompt reveals only confirmed characters, never 
   assert.equal(user.includes("牢"), false);
   const han = Array.from(new Set(user.match(/\p{Script=Han}/gu) ?? [])).sort();
   assert.deepEqual(han, ["之", "亡", "歎", "羊"]);
+});
+
+test("confirmed characters become a hard constraint and are checked", () => {
+  const prev = [{ guess: "亡羊之歎", confirmed: ["亡", "羊", null, null] }];
+  const user = buildGuessUserMessage({ descriptions: ["x", "y"], previousGuesses: prev });
+  assert.ok(user.includes("HARD CONSTRAINT: the 1st character MUST be 亡, the 2nd character MUST be 羊"));
+  assert.equal(respectsConfirmed("亡羊補牢", prev), true);
+  assert.equal(respectsConfirmed("羊入虎口", prev), false);
+  assert.equal(respectsConfirmed("亡 羊 補 牢", prev), true, "spaces are ignored");
+  assert.equal(respectsConfirmed("守株待兔", []), true, "no constraint when nothing is confirmed");
 });
 
 test("guess prompt wraps player text as data and includes every prior description", () => {

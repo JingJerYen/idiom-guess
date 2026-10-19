@@ -1,5 +1,6 @@
 import { config } from "../config.js";
 import { loadIdioms, type Idiom } from "../game/idioms.js";
+import { respectsConfirmed, type PreviousGuess } from "../prompts/guess.js";
 import type { GuessResult, FeedbackResult, DescribeResult } from "./types.js";
 
 const STOP = new Set(
@@ -40,9 +41,11 @@ export function mockPerfectSentence(text: string): { perfect: boolean; note: str
   return { perfect: true, note: "" };
 }
 
-export function mockGuess(descriptions: string[], previousGuesses: string[] = []): GuessResult {
-  // Like the real model, never repeat an earlier wrong guess.
-  const all = loadIdioms().filter((it) => !previousGuesses.includes(it.idiom));
+export function mockGuess(descriptions: string[], previousGuesses: string[] = [], prev: PreviousGuess[] = []): GuessResult {
+  // Like the real model, never repeat an earlier wrong guess, and keep confirmed characters in place.
+  const pool = loadIdioms().filter((it) => !previousGuesses.includes(it.idiom));
+  const constrained = pool.filter((it) => respectsConfirmed(it.idiom, prev));
+  const all = constrained.length ? constrained : pool;
   const words = keywords(descriptions.join(" "));
   const g = mockPerfectSentence(descriptions[descriptions.length - 1] ?? "");
   const grammar = { perfect_sentence: g.perfect, grammar_note: g.note };

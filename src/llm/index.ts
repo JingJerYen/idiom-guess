@@ -4,7 +4,7 @@ import { log } from "../logger.js";
 import { allTags, type Idiom } from "../game/idioms.js";
 import { callJson, salvageGuess } from "./callJson.js";
 import { mockDescribe, mockFeedback, mockGuess } from "./mock.js";
-import { buildGuessSystemPrompt, buildGuessUserMessage, type PreviousGuess } from "../prompts/guess.js";
+import { buildGuessSystemPrompt, buildGuessUserMessage, respectsConfirmed, type PreviousGuess } from "../prompts/guess.js";
 import { FEEDBACK_SYSTEM_PROMPT, buildFeedbackUserMessage } from "../prompts/feedback.js";
 import { DESCRIBE_SYSTEM_PROMPT, buildDescribeUserMessage } from "../prompts/describe.js";
 import {
@@ -24,17 +24,20 @@ export type GuessOutcome = GuessResult & {
 /** The guesser never receives the idiom; only the player's descriptions and its own earlier guesses. */
 export async function guessIdiom(descriptions: string[], previousGuesses: PreviousGuess[] = []): Promise<GuessOutcome> {
   const prior = previousGuesses.map((p) => p.guess);
-  if (config.mockMode) return mockGuess(descriptions, prior);
+  if (config.mockMode) return mockGuess(descriptions, prior, previousGuesses);
   try {
-    return await callJson({
-      kind: "guess",
-      // The guesser learns which kinds of terms exist in the bank, never which kind this item is.
-      system: buildGuessSystemPrompt(allTags()),
-      user: buildGuessUserMessage({ descriptions, previousGuesses }),
-      maxTokens: config.maxTokens.guess,
-      schema: GuessResultSchema,
-      salvage: salvageGuess,
-    });
+    const system = buildGuessSystemPrompt(allTags());
+    const user = buildGuessUserMessage({ descriptions, previousGuesses });
+    const call = (u: string) => callJson({ kind: "guess", system, user: u, maxTokens: config.maxTokens.guess, schema: GuessResultSchema, salvage: salvageGuess });
+    let result = await call(user);
+    // Low-effort models sometimes drop a confirmed character; ask once more with the violation spelled out.
+    if (!respectsConfirmed(result.guess, previousGuesses)) {
+      log.warn("guess ignored confirmed characters; retrying", { guess: result.guess });
+      const retry = await call(`${user}\n\nYour previous answer "${result.guess}" breaks the HARD CONSTRAINT above. Give a different guess that satisfies it.`);
+      if (respectsConfirmed(retry.guess, previousGuesses)) result = retry;
+      else log.warn("guess still ignores confirmed characters", { guess: retry.guess });
+    }
+    return result;
   } catch (err) {
     // Unreadable output (after salvage and one retry): keep the game moving with a blind guess.
     // API/network failures still surface as errors, because then nothing is working.
