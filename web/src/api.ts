@@ -18,6 +18,8 @@ export interface RoundResponse {
   mode: Mode;
   maxGuesses: number;
   mock: boolean;
+  /** Server-side audio features (need GAME_OPENAI_KEY); the client falls back to browser APIs when false. */
+  features?: { stt: boolean; tts: boolean };
   questions: Question[];
 }
 
@@ -78,6 +80,23 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   if (!data) throw new ApiError("BAD_RESPONSE", "伺服器回應無法解析。", res.status);
   if (!res.ok && data.error) throw new ApiError(data.error.code, data.error.message, res.status);
   return data as T;
+}
+
+/** Upload a recorded clip; returns the transcript. */
+export async function transcribeClip(blob: Blob): Promise<string> {
+  let res: Response;
+  try {
+    res = await fetch("/api/transcribe", { method: "POST", headers: { "content-type": blob.type || "audio/webm" }, body: blob });
+  } catch {
+    throw new ApiError("NETWORK", "連不上伺服器，請檢查網路。", 0);
+  }
+  const data = (await res.json().catch(() => null)) as { ok?: boolean; text?: string; error?: { code: string; message: string } } | null;
+  if (!res.ok || !data?.ok) throw new ApiError(data?.error?.code ?? "STT", data?.error?.message ?? "語音辨識失敗", res.status);
+  return data.text ?? "";
+}
+
+export function ttsUrl(text: string, speed: number): string {
+  return `/api/tts?text=${encodeURIComponent(text)}&speed=${speed}`;
 }
 
 export const api = {

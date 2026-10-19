@@ -1,6 +1,6 @@
-import { api, ApiError, type Level, type Mode, type Violation } from "./api.js";
+import { api, ApiError, transcribeClip, ttsUrl, type Level, type Mode, type Violation } from "./api.js";
 import { canListen, joinOverlap, startListening, type Listener } from "./speech.js";
-import { joinClips, startRecording, type Recording } from "./recorder.js";
+import { canRecord, joinClips, startRecording, type Recording } from "./recorder.js";
 import { MAX_ATTEMPTS, MAX_CHARS, MIN_WORDS, SENTENCE_BONUS, countWords, getBest, recordScore, scoreFor, type Game, type QuestionState, type Screen } from "./state.js";
 
 const root = document.getElementById("app") as HTMLElement;
@@ -98,6 +98,46 @@ function pickVoice(): SpeechSynthesisVoice | null {
 /** Speech rate by level: easy mode speaks noticeably slower. */
 const SPEECH_RATE: Record<Level, number> = { hard: 0.8, easy: 0.6 };
 let speechRate = SPEECH_RATE.hard;
+/** Server TTS (OpenAI) speed by level; 1.0 is natural. */
+const TTS_SPEED: Record<Level, number> = { hard: 1.0, easy: 0.8 };
+let useServerTts = false;
+let ttsSpeed = TTS_SPEED.hard;
+/** Whisper mode: record a clip, then upload it for transcription (no live words). */
+let useWhisper = false;
+let whisperRec: Recording | null = null;
+let whisperBusy = false;
+
+/** Speak a clue or sentence: server TTS when enabled (natural voice), else the browser voice. */
+function say(text: string) {
+  const clean = text.replace(/^\[MOCK[^\]]*\]\s*/, "");
+  if (useServerTts) {
+    if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+    try { window.speechSynthesis?.cancel(); } catch { /* ignore */ }
+    const a = new Audio(ttsUrl(clean, ttsSpeed));
+    currentAudio = a;
+    a.onerror = () => { currentAudio = null; speak(clean); }; // server hiccup: fall back to browser voice
+    void a.play().catch(() => speak(clean));
+    return;
+  }
+  speak(clean);
+}
+
+/** Say several texts in order (server TTS plays them one after another). */
+function sayAll(texts: string[]) {
+  const list = texts.map((t) => t.replace(/^\[MOCK[^\]]*\]\s*/, "")).filter((t) => t.trim());
+  if (!useServerTts) { speakAll(list); return; }
+  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+  let i = 0;
+  const next = () => {
+    if (i >= list.length) { currentAudio = null; return; }
+    const a = new Audio(ttsUrl(list[i++], ttsSpeed));
+    currentAudio = a;
+    a.onended = next;
+    a.onerror = next;
+    void a.play().catch(next);
+  };
+  next();
+}
 
 function speak(text: string) {
   if (!canSpeak) return;
@@ -250,7 +290,7 @@ function renderPlay(game: Game) {
   } else {
     body += `<div class="tagrow">${q.tags.map((t) => `<span class="kind">${esc(t)}</span>`).join("")}${stars(q.difficulty)}</div>`;
     // While guessing, a clue is only something you can replay. Text appears after the question ends.
-    body += canSpeak
+    body += canSpeak || useServerTts
       ? `<div class="speakers">${qs.clues
           .map((c, i) => `<button class="speaker" data-i="${i}" aria-label="播放第 ${i + 1} 句">🔊<small>${i + 1}</small></button>`)
           .join("")}</div>`
@@ -290,7 +330,7 @@ function renderPlay(game: Game) {
       body += `<div class="draftwrap"><textarea id="draft" class="${listener ? "listening" : ""}" placeholder="${listener ? "Listening…" : "Describe it in simple English…"}" maxlength="${MAX_CHARS + 50}" ${ui.busy ? "disabled" : ""}>${esc(ui.draft)}${listener && micInterim ? esc((ui.draft && !/\s$/.test(ui.draft) ? " " : "") + micInterim) : ""}</textarea>
         ${ui.draft || micInterim ? `<button id="clear" class="clearbtn" aria-label="清除全部" ${ui.busy ? "disabled" : ""}>✕</button>` : ""}</div>
         <div class="counter">${wordDots(countWords(ui.draft))}<span class="chars"></span></div>
-        ${listener ? `<div id="micstatus" class="small muted micstatus">${esc(micStatus)}</div>` : ""}`;
+        ${listener || whisperRec || whisperBusy ? `<div id="micstatus" class="small muted micstatus">${esc(micStatus)}</div>` : ""}`;
     } else {
       body += `<input id="draft" class="guess" type="text" maxlength="20" value="${esc(ui.draft)}" ${ui.busy ? "disabled" : ""} autocomplete="off" placeholder="…" />`;
     }
@@ -299,7 +339,9 @@ function renderPlay(game: Game) {
     body += `<div class="actions">
       ${forward ? `<button id="starters" class="mic hint ${qs.showStarters ? "on" : ""}" aria-pressed="${qs.showStarters ? "true" : "false"}" aria-label="不知道怎麼開口？">💡</button>` : ""}
       <button id="submit" class="btn" ${ui.busy ? "disabled" : ""}>${ui.busy ? '<span class="spinner"></span>' : "➤"}</button>
-      ${forward ? (canListen
+      ${forward ? (useWhisper
+        ? `<button id="mic" class="mic ${whisperRec ? "on" : ""}" ${ui.busy || whisperBusy ? "disabled" : ""} aria-pressed="${whisperRec ? "true" : "false"}" aria-label="${whisperRec ? "停止錄音並辨識" : "語音輸入"}">${whisperBusy ? '<span class="spinner"></span>' : whisperRec ? "⏹" : "🎤"}</button>`
+        : canListen
         ? `<button id="mic" class="mic ${listener ? "on" : ""}" ${ui.busy ? "disabled" : ""} aria-pressed="${listener ? "true" : "false"}" aria-label="${listener ? "停止錄音" : "語音輸入"}">${listener ? "⏹" : "🎤"}</button>`
         : `<button class="mic off" disabled title="這個瀏覽器不支援語音輸入" aria-label="語音輸入（不支援）">🎤</button>`) : ""}
     </div>
@@ -344,7 +386,7 @@ function renderPlay(game: Game) {
     }
   }
   root.querySelectorAll<HTMLButtonElement>(".speak, .speaker").forEach((b) =>
-    b.addEventListener("click", () => speak(qs.clues[Number(b.dataset.i)] ?? "")),
+    b.addEventListener("click", () => say(qs.clues[Number(b.dataset.i)] ?? "")),
   );
   root.querySelectorAll<HTMLButtonElement>(".chip.word").forEach((b) =>
     b.addEventListener("click", () => {
@@ -370,7 +412,7 @@ function renderPlay(game: Game) {
     // Only forward mode has English sentences from the player; in listening mode the turns are
     // Chinese guesses and must not be fed to the English voice.
     if (game.mode === "forward") qs.turns.forEach((t, i) => texts.push(qs.feedback?.corrections[i]?.corrected || t.you));
-    speakAll(texts);
+    sayAll(texts);
   });
   root.querySelectorAll<HTMLButtonElement>(".eye2").forEach((b) =>
     b.addEventListener("click", () => {
@@ -387,7 +429,7 @@ function renderPlay(game: Game) {
       render();
     }),
   );
-  root.querySelector("#mic")?.addEventListener("click", () => toggleMic(game));
+  root.querySelector("#mic")?.addEventListener("click", () => (useWhisper ? void toggleWhisper(game) : toggleMic(game)));
   root.querySelector("#clear")?.addEventListener("click", () => clearDraft(game));
   root.querySelector("#starters")?.addEventListener("click", () => { qs.showStarters = !qs.showStarters; render(); });
   root.querySelectorAll<HTMLButtonElement>(".starter").forEach((b) =>
@@ -484,7 +526,7 @@ function renderResult(game: Game, qs: QuestionState): string {
   const toggle = detailsHtml
     ? `<button id="details" class="btn ghost sm details ${qs.showDetails ? "open" : ""}" aria-expanded="${qs.showDetails ? "true" : "false"}">${loading ? '<span class="spinner"></span>' : qs.showDetails ? "收起 ▴" : "📖 回饋 ▾"}</button>`
     : "";
-  const speakBtn = qs.showDetails && canSpeak && !loading
+  const speakBtn = qs.showDetails && (canSpeak || useServerTts) && !loading
     ? `<button id="fb-speak" class="iconbtn fbspeak" aria-label="朗讀回饋">🔊</button>`
     : "";
   return `<section class="card result center">${head}${answer}${game.mode === "reverse" ? transcript : ""}
@@ -557,15 +599,21 @@ async function startGame() {
   setScreen({ name: "loading", text: "" });
   try {
     const r = await api.round(chosenMode, chosenLevel);
+    const features = r.features ?? { stt: false, tts: false };
     const game: Game = {
       mode: r.mode,
       level: chosenLevel,
+      features,
       maxGuesses: Math.min(MAX_ATTEMPTS, r.maxGuesses),
       mock: r.mock,
       questions: r.questions.map((q) => ({ q, turns: [], clues: [], done: false, solved: false, gaveUp: false, score: 0, bonus: 0 })),
       index: 0,
     };
     speechRate = SPEECH_RATE[chosenLevel];
+    ttsSpeed = TTS_SPEED[chosenLevel];
+    useServerTts = features.tts;
+    // Whisper needs a recorder; devices without MediaRecorder keep the browser recogniser.
+    useWhisper = features.stt && canRecord;
     modelBadge = r.mock ? "MOCK" : "Haiku";
     for (const old of game.questions) old.turns.forEach((t) => t.audioUrl && URL.revokeObjectURL(t.audioUrl));
     resetUi();
@@ -626,6 +674,41 @@ function setMicStatus(text: string) {
   micStatus = text;
   const el = root.querySelector("#micstatus");
   if (el) el.textContent = text;
+}
+
+/** Whisper flow: tap to record, tap again to stop; the clip is uploaded and the text appended. */
+async function toggleWhisper(game: Game) {
+  if (whisperBusy) return;
+  if (whisperRec) {
+    const rec = whisperRec;
+    whisperRec = null;
+    whisperBusy = true;
+    setMicStatus("辨識中…");
+    render();
+    try {
+      const blob = await rec.stop();
+      if (!blob || blob.size < 1000) { ui.error = "沒有錄到聲音，再試一次。"; }
+      else {
+        const text = await transcribeClip(blob);
+        if (text) {
+          ui.draft = joinText(ui.draft, text);
+          clips.push(blob); // keep the real voice for the guess row
+        } else ui.error = "沒有辨識到英文，請再說一次。";
+      }
+    } catch (e) {
+      ui.error = e instanceof ApiError ? e.message : "語音辨識失敗。";
+    }
+    whisperBusy = false;
+    micStatus = "";
+    render();
+    return;
+  }
+  ui.error = "";
+  const rec = await startRecording();
+  if (!rec) { ui.error = "無法使用麥克風，請允許權限後再試。"; render(); return; }
+  whisperRec = rec;
+  setMicStatus("錄音中，說完再按一次 ⏹");
+  render();
 }
 
 function toggleMic(game: Game) {
@@ -743,6 +826,7 @@ function syncDraftBox() {
 }
 
 function clearDraft(game: Game) {
+  if (whisperRec) { const r = whisperRec; whisperRec = null; void r.stop(); }
   const wasListening = Boolean(listener);
   if (wasListening) { micUserStopped = true; listener?.stop(); listener = null; }
   ui.draft = "";
@@ -757,6 +841,8 @@ function clearDraft(game: Game) {
 
 function resetUi() {
   stopMic();
+  if (whisperRec) { const r = whisperRec; whisperRec = null; void r.stop(); }
+  whisperBusy = false;
   clips = [];
   ui.draft = "";
   ui.busy = false;
@@ -812,7 +898,7 @@ async function loadClue(game: Game, qs: QuestionState) {
     qs.clues.push(r.description);
     if (r.reveal) qs.revealed = { ...(qs.revealed ?? {}), [r.reveal.index]: r.reveal.char };
     qs.shownClue = undefined;
-    speak(r.description);
+    say(r.description);
   } catch (e) {
     ui.error = e instanceof Error ? e.message : "無法取得描述";
   }

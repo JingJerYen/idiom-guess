@@ -54,6 +54,8 @@ export interface Game {
   mode: Mode;
   /** easy: word cards may be used in the description; hard: they are forbidden. */
   level: Level;
+  /** Server-side audio features available this round. */
+  features: { stt: boolean; tts: boolean };
   maxGuesses: number;
   mock: boolean;
   questions: QuestionState[];

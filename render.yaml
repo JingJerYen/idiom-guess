@@ -18,3 +18,5 @@ services:
         value: "3"
       - key: GAME_ANTHROPIC_KEY
         sync: false   # set it in the Render dashboard; never commit it
+      - key: GAME_OPENAI_KEY
+        sync: false   # optional: enables Whisper STT and TTS clues

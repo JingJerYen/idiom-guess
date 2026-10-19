@@ -1,11 +1,12 @@
-import { Router, type Request } from "express";
-import type { z } from "zod";
+import express, { Router, type Request } from "express";
+import { z } from "zod";
 import { config } from "../config.js";
 import { AppError } from "../errors.js";
 import { getIdiomById, loadIdioms, pickRound, toPublic, type Idiom } from "../game/idioms.js";
 import { isCorrectGuess, normalizeIdiom, positionMatches } from "../game/match.js";
 import { validateDescription } from "../game/validate.js";
 import { describeIdiom, getFeedback, guessIdiom } from "../llm/index.js";
+import { sttEnabled, synthesize, transcribe, ttsEnabled } from "../llm/openai.js";
 import { lightLimiter, modelLimiter } from "../middleware/rateLimit.js";
 import {
   DescribeBodySchema,
@@ -55,7 +56,7 @@ function checkDescriptions(descriptions: string[], idiom: Idiom, forbidden: stri
 }
 
 api.get("/health", (_req, res) => {
-  res.json({ ok: true, mock: config.mockMode, mockReason: config.mockReason, model: config.model });
+  res.json({ ok: true, mock: config.mockMode, mockReason: config.mockReason, model: config.model, stt: sttEnabled, tts: ttsEnabled });
 });
 
 api.get("/round", lightLimiter, (req, res) => {
@@ -64,7 +65,7 @@ api.get("/round", lightLimiter, (req, res) => {
   const level = LevelSchema.safeParse(req.query.level ?? "hard");
   if (!level.success) throw new AppError("BAD_REQUEST", "level 必須是 easy 或 hard。");
   const questions = pickRound(loadIdioms()).map((q) => toPublic(q, mode.data, level.data));
-  res.json({ ok: true, mode: mode.data, level: level.data, maxGuesses: config.maxGuesses, mock: config.mockMode, questions });
+  res.json({ ok: true, mode: mode.data, level: level.data, maxGuesses: config.maxGuesses, mock: config.mockMode, features: { stt: sttEnabled, tts: ttsEnabled }, questions });
 });
 
 api.post("/guess", modelLimiter, async (req, res) => {
@@ -115,6 +116,33 @@ api.post("/feedback", modelLimiter, async (req, res) => {
     note: fb.corrections[i]?.note ?? "",
   }));
   res.json({ ok: true, corrections, reference_english: idiom.reference_english });
+});
+
+// ---- Audio (optional, needs GAME_OPENAI_KEY) ----
+
+/** Whisper speech-to-text. Body is the raw audio blob the browser recorded. */
+api.post("/transcribe", modelLimiter, express.raw({ type: ["audio/*", "video/webm", "application/octet-stream"], limit: "8mb" }), async (req, res) => {
+  if (!sttEnabled) throw new AppError("UPSTREAM_ERROR", "語音辨識未啟用。", 503);
+  const body = req.body as Buffer | undefined;
+  if (!body || !Buffer.isBuffer(body) || body.length < 1000) throw new AppError("BAD_REQUEST", "沒有收到音訊。");
+  const text = await transcribe(body, (req.headers["content-type"] ?? "audio/webm").split(";")[0]);
+  res.json({ ok: true, text });
+});
+
+const TtsQuery = z.object({
+  text: z.string().trim().min(1).max(400),
+  speed: z.coerce.number().min(0.5).max(1.5).default(1),
+});
+
+/** Text-to-speech for listening clues; returns mp3. */
+api.get("/tts", modelLimiter, async (req, res) => {
+  if (!ttsEnabled) throw new AppError("UPSTREAM_ERROR", "語音合成未啟用。", 503);
+  const q = TtsQuery.safeParse(req.query);
+  if (!q.success) throw new AppError("BAD_REQUEST", "text 或 speed 不正確。");
+  const audio = await synthesize(q.data.text, q.data.speed);
+  res.setHeader("content-type", "audio/mpeg");
+  res.setHeader("cache-control", "private, max-age=3600");
+  res.send(audio);
 });
 
 /** Player gives up: zero points, reveal the answer. */
