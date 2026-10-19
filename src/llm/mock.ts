@@ -84,7 +84,7 @@ export function mockFeedback(_idiom: Idiom, descriptions: string[]): FeedbackRes
 export function mockDescribe(idiom: Idiom, attempt: number, previous: string[], literal: { position: number; category: string; english: string } | null = null): DescribeResult {
   if (attempt >= config.maxGuesses) {
     const fact = literal
-      ? literal.category === "number" ? `It has the number ${literal.english} in it.` : `One of the characters means ${literal.english}.`
+      ? /number/.test(literal.category) ? `It has the number ${literal.english} in it.` : `One of the characters means ${literal.english}.`
       : "";
     return { description: `[MOCK last clue] ${fact} ${idiom.reference_english}`.replace(/\s+/g, " ") };
   }
