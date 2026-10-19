@@ -125,14 +125,55 @@ async function fetchClueAudio(qs: QuestionState, index: number, text: string): P
   }
 }
 
-/** Play a clue: cached server audio when available, otherwise the browser voice. */
+/**
+ * Louder playback for clues: an <audio> element tops out at 100%, so route the clip through a
+ * Web Audio gain node (with a compressor to avoid clipping). Falls back to <audio> if unavailable.
+ */
+const CLUE_GAIN = 1.8;
+let audioCtx: AudioContext | null = null;
+let boostedSource: AudioBufferSourceNode | null = null;
+const decodedClips = new Map<string, AudioBuffer>();
+
+async function playBoosted(url: string): Promise<boolean> {
+  try {
+    const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!Ctx) return false;
+    audioCtx ??= new Ctx();
+    if (audioCtx.state === "suspended") await audioCtx.resume();
+    let buffer = decodedClips.get(url);
+    if (!buffer) {
+      const data = await (await fetch(url)).arrayBuffer();
+      buffer = await audioCtx.decodeAudioData(data);
+      decodedClips.set(url, buffer);
+    }
+    if (boostedSource) { try { boostedSource.stop(); } catch { /* already stopped */ } }
+    const src = audioCtx.createBufferSource();
+    src.buffer = buffer;
+    const gain = audioCtx.createGain();
+    gain.gain.value = CLUE_GAIN;
+    const comp = audioCtx.createDynamicsCompressor();
+    comp.threshold.value = -12;
+    comp.ratio.value = 6;
+    src.connect(gain).connect(comp).connect(audioCtx.destination);
+    src.onended = () => { if (boostedSource === src) boostedSource = null; };
+    boostedSource = src;
+    src.start();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Play a clue: cached server audio when available (boosted), otherwise the browser voice. */
 async function playClue(qs: QuestionState, index: number) {
   const text = qs.clues[index] ?? "";
   if (!text) return;
   if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+  if (boostedSource) { try { boostedSource.stop(); } catch { /* ignore */ } boostedSource = null; }
   try { window.speechSynthesis?.cancel(); } catch { /* ignore */ }
   const url = useServerTts ? await fetchClueAudio(qs, index, text) : null;
   if (url) {
+    if (await playBoosted(url)) return;
     const a = new Audio(url);
     currentAudio = a;
     a.onerror = () => { currentAudio = null; speak(text); };
@@ -620,7 +661,7 @@ async function startGame() {
     modelBadge = r.mock ? "MOCK" : "Haiku";
     for (const old of game.questions) {
       old.turns.forEach((t) => t.audioUrl && URL.revokeObjectURL(t.audioUrl));
-      Object.values(old.clueAudio ?? {}).forEach((u) => URL.revokeObjectURL(u));
+      Object.values(old.clueAudio ?? {}).forEach((u) => { decodedClips.delete(u); URL.revokeObjectURL(u); });
     }
     resetUi();
     setScreen({ name: "play", game });
