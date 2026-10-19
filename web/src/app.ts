@@ -130,38 +130,47 @@ async function fetchClueAudio(qs: QuestionState, index: number, text: string): P
 }
 
 /**
- * Louder playback for clues: an <audio> element tops out at 100%, so route the clip through a
- * Web Audio gain node (with a compressor to avoid clipping). Falls back to <audio> if unavailable.
+ * Louder playback for clues: an <audio> element tops out at 100%, so its output is routed through
+ * a Web Audio gain node (plus a compressor against clipping). The element streams and decodes the
+ * clip itself, so nothing beyond the 150 KB mp3 is kept in memory. One shared element is reused;
+ * if Web Audio is unavailable the element simply plays at normal volume.
  */
 const CLUE_GAIN = 1.8;
 let audioCtx: AudioContext | null = null;
-let boostedSource: AudioBufferSourceNode | null = null;
-const decodedClips = new Map<string, AudioBuffer>();
+let clueElement: HTMLAudioElement | null = null;
+
+function getClueElement(): HTMLAudioElement {
+  if (clueElement) return clueElement;
+  const el = new Audio();
+  el.preload = "auto";
+  clueElement = el;
+  try {
+    const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (Ctx) {
+      audioCtx ??= new Ctx();
+      const src = audioCtx.createMediaElementSource(el); // an element can be connected only once
+      const gain = audioCtx.createGain();
+      gain.gain.value = CLUE_GAIN;
+      const comp = audioCtx.createDynamicsCompressor();
+      comp.threshold.value = -12;
+      comp.ratio.value = 6;
+      src.connect(gain).connect(comp).connect(audioCtx.destination);
+    }
+  } catch {
+    /* no Web Audio: the element still plays, just not boosted */
+  }
+  return el;
+}
 
 async function playBoosted(url: string): Promise<boolean> {
   try {
-    const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-    if (!Ctx) return false;
-    audioCtx ??= new Ctx();
-    if (audioCtx.state === "suspended") await audioCtx.resume();
-    let buffer = decodedClips.get(url);
-    if (!buffer) {
-      const data = await (await fetch(url)).arrayBuffer();
-      buffer = await audioCtx.decodeAudioData(data);
-      decodedClips.set(url, buffer);
-    }
-    if (boostedSource) { try { boostedSource.stop(); } catch { /* already stopped */ } }
-    const src = audioCtx.createBufferSource();
-    src.buffer = buffer;
-    const gain = audioCtx.createGain();
-    gain.gain.value = CLUE_GAIN;
-    const comp = audioCtx.createDynamicsCompressor();
-    comp.threshold.value = -12;
-    comp.ratio.value = 6;
-    src.connect(gain).connect(comp).connect(audioCtx.destination);
-    src.onended = () => { if (boostedSource === src) boostedSource = null; };
-    boostedSource = src;
-    src.start();
+    const el = getClueElement();
+    if (audioCtx?.state === "suspended") await audioCtx.resume().catch(() => undefined);
+    el.pause();
+    el.src = url;
+    el.currentTime = 0;
+    currentAudio = el;
+    await el.play();
     return true;
   } catch {
     return false;
@@ -173,11 +182,11 @@ async function playClue(qs: QuestionState, index: number) {
   const text = qs.clues[index] ?? "";
   if (!text) return;
   if (currentAudio) { currentAudio.pause(); currentAudio = null; }
-  if (boostedSource) { try { boostedSource.stop(); } catch { /* ignore */ } boostedSource = null; }
   try { window.speechSynthesis?.cancel(); } catch { /* ignore */ }
   const url = useServerTts ? await fetchClueAudio(qs, index, text) : null;
   if (url) {
     if (await playBoosted(url)) return;
+    // Routed element refused (e.g. iOS quirk): plain, unboosted playback, then browser voice.
     const a = new Audio(url);
     currentAudio = a;
     a.onerror = () => { currentAudio = null; speak(text); };
@@ -1069,9 +1078,9 @@ async function loadFeedback(game: Game, qs: QuestionState) {
 
 /** Free every audio resource of a question: clue clips, their decoded PCM, and the player's recordings. */
 function releaseQuestionAudio(qs: QuestionState) {
-  if (boostedSource) { try { boostedSource.stop(); } catch { /* ignore */ } boostedSource = null; }
   if (currentAudio) { currentAudio.pause(); currentAudio = null; }
-  for (const u of Object.values(qs.clueAudio ?? {})) { decodedClips.delete(u); URL.revokeObjectURL(u); }
+  if (clueElement) { clueElement.pause(); clueElement.removeAttribute("src"); clueElement.load(); }
+  for (const u of Object.values(qs.clueAudio ?? {})) URL.revokeObjectURL(u);
   qs.clueAudio = undefined;
   for (const t of qs.turns) { if (t.audioUrl) { URL.revokeObjectURL(t.audioUrl); t.audioUrl = undefined; } }
 }
