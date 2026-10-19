@@ -62,7 +62,45 @@ export type Screen =
   | { name: "start" }
   | { name: "loading"; text: string }
   | { name: "play"; game: Game }
-  | { name: "summary"; game: Game };
+  | { name: "summary"; game: Game; record: RecordResult };
+
+/** Outcome of comparing a finished round with the stored best score for its mode + level. */
+export interface RecordResult {
+  /** Best before this round, or null when this was the first round of that kind. */
+  previous: number | null;
+  isNew: boolean;
+}
+
+const BEST_KEY = "idiom.best";
+
+function bestKey(mode: Mode, level: Level): string {
+  return `${mode}:${level}`;
+}
+
+/** Best score per mode + level, kept in localStorage (per browser; never sent to the server). */
+export function getBest(mode: Mode, level: Level): number | null {
+  try {
+    const all = JSON.parse(localStorage.getItem(BEST_KEY) ?? "{}") as Record<string, number>;
+    const v = all[bestKey(mode, level)];
+    return typeof v === "number" ? v : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Record a finished round; returns whether it beat the stored best. */
+export function recordScore(mode: Mode, level: Level, score: number): RecordResult {
+  const previous = getBest(mode, level);
+  const isNew = previous === null || score > previous;
+  if (isNew) {
+    try {
+      const all = JSON.parse(localStorage.getItem(BEST_KEY) ?? "{}") as Record<string, number>;
+      all[bestKey(mode, level)] = score;
+      localStorage.setItem(BEST_KEY, JSON.stringify(all));
+    } catch { /* storage unavailable: still report the result */ }
+  }
+  return { previous, isNew };
+}
 
 /** Points by the attempt on which the answer was found; 0 after that or on give-up. */
 export const SCORES: Record<Level, readonly number[]> = { hard: [5, 3, 1], easy: [3, 2, 1] };

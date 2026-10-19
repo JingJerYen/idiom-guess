@@ -1,7 +1,7 @@
 import { api, ApiError, type Level, type Mode, type Violation } from "./api.js";
 import { canListen, startListening, type Listener } from "./speech.js";
 import { joinClips, startRecording, type Recording } from "./recorder.js";
-import { MAX_ATTEMPTS, MAX_CHARS, MIN_WORDS, SCORES, SENTENCE_BONUS, countWords, maxScore, scoreFor, type Game, type QuestionState, type Screen } from "./state.js";
+import { MAX_ATTEMPTS, MAX_CHARS, MIN_WORDS, SENTENCE_BONUS, countWords, getBest, recordScore, scoreFor, type Game, type QuestionState, type Screen } from "./state.js";
 
 const root = document.getElementById("app") as HTMLElement;
 const topbar = document.getElementById("topbar") as HTMLElement;
@@ -165,8 +165,14 @@ function render() {
     case "start": return renderStart();
     case "loading": root.innerHTML = `<section class="card center pad"><span class="spinner"></span>${esc(screen.text)}</section>`; return;
     case "play": return renderPlay(screen.game);
-    case "summary": return renderSummary(screen.game);
+    case "summary": return renderSummary(screen.game, screen.record);
   }
+}
+
+/** 🏆 best score for a mode at the currently selected level; "—" when never played. */
+function bestBadge(mode: Mode): string {
+  const b = getBest(mode, chosenLevel);
+  return `<span class="best ${b === null ? "none" : ""}" aria-label="最高分">🏆 ${b === null ? "—" : b}</span>`;
 }
 
 function renderStart() {
@@ -181,10 +187,10 @@ function renderStart() {
     </section>
     <section class="modes" role="group" aria-label="模式">
       <button class="mode" data-mode="forward" aria-pressed="${chosenMode === "forward"}">
-        <span class="icon">🗣️</span><b>口說</b><span class="small muted">你描述，AI 猜</span>
+        <span class="icon">🗣️</span><b>口說</b><span class="small muted">你描述，AI 猜</span>${bestBadge("forward")}
       </button>
       <button class="mode" data-mode="reverse" aria-pressed="${chosenMode === "reverse"}">
-        <span class="icon">👂</span><b>聽力</b><span class="small muted">AI 描述，你猜</span>
+        <span class="icon">👂</span><b>聽力</b><span class="small muted">AI 描述，你猜</span>${bestBadge("reverse")}
       </button>
     </section>
     ${ui.error ? `<div class="alert error">${esc(ui.error)}</div>` : ""}
@@ -453,16 +459,21 @@ function renderResult(game: Game, qs: QuestionState): string {
     <button id="next" class="btn lg block" style="margin-top:16px">${last ? "總結" : "下一題 →"}</button></section>`;
 }
 
-function renderSummary(game: Game) {
+function renderSummary(game: Game, record: { previous: number | null; isNew: boolean }) {
   const qs = game.questions;
   const total = qs.reduce((n, q) => n + q.score, 0);
   const solved = qs.filter((q) => q.solved).length;
+  const recordHtml = record.isNew
+    ? `<div class="record">🏆 ${record.previous === null ? "首次紀錄" : `新紀錄！上次 ${record.previous}`}</div>`
+    : `<div class="record prev">🏆 最高 ${record.previous}</div>`;
   const rows = qs
     .map((q) => `<li class="${q.solved ? "ok" : "no"}"><span>${esc(q.q.idiom ?? q.answer ?? "？")}</span><span class="pts ${q.score ? "" : "zero"}">${q.gaveUp ? "🏳️ " : ""}${q.bonus ? "✅ " : ""}+${q.score}</span></li>`)
     .join("");
   root.innerHTML = `<section class="card summary center">
-      <div class="big">${total}<span class="muted">/${qs.length * (maxScore(game.level) + SENTENCE_BONUS)}</span></div>
-      <div class="muted">${solved}/${qs.length} 題猜中</div>
+      <div class="small muted">${game.mode === "forward" ? "🗣️ 口說" : "👂 聽力"} ${game.level === "easy" ? "🌱" : "🔥"}</div>
+      <div class="big">${total}<small>分</small></div>
+      ${recordHtml}
+      <div class="stats"><span class="num ok" aria-label="答對">${solved}</span><span class="num no" aria-label="答錯">${qs.length - solved}</span></div>
       <ul class="list">${rows}</ul>
       <button id="again" class="btn lg block" style="margin-top:16px">再玩</button>
     </section>`;
@@ -758,7 +769,8 @@ async function loadFeedback(game: Game, qs: QuestionState) {
 
 async function nextQuestion(game: Game) {
   if (game.index + 1 >= game.questions.length) {
-    setScreen({ name: "summary", game });
+    const total = game.questions.reduce((n, q) => n + q.score, 0);
+    setScreen({ name: "summary", game, record: recordScore(game.mode, game.level, total) });
     return;
   }
   game.index += 1;
