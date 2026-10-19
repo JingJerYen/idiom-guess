@@ -83,7 +83,7 @@ docker run -p 3000:3000 -e GAME_ANTHROPIC_KEY=sk-ant-... -e TRUST_PROXY=1 idiom-
 | `POST /api/guess` | `{ idiomId, level: "easy"\|"hard", forbidden[], descriptions[], previousGuesses[] }` → 程式檢查違規回 422 `{ violations }`；通過則回 `{ guess, reason, correct, positions[], perfectSentence, grammarNote, attempt, remaining }` |
 | `POST /api/feedback` | `{ idiomId, descriptions[], guessedCorrectly, attempts }` → `{ corrections: [{ corrected, note }], reference_english }`（每句描述一筆，順序相同） |
 | `POST /api/give-up` | `{ idiomId }` → `{ answer, tags, reference_english }`（放棄：0 分並揭露答案） |
-| `POST /api/describe` | 反向模式：`{ idiomId, attempt, previousClues[] }` → `{ description }` |
+| `POST /api/describe` | 反向模式：`{ idiomId, attempt, previousClues[], knownPositions[] }` → `{ description, reveal? }`（最後一次線索附帶揭露一個字：玩家尚未猜對的第一個位置） |
 | `POST /api/reverse-guess` | 反向模式：`{ idiomId, guess, attempt }` → `{ correct, positions[], remaining, answer? }`（答案只在猜中或用完次數時揭露） |
 
 `positions` 是 Wordle 式的逐字結果：每個字一個布林值，`true` 代表「字對、位置也對」，前端顯示為綠格。
@@ -169,7 +169,7 @@ tests/                 node:test
 
 AI 的描述用瀏覽器內建的 Web Speech API（`speechSynthesis`）朗讀，不經過伺服器、不花 API 費用。
 猜題進行中只有 🔊 按鈕可以重播每一句線索，看不到文字；題目結束後才在答案下方列出全部線索文字並可回放。
-簡單模式語速 0.6、困難模式 0.8（瀏覽器語速倍率）。最後一句線索會更直接：點出詞裡的數字，或某一個可以具象化的字的英文意思（只給一個字）。瀏覽器不支援語音合成時會直接顯示文字。描述 prompt 要求 A2～B1 程度的常用字、30 字以內、適合朗讀。
+簡單模式語速 0.6、困難模式 0.8（瀏覽器語速倍率）。最後一句線索會更直接：點出詞裡的數字，或某一個可以具象化的字的英文意思（只給一個字），同時在答案格子裡直接亮出一個字（優先第一個字，已猜對就換下一個）。瀏覽器不支援語音合成時會直接顯示文字。描述 prompt 要求 A2～B1 程度的常用字、30 字以內、適合朗讀。
 
 ## 口說模式的語音輸入
 

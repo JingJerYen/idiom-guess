@@ -23,6 +23,8 @@ export interface QuestionState {
   turns: Turn[];
   /** Reverse mode: clues shown so far. */
   clues: string[];
+  /** Reverse mode: characters revealed by the last clue, by position. */
+  revealed?: Record<number, string>;
   /** Reverse mode: index of the clue whose text is currently revealed, if any. */
   shownClue?: number;
   /** Forward mode: index of the AI turn whose reason/description text is expanded, if any. */

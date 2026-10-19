@@ -255,8 +255,7 @@ function renderPlay(game: Game) {
           .map((c, i) => `<button class="speaker" data-i="${i}" aria-label="播放第 ${i + 1} 句">🔊<small>${i + 1}</small></button>`)
           .join("")}</div>`
       : qs.clues.map((c, i) => `<div class="clue shown"><span class="cluetext">${i + 1}. ${esc(c)}</span></div>`).join("");
-    const confirmed: (string | null)[] = [];
-    for (const t of qs.turns) chars(t.you).forEach((ch, i) => { if (t.positions?.[i]) confirmed[i] = ch; });
+    const confirmed = knownChars(qs);
     if (!qs.done) body += slots(q.length ?? 4, confirmed, ui.draft);
   }
 
@@ -330,9 +329,7 @@ function renderPlay(game: Game) {
         const counter = root.querySelector(".counter");
         if (counter) counter.innerHTML = `${wordDots(n)}<span class="chars ${c > MAX_CHARS ? "bad" : ""}">${c > MAX_CHARS - 60 ? `${c}/${MAX_CHARS}` : ""}</span>`;
       } else {
-        const confirmed: (string | null)[] = [];
-        for (const t of qs.turns) chars(t.you).forEach((ch, i) => { if (t.positions?.[i]) confirmed[i] = ch; });
-        root.querySelector(".tiles.lg")?.replaceWith(fragment(slots(q.length ?? 4, confirmed, ui.draft)));
+        root.querySelector(".tiles.lg")?.replaceWith(fragment(slots(q.length ?? 4, knownChars(qs), ui.draft)));
       }
     });
     draft.addEventListener("keydown", (ev) => {
@@ -431,6 +428,14 @@ function diffWords(before: string, after: string): string {
   }
   while (j < m) out.push(`<mark>${esc(b[j++])}</mark>`);
   return out.join(" ");
+}
+
+/** Characters the player already has in place: green from earlier guesses, plus any revealed by the last clue. */
+function knownChars(qs: QuestionState): (string | null)[] {
+  const confirmed: (string | null)[] = [];
+  for (const t of qs.turns) chars(t.you).forEach((ch, i) => { if (t.positions?.[i]) confirmed[i] = ch; });
+  for (const [i, ch] of Object.entries(qs.revealed ?? {})) confirmed[Number(i)] = ch;
+  return confirmed;
 }
 
 function fragment(html: string): Node {
@@ -765,8 +770,10 @@ async function loadClue(game: Game, qs: QuestionState) {
   ui.error = "";
   render();
   try {
-    const r = await api.describe(qs.q.id, qs.clues.length + 1, qs.clues);
+    const known = knownChars(qs).map((c, i) => (c ? i : -1)).filter((i) => i >= 0);
+    const r = await api.describe(qs.q.id, qs.clues.length + 1, qs.clues, known);
     qs.clues.push(r.description);
+    if (r.reveal) qs.revealed = { ...(qs.revealed ?? {}), [r.reveal.index]: r.reveal.char };
     qs.shownClue = undefined;
     speak(r.description);
   } catch (e) {

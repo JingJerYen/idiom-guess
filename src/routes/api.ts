@@ -130,7 +130,14 @@ api.post("/describe", modelLimiter, async (req, res) => {
   const body = parseBody(req, DescribeBodySchema);
   const idiom = requireIdiom(body.idiomId);
   const out = await describeIdiom(idiom, body.attempt, body.previousClues);
-  res.json({ ok: true, description: out.description, attempt: body.attempt });
+  // Last clue: also reveal one character (the first the player does not have yet).
+  let reveal: { index: number; char: string } | null = null;
+  if (body.attempt >= config.maxGuesses) {
+    const chars = Array.from(normalizeIdiom(idiom.idiom));
+    const idx = chars.findIndex((_, i) => !body.knownPositions.includes(i));
+    if (idx >= 0) reveal = { index: idx, char: chars[idx] };
+  }
+  res.json({ ok: true, description: out.description, attempt: body.attempt, reveal });
 });
 
 api.post("/reverse-guess", modelLimiter, (req, res) => {
