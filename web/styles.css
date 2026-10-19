@@ -198,6 +198,8 @@ textarea.listening { border-color: var(--accent); }
 .corrections { display: grid; gap: 10px; margin-top: 12px; text-align: left; }
 .corr .orig { color: var(--muted); font-style: italic; }
 .corr .orig.ok { color: var(--ink); font-style: normal; }
+.corr .n { font-style: normal; font-size: 12px; font-weight: 700; color: var(--muted); margin-right: 2px; }
+.corr .oktag { font-size: 11px; font-weight: 700; color: var(--ok); background: var(--ok-soft); border-radius: 999px; padding: 1px 8px; vertical-align: middle; white-space: nowrap; }
 .corr .fixed { margin-top: 4px; padding-left: 26px; line-height: 1.6; }
 .corr .note { margin-top: 4px; padding-left: 26px; color: var(--muted); }
 .corr mark { background: var(--ok-soft); color: var(--ok); border-radius: 4px; padding: 0 3px; font-weight: 700; }

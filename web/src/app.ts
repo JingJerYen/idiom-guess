@@ -417,8 +417,9 @@ function renderResult(game: Game, qs: QuestionState): string {
         .map((t, i) => {
           const c = f.corrections[i] ?? { corrected: t.you, note: "" };
           const same = normalizeForDiff(c.corrected) === normalizeForDiff(t.you);
+          // Each row is one of the player's own descriptions, in order; a tag says whether grammar needed fixing.
           return `<div class="corr">
-            <div class="orig ${same ? "ok" : ""}">${same ? "✅" : "✏️"} ${esc(t.you)}</div>
+            <div class="orig ${same ? "ok" : ""}"><span class="n">#${i + 1}</span> ${same ? "" : "✏️ "}${esc(t.you)}${same ? ` <span class="oktag">文法 OK</span>` : ""}</div>
             ${same ? "" : `<div class="fixed">${diffWords(t.you, c.corrected)}</div>`}
             ${c.note ? `<div class="note small">${esc(c.note)}</div>` : ""}
           </div>`;
