@@ -11,7 +11,7 @@ const apiKey = process.env.GAME_OPENAI_KEY?.trim() || undefined;
 export const sttEnabled = Boolean(apiKey) && process.env.DISABLE_STT !== "1";
 export const ttsEnabled = Boolean(apiKey) && process.env.DISABLE_TTS !== "1";
 
-const STT_MODEL = process.env.STT_MODEL || "whisper-1";
+const STT_MODEL = process.env.STT_MODEL || "gpt-4o-mini-transcribe";
 const TTS_MODEL = process.env.TTS_MODEL || "tts-1";
 const TTS_VOICE = process.env.TTS_VOICE || "nova";
 const BASE = process.env.OPENAI_BASE_URL || "https://api.openai.com/v1";
