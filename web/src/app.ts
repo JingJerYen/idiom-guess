@@ -492,6 +492,35 @@ function renderResult(game: Game, qs: QuestionState): string {
     <button id="next" class="btn lg block" style="margin-top:16px">${last ? "總結" : "下一題 →"}</button></section>`;
 }
 
+/** Wordle-style share text: score, one square per question, link. */
+function shareText(game: Game, record: { previous: number | null; isNew: boolean }): string {
+  const total = game.questions.reduce((n, q) => n + q.score, 0);
+  const squares = game.questions
+    .map((q) => (q.gaveUp ? "🏳️" : !q.solved ? "⬛" : q.turns.length === 1 ? "🟩" : q.turns.length === 2 ? "🟨" : "🟧"))
+    .join("");
+  const mode = `${game.mode === "forward" ? "🗣️ 口說" : "👂 聽力"} ${game.level === "easy" ? "🌱" : "🔥"}`;
+  const solved = game.questions.filter((q) => q.solved).length;
+  const rec = record.isNew && record.previous !== null ? " 🏆 新紀錄" : "";
+  return `繞著說 ${mode}\n${total} 分${rec}　${solved}/${game.questions.length} 題\n${squares}\n${location.origin}${location.pathname}`;
+}
+
+async function share(text: string): Promise<"shared" | "copied" | "failed"> {
+  try {
+    if (navigator.share) {
+      await navigator.share({ text });
+      return "shared";
+    }
+  } catch (e) {
+    if ((e as { name?: string }).name === "AbortError") return "shared"; // user closed the sheet
+  }
+  try {
+    await navigator.clipboard.writeText(text);
+    return "copied";
+  } catch {
+    return "failed";
+  }
+}
+
 function renderSummary(game: Game, record: { previous: number | null; isNew: boolean }) {
   const qs = game.questions;
   const total = qs.reduce((n, q) => n + q.score, 0);
@@ -509,8 +538,15 @@ function renderSummary(game: Game, record: { previous: number | null; isNew: boo
       <div class="stats"><span class="num ok" aria-label="答對">${solved}</span><span class="num no" aria-label="答錯">${qs.length - solved}</span></div>
       <ul class="list">${rows}</ul>
       <button id="again" class="btn lg block" style="margin-top:16px">再玩</button>
+      <button id="share" class="btn ghost block" style="margin-top:10px">分享成績</button>
+      <div id="sharemsg" class="small muted" style="min-height:18px;margin-top:6px"></div>
     </section>`;
   root.querySelector("#again")?.addEventListener("click", () => { ui.error = ""; setScreen({ name: "start" }); });
+  root.querySelector("#share")?.addEventListener("click", async () => {
+    const msg = root.querySelector("#sharemsg");
+    const outcome = await share(shareText(game, record));
+    if (msg) msg.textContent = outcome === "copied" ? "已複製到剪貼簿，貼到想分享的地方吧" : outcome === "failed" ? "無法分享，請截圖" : "";
+  });
 }
 
 // ---------- actions ----------
