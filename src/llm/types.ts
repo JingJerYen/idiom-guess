@@ -46,6 +46,12 @@ export const ClueVocabResultSchema = z.object({
 });
 export type ClueVocabResult = z.infer<typeof ClueVocabResultSchema>;
 
+export const DefineResultSchema = z.object({
+  word: z.string().trim().min(1).transform((s) => s.slice(0, 60)),
+  zh: z.string().trim().default("").transform((s) => s.slice(0, 60)),
+});
+export type DefineResult = z.infer<typeof DefineResultSchema>;
+
 export const DescribeResultSchema = z.object({
   description: z.string().trim().min(1).transform((s) => s.slice(0, 400)),
 });

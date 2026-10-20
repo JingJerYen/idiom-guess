@@ -7,7 +7,7 @@ import { getClient } from "./client.js";
 
 export interface JsonCallOptions<S extends z.ZodTypeAny> {
   /** Short label for logs, e.g. "guess". */
-  kind: "guess" | "feedback" | "describe" | "clue-vocab";
+  kind: "guess" | "feedback" | "describe" | "clue-vocab" | "define";
   system: string;
   user: string;
   maxTokens: number;

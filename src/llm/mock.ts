@@ -1,7 +1,7 @@
 import { config } from "../config.js";
 import { loadIdioms, type Idiom } from "../game/idioms.js";
 import { respectsConfirmed, type PreviousGuess } from "../prompts/guess.js";
-import type { GuessResult, FeedbackResult, DescribeResult, ClueVocabResult } from "./types.js";
+import type { GuessResult, FeedbackResult, DescribeResult, ClueVocabResult, DefineResult } from "./types.js";
 
 const STOP = new Set(
   "a an the and or but of to in on at for with by from is are was were be been being it its this that these those someone something somebody who which what when you your they them their he she his her we our i me my not no do does did done doing have has had very really just only also even still about into over after before than then there here".split(" "),
@@ -101,6 +101,11 @@ export function mockClueVocab(clues: string[]): ClueVocabResult {
     if (items.length === 3) break;
   }
   return { vocab: items };
+}
+
+export function mockDefine(word: string): DefineResult {
+  const w = word.toLowerCase();
+  return { word: w, zh: `[MOCK] ${w} 的中文` };
 }
 
 export function mockDescribe(idiom: Idiom, attempt: number, previous: string[], literal: { position: number; category: string; english: string } | null = null): DescribeResult {

@@ -35,6 +35,12 @@ export const ClueVocabBodySchema = z.object({
   clues: z.array(z.string().trim().min(1).max(500)).min(1).max(config.maxGuesses),
 });
 
+/** Tap-to-look-up: a sentence shown on the result card and the word tapped in it. */
+export const DefineBodySchema = z.object({
+  sentence: z.string().trim().min(1).max(600),
+  word: z.string().trim().min(1).max(40).regex(/^[A-Za-z][A-Za-z'-]*$/, "one English word"),
+});
+
 export const DescribeBodySchema = z.object({
   idiomId: z.string().min(1).max(64),
   attempt: z.number().int().min(1).max(config.maxGuesses),

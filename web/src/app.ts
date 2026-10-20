@@ -14,6 +14,9 @@ let chosenMode: Mode = "forward";
 let chosenLevel: Level = "hard";
 /** Transient per-question UI state. */
 const ui = { draft: "", busy: false, error: "", violations: [] as Violation[], confirmGiveUp: false };
+/** Tap-to-look-up sheet on the result card: the tapped word, its sentence, and the lookup state. */
+let lookup: { sentence: string; tapped: string; source: string; status: "loading" | "ready" | "error"; word?: string; zh?: string; saved?: boolean } | null = null;
+let lookupHintShown = false;
 /** Active microphone session (forward mode). The text typed before recording is kept as a prefix. */
 let listener: Listener | null = null;
 let micPrefix = "";
@@ -508,6 +511,7 @@ function renderPlay(game: Game) {
     }),
   );
   root.querySelector("#details")?.addEventListener("click", () => { qs.showDetails = !qs.showDetails; render(); });
+  bindLookup(root, qs.answer ?? q.idiom ?? "");
   root.querySelector("#addbook")?.addEventListener("click", () => {
     if (game.mode === "reverse") { void addCluesToBook(game, qs); return; }
     const f = qs.feedback;
@@ -538,7 +542,7 @@ function renderPlay(game: Game) {
     }),
   );
   root.querySelector("#submit")?.addEventListener("click", () => void submit(game));
-  root.querySelector("#next")?.addEventListener("click", () => void nextQuestion(game));
+  root.querySelector("#next")?.addEventListener("click", () => { lookup = null; void nextQuestion(game); });
   root.querySelector("#giveup")?.addEventListener("click", () => {
     if (!ui.confirmGiveUp) { ui.confirmGiveUp = true; render(); return; }
     void giveUp(game);
@@ -568,6 +572,65 @@ function diffWords(before: string, after: string): string {
   return out.join(" ");
 }
 
+/**
+ * Make every English word in an HTML fragment tappable (wrapped in <span class="w">). Only text
+ * nodes are touched, so existing tags survive; words inside <del> are skipped. `sentence` is the
+ * plain text the lookup sends to the server (the fragment's own sentence).
+ */
+function tappable(html: string, sentence: string): string {
+  const s = esc(sentence);
+  const hl = lookup && lookup.sentence === sentence ? lookup.tapped.toLowerCase() : "";
+  let inDel = false;
+  return html.replace(/(<[^>]+>)|([^<]+)/g, (_m, tag: string | undefined, text: string | undefined) => {
+    if (tag) { if (/^<del\b/i.test(tag)) inDel = true; else if (/^<\/del>/i.test(tag)) inDel = false; return tag; }
+    if (inDel || !text) return text ?? "";
+    return text.replace(/[A-Za-z][A-Za-z'-]*/g, (w) => `<span class="w ${w.toLowerCase() === hl ? "hl" : ""}" data-w="${w}" data-s="${s}">${w}</span>`);
+  });
+}
+
+function renderLookupSheet(): string {
+  if (!lookup) return "";
+  const body = lookup.status === "loading"
+    ? `<span class="spinner"></span><span class="lk-word">${esc(lookup.tapped)}</span>`
+    : lookup.status === "error"
+      ? `<span class="lk-word">${esc(lookup.tapped)}</span><span class="muted small">查詢失敗</span><button id="lk-retry" class="btn ghost sm">重試</button>`
+      : `<span class="lk-word">${esc(lookup.word ?? lookup.tapped)}</span><span class="lk-zh">${esc(lookup.zh || "？")}</span>
+         <button id="lk-add" class="addbook ${lookup.saved ? "done" : ""}" ${lookup.saved ? "disabled" : ""}>${lookup.saved ? "✓ 已加入" : "＋ 詞本"}</button>`;
+  return `<div class="sheet" role="dialog" aria-label="查單字">${body}<button id="lk-close" class="iconbtn sm" aria-label="關閉">✕</button></div>`;
+}
+
+async function startLookup(sentence: string, tapped: string, source: string): Promise<void> {
+  lookup = { sentence, tapped, source, status: "loading" };
+  lookupHintShown = true;
+  render();
+  try {
+    const r = await api.define(sentence, tapped);
+    if (!lookup || lookup.sentence !== sentence || lookup.tapped !== tapped) return; // a newer tap replaced this one
+    lookup = { ...lookup, status: "ready", word: r.word, zh: r.zh };
+  } catch {
+    if (lookup && lookup.sentence === sentence && lookup.tapped === tapped) lookup = { ...lookup, status: "error" };
+  }
+  render();
+}
+
+function bindLookup(scope: HTMLElement, source: string) {
+  scope.querySelectorAll<HTMLElement>(".w").forEach((el) =>
+    el.addEventListener("click", (e) => {
+      e.stopPropagation();
+      void startLookup(el.dataset.s ?? "", el.dataset.w ?? "", source);
+    }),
+  );
+  scope.querySelector("#lk-close")?.addEventListener("click", () => { lookup = null; render(); });
+  scope.querySelector("#lk-retry")?.addEventListener("click", () => { if (lookup) void startLookup(lookup.sentence, lookup.tapped, lookup.source); });
+  scope.querySelector("#lk-add")?.addEventListener("click", () => {
+    if (!lookup || lookup.status !== "ready" || lookup.saved) return;
+    addFromFeedback(lookup.source, [{ word: lookup.word ?? lookup.tapped, zh: lookup.zh ?? "", example: lookup.sentence }], null);
+    lookup = { ...lookup, saved: true };
+    render();
+    setTimeout(() => { if (lookup?.saved) { lookup = null; render(); } }, 1200);
+  });
+}
+
 /** Characters the player already has in place: green from earlier guesses, plus any revealed by the last clue. */
 function knownChars(qs: QuestionState): (string | null)[] {
   const confirmed: (string | null)[] = [];
@@ -590,9 +653,9 @@ function renderResult(game: Game, qs: QuestionState): string {
     ? `<div class="answer">${tiles(qs.answer ?? "", chars(qs.answer ?? "").map(() => qs.solved), "lg")}<div class="tagrow">${(qs.answerTags ?? []).map((t) => `<span class="kind">${esc(t)}</span>`).join("")}</div></div>`
     : "";
   const ref = qs.referenceEnglish ?? qs.feedback?.reference_english;
-  const refHtml = ref ? `<div class="ref"><div class="lbl">📖 參考答案</div>${esc(ref)}</div>` : "";
+  const refHtml = ref ? `<div class="ref"><div class="lbl">📖 參考答案</div>${tappable(esc(ref), ref)}</div>` : "";
   const transcript = game.mode === "reverse" && qs.clues.length
-    ? `<div class="transcript">${qs.clues.map((c, i) => `<div class="small"><button class="iconbtn speak sm" data-i="${i}" aria-label="播放">🔊</button> ${esc(c)}</div>`).join("")}</div>`
+    ? `<div class="transcript">${qs.clues.map((c, i) => `<div class="small"><button class="iconbtn speak sm" data-i="${i}" aria-label="播放">🔊</button> ${tappable(esc(c), c)}</div>`).join("")}${lookupHintShown ? "" : `<div class="small muted">👆 點英文字可以查意思、存進詞本</div>`}</div>`
     : "";
 
   let fb = "";
@@ -607,8 +670,8 @@ function renderResult(game: Game, qs: QuestionState): string {
           const same = normalizeForDiff(c.corrected) === normalizeForDiff(t.you);
           // Each row is one of the player's own descriptions, in order; a tag says whether grammar needed fixing.
           return `<div class="corr">
-            <div class="orig ${same ? "ok" : ""}"><span class="n">#${i + 1}</span> ${same ? "" : "✏️ "}${esc(t.you)}${same ? ` <span class="oktag">文法 OK</span>` : ""}</div>
-            ${same ? "" : `<div class="fixed">${diffWords(t.you, c.corrected)}</div>`}
+            <div class="orig ${same ? "ok" : ""}"><span class="n">#${i + 1}</span> ${same ? "" : "✏️ "}${same ? tappable(esc(t.you), t.you) : esc(t.you)}${same ? ` <span class="oktag">文法 OK</span>` : ""}</div>
+            ${same ? "" : `<div class="fixed">${tappable(diffWords(t.you, c.corrected), c.corrected)}</div>`}
             ${c.note ? `<div class="note small">${esc(c.note)}</div>` : ""}
           </div>`;
         })
@@ -634,7 +697,7 @@ function renderResult(game: Game, qs: QuestionState): string {
   return `<section class="card result center">${head}${answer}${game.mode === "reverse" ? transcript : ""}
     <div class="row" style="justify-content:center;margin-top:8px;gap:8px">${toggle}${speakBtn}${addBtn}</div>
     ${qs.showDetails ? `<div class="details-body">${detailsHtml}</div>` : ""}
-    <button id="next" class="btn lg block" style="margin-top:16px">${last ? "總結" : "下一題 →"}</button></section>`;
+    <button id="next" class="btn lg block" style="margin-top:16px">${last ? "總結" : "下一題 →"}</button></section>${renderLookupSheet()}`;
 }
 
 /** Listening mode: ask the server for study words from this question's clues, then store them. */

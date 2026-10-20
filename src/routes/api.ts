@@ -7,11 +7,12 @@ import { isCorrectGuess, normalizeIdiom, positionMatches } from "../game/match.j
 import { CATEGORY_LABEL, numbersIn, pickLiteralHint } from "../game/literal.js";
 import { validateDescription } from "../game/validate.js";
 import { anchorToClues } from "../game/clueVocab.js";
-import { describeIdiom, getClueVocab, getFeedback, guessIdiom } from "../llm/index.js";
+import { defineWord, describeIdiom, getClueVocab, getFeedback, guessIdiom } from "../llm/index.js";
 import { sttEnabled, synthesize, transcribe, ttsEnabled } from "../llm/openai.js";
 import { lightLimiter, modelLimiter } from "../middleware/rateLimit.js";
 import {
   ClueVocabBodySchema,
+  DefineBodySchema,
   DescribeBodySchema,
   FeedbackBodySchema,
   GiveUpBodySchema,
@@ -119,6 +120,16 @@ api.post("/feedback", modelLimiter, async (req, res) => {
     note: fb.corrections[i]?.note ?? "",
   }));
   res.json({ ok: true, corrections, vocab: fb.vocab, grammar: fb.grammar, reference_english: idiom.reference_english });
+});
+
+/** Tap-to-look-up: gloss for one word (or the expression it belongs to) in a sentence shown on the result card. */
+api.post("/define", modelLimiter, async (req, res) => {
+  const body = parseBody(req, DefineBodySchema);
+  if (!new RegExp(`\\b${body.word}\\b`, "i").test(body.sentence)) throw new AppError("BAD_REQUEST", "這個字不在句子裡。");
+  const r = await defineWord(body.sentence, body.word);
+  // The expression must occur in the sentence; otherwise fall back to the tapped word itself.
+  const [anchored] = anchorToClues([{ word: r.word, example: "" }], [body.sentence]);
+  res.json({ ok: true, word: anchored ? r.word : body.word.toLowerCase(), zh: r.zh, example: body.sentence });
 });
 
 /** Listening mode word book: study words from this question's clues, on demand. */

@@ -3,17 +3,20 @@ import { AppError } from "../errors.js";
 import { log } from "../logger.js";
 import { allTags, type Idiom } from "../game/idioms.js";
 import { callJson, salvageGuess } from "./callJson.js";
-import { mockClueVocab, mockDescribe, mockFeedback, mockGuess } from "./mock.js";
+import { mockClueVocab, mockDefine, mockDescribe, mockFeedback, mockGuess } from "./mock.js";
+import { DEFINE_SYSTEM_PROMPT, buildDefineUserMessage } from "../prompts/define.js";
 import { CLUE_VOCAB_SYSTEM_PROMPT, buildClueVocabUserMessage } from "../prompts/clueVocab.js";
 import { buildGuessSystemPrompt, buildGuessUserMessage, respectsConfirmed, type PreviousGuess } from "../prompts/guess.js";
 import { FEEDBACK_SYSTEM_PROMPT, buildFeedbackUserMessage } from "../prompts/feedback.js";
 import { DESCRIBE_SYSTEM_PROMPT, buildDescribeUserMessage } from "../prompts/describe.js";
 import {
   ClueVocabResultSchema,
+  DefineResultSchema,
   DescribeResultSchema,
   FeedbackResultSchema,
   GuessResultSchema,
   type ClueVocabResult,
+  type DefineResult,
   type DescribeResult,
   type FeedbackResult,
   type GuessResult,
@@ -101,6 +104,18 @@ export async function getClueVocab(idiom: Idiom, clues: string[]): Promise<ClueV
     user: buildClueVocabUserMessage({ idiom: idiom.idiom, tags: idiom.tags, clues }),
     maxTokens: config.maxTokens.clueVocab,
     schema: ClueVocabResultSchema,
+  }));
+}
+
+/** Tap-to-look-up on the result card: one word in one sentence, on demand. */
+export async function defineWord(sentence: string, word: string): Promise<DefineResult> {
+  if (config.mockMode) return mockDefine(word);
+  return withFallback("define", () => mockDefine(word), () => callJson({
+    kind: "define",
+    system: DEFINE_SYSTEM_PROMPT,
+    user: buildDefineUserMessage({ sentence, word }),
+    maxTokens: config.maxTokens.define,
+    schema: DefineResultSchema,
   }));
 }
 

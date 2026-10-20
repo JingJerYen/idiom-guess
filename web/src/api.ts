@@ -107,6 +107,8 @@ export interface ClueVocabResponse {
   vocab: { word: string; zh: string; example: string }[];
 }
 
+export interface DefineResponse { ok: true; word: string; zh: string; example: string }
+
 export const api = {
   round: (mode: Mode, level: Level) => request<RoundResponse>(`/api/round?mode=${mode}&level=${level}`),
   guess: (idiomId: string, level: Level, forbidden: string[], descriptions: string[], previousGuesses: string[]) =>
@@ -118,6 +120,8 @@ export const api = {
     }),
   describe: (idiomId: string, attempt: number, previousClues: string[], knownPositions: number[]) =>
     request<DescribeResponse>("/api/describe", { method: "POST", body: JSON.stringify({ idiomId, attempt, previousClues, knownPositions }) }),
+  define: (sentence: string, word: string) =>
+    request<DefineResponse>("/api/define", { method: "POST", body: JSON.stringify({ sentence, word }) }),
   clueVocab: (idiomId: string, clues: string[]) =>
     request<ClueVocabResponse>("/api/clue-vocab", { method: "POST", body: JSON.stringify({ idiomId, clues }) }),
   giveUp: (idiomId: string) => request<GiveUpResponse>("/api/give-up", { method: "POST", body: JSON.stringify({ idiomId }) }),
