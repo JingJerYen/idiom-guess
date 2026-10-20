@@ -8820,28 +8820,6 @@
     "reference_english": "Don't judge people by how they look."
   },
   {
-    "id": "shuo-cao-cao-cao-cao-jiu-dao",
-    "idiom": "說曹操，曹操就到",
-    "aliases": [
-      "说曹操，曹操就到",
-      "說曹操曹操到",
-      "说曹操曹操到"
-    ],
-    "tags": [
-      "俗語"
-    ],
-    "pinyin": "shuo cao cao cao cao jiu dao",
-    "taboo": [
-      "speak",
-      "devil",
-      "arrive",
-      "name",
-      "mention"
-    ],
-    "difficulty": 1,
-    "reference_english": "The person you were just talking about suddenly shows up."
-  },
-  {
     "id": "yi-shan-hai-you-yi-shan-gao",
     "idiom": "一山還有一山高",
     "aliases": [
@@ -8947,46 +8925,6 @@
     "reference_english": "The early bird catches the worm."
   },
   {
-    "id": "huo-dao-lao-xue-dao-lao",
-    "idiom": "活到老，學到老",
-    "aliases": [
-      "活到老，学到老"
-    ],
-    "tags": [
-      "俗語"
-    ],
-    "pinyin": "huo dao lao xue dao lao",
-    "taboo": [
-      "old",
-      "learn",
-      "live",
-      "study",
-      "life"
-    ],
-    "difficulty": 1,
-    "reference_english": "You are never too old to learn."
-  },
-  {
-    "id": "bu-jing-yi-shi-bu-zhang-yi-zhi",
-    "idiom": "不經一事，不長一智",
-    "aliases": [
-      "不经一事，不长一智"
-    ],
-    "tags": [
-      "俗語"
-    ],
-    "pinyin": "bu jing yi shi bu zhang yi zhi",
-    "taboo": [
-      "experience",
-      "learn",
-      "wise",
-      "smart",
-      "lesson"
-    ],
-    "difficulty": 3,
-    "reference_english": "You only learn wisdom by going through things yourself."
-  },
-  {
     "id": "qing-guan-nan-duan-jia-wu-shi",
     "idiom": "清官難斷家務事",
     "aliases": [
@@ -9089,26 +9027,6 @@
     "reference_english": "There are many different ways to reach the same goal."
   },
   {
-    "id": "xiao-dong-bu-bu-da-dong-chi-ku",
-    "idiom": "小洞不補，大洞吃苦",
-    "aliases": [
-      "小洞不补，大洞吃苦"
-    ],
-    "tags": [
-      "俗語"
-    ],
-    "pinyin": "xiao dong bu bu da dong chi ku",
-    "taboo": [
-      "hole",
-      "small",
-      "big",
-      "fix",
-      "repair"
-    ],
-    "difficulty": 2,
-    "reference_english": "Fix small problems early, or they become big ones."
-  },
-  {
     "id": "yi-ri-zhi-ji-zai-yu-chen",
     "idiom": "一日之計在於晨",
     "aliases": [
@@ -9126,24 +9044,6 @@
     ],
     "difficulty": 1,
     "reference_english": "The morning is the most important part of the day."
-  },
-  {
-    "id": "bu-ru-hu-xue-yan-de-hu-zi",
-    "idiom": "不入虎穴，焉得虎子",
-    "aliases": [],
-    "tags": [
-      "俗語"
-    ],
-    "pinyin": "bu ru hu xue yan de hu zi",
-    "taboo": [
-      "tiger",
-      "cave",
-      "cub",
-      "risk",
-      "danger"
-    ],
-    "difficulty": 3,
-    "reference_english": "You must take risks to get great rewards."
   },
   {
     "id": "hu-fu-wu-quan-zi",
@@ -9164,26 +9064,6 @@
     ],
     "difficulty": 3,
     "reference_english": "A great parent will not have a useless child."
-  },
-  {
-    "id": "ma-que-sui-xiao-wu-zang-ju-quan",
-    "idiom": "麻雀雖小，五臟俱全",
-    "aliases": [
-      "麻雀虽小，五脏俱全"
-    ],
-    "tags": [
-      "俗語"
-    ],
-    "pinyin": "ma que sui xiao wu zang ju quan",
-    "taboo": [
-      "sparrow",
-      "bird",
-      "small",
-      "organ",
-      "complete"
-    ],
-    "difficulty": 3,
-    "reference_english": "Small, but it has everything it needs."
   },
   {
     "id": "ren-xin-bu-zu-she-tun-xiang",
@@ -9325,24 +9205,6 @@
     ],
     "difficulty": 3,
     "reference_english": "Young people are fearless because they don't know the danger."
-  },
-  {
-    "id": "xiao-yi-xiao-shi-nian-shao",
-    "idiom": "笑一笑，十年少",
-    "aliases": [],
-    "tags": [
-      "俗語"
-    ],
-    "pinyin": "xiao yi xiao shi nian shao",
-    "taboo": [
-      "smile",
-      "laugh",
-      "ten",
-      "year",
-      "young"
-    ],
-    "difficulty": 1,
-    "reference_english": "Smiling keeps you young."
   },
   {
     "id": "san-fen-zhong-re-du",
