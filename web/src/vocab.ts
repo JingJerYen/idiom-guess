@@ -126,3 +126,33 @@ export function blankWord(example: string, word: string): string {
 function escapeRe(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
+
+/** Plain-text dump of the word book, for export to a .txt file (local download or share sheet). */
+export function exportText(cards: Card[], now: Date = new Date()): string {
+  const words = cards.filter((c): c is WordCard => c.type === "word");
+  const grammar = cards.filter((c): c is GrammarCard => c.type === "grammar");
+  const lines: string[] = [`繞著說 詞本  ${dateStamp(now)}`, `單字 ${words.length} 個，文法 ${grammar.length} 則`, ""];
+  if (words.length) {
+    lines.push("【單字】");
+    for (const w of words) {
+      lines.push(`${w.word}  ${w.zh}${w.source ? `  （${w.source}）` : ""}`);
+      if (w.example) lines.push(`  ${w.example}`);
+    }
+    lines.push("");
+  }
+  if (grammar.length) {
+    lines.push("【文法】");
+    for (const g of grammar) {
+      lines.push(`${g.title}${g.source ? `  （${g.source}）` : ""}`);
+      lines.push(`  ✗ ${g.wrong}`);
+      lines.push(`  ✓ ${g.fixed}`);
+    }
+    lines.push("");
+  }
+  return lines.join("\n");
+}
+
+export function dateStamp(d: Date): string {
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}

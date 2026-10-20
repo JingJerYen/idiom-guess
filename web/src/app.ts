@@ -1,7 +1,7 @@
 import { api, ApiError, transcribeClip, ttsUrl, type Level, type Mode, type Violation } from "./api.js";
 import { canListen, joinOverlap, startListening, type Listener } from "./speech.js";
 import { canRecord, joinClips, startRecording, type Recording } from "./recorder.js";
-import { addFromFeedback, blankWord, cardCount, keepCard, listCards, removeCard, type Card } from "./vocab.js";
+import { addFromFeedback, blankWord, cardCount, dateStamp, exportText, keepCard, listCards, removeCard, type Card } from "./vocab.js";
 import { MAX_ATTEMPTS, MAX_CHARS, MIN_WORDS, SENTENCE_BONUS, countWords, getBest, recordScore, scoreFor, type Game, type QuestionState, type Screen } from "./state.js";
 
 const root = document.getElementById("app") as HTMLElement;
@@ -643,6 +643,37 @@ async function share(text: string): Promise<"shared" | "copied" | "failed"> {
 const RECALL_LIMIT_MS = 10_000;
 const review = { flipped: false, shownAt: 0, flippedAt: 0, done: 0, dragX: 0 };
 
+/**
+ * Export the word book as a .txt file. On phones the share sheet is used (it offers Google Drive,
+ * Files, LINE, …); elsewhere the file is downloaded. Nothing leaves the device through our server.
+ */
+async function exportVocab(): Promise<void> {
+  const cards = listCards();
+  if (!cards.length) return;
+  // ASCII file name: some browsers drop a non-ASCII download name and save the file as "download".
+  const name = `vocab-${dateStamp(new Date())}.txt`;
+  const text = exportText(cards);
+  const file = new File([text], name, { type: "text/plain" });
+  const touch = matchMedia("(pointer: coarse)").matches;
+  if (touch && typeof navigator.canShare === "function" && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: "繞著說 詞本" });
+      return;
+    } catch (err) {
+      if ((err as DOMException).name === "AbortError") return; // user closed the sheet
+      // fall through to a plain download
+    }
+  }
+  const url = URL.createObjectURL(file);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
+}
+
 function renderVocab() {
   const cards = listCards();
   const card = cards[0];
@@ -662,7 +693,7 @@ function renderVocab() {
        ${review.flipped ? `<div class="ex fixed">${diffWords(card.wrong, card.fixed)}</div>` : `<div class="ex wrong">${esc(card.wrong)}</div>`}`;
   root.innerHTML = `<section>
       <div class="bookhead"><span class="muted small">卡片 ${review.done + 1} / ${review.done + cards.length}</span>
-        <span class="row" style="gap:6px"><button id="say" class="btn ghost sm" ${review.flipped ? "" : "disabled"}>🔊</button><button id="home" class="btn ghost sm">✕</button></span></div>
+        <span class="row" style="gap:6px"><button id="say" class="btn ghost sm" ${review.flipped ? "" : "disabled"}>🔊</button><button id="export" class="btn ghost sm" title="匯出成 txt">⬇</button><button id="home" class="btn ghost sm">✕</button></span></div>
       <div class="stack">
         ${cards[2] ? `<div class="fc back2"></div>` : ""}${cards[1] ? `<div class="fc back1"></div>` : ""}
         <div id="fc" class="fc live ${card.type}"><span class="timer">⏱ ${seconds} 秒</span><span class="from">${esc(card.source)}</span>${front}</div>
@@ -684,6 +715,7 @@ function renderVocab() {
   };
   root.querySelector("#home")?.addEventListener("click", () => { review.done = 0; review.shownAt = 0; review.flipped = false; review.flippedAt = 0; setScreen({ name: "start" }); });
   root.querySelector("#say")?.addEventListener("click", () => speak(card.type === "word" ? `${card.word}. ${card.example}` : card.fixed));
+  root.querySelector("#export")?.addEventListener("click", () => { void exportVocab(); });
   root.querySelector("#yes")?.addEventListener("click", () => settle(true));
   root.querySelector("#no")?.addEventListener("click", () => settle(false));
   // Tap flips; a horizontal drag of 80px+ swipes.
