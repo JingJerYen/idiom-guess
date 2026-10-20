@@ -68,8 +68,15 @@ export function mockGuess(descriptions: string[], previousGuesses: string[] = []
 }
 
 /** MOCK proofreader: capitalise the first letter, fix lowercase "i", add a final period. */
-export function mockFeedback(_idiom: Idiom, descriptions: string[]): FeedbackResult {
+export function mockFeedback(idiom: Idiom, descriptions: string[]): FeedbackResult {
+  const longWords = Array.from(new Set((idiom.reference_english.match(/[A-Za-z]{7,}/g) ?? []).map((w) => w.toLowerCase()))).slice(0, 3);
+  const vocab = longWords.map((w) => ({ word: w, zh: `[MOCK] ${w} 的中文`, example: idiom.reference_english }));
+  const first = descriptions[0] ?? "";
+  const fixedFirst = (() => { let t = first.trim().replace(/\s+/g, " ").replace(/\bi\b/g, "I"); t = t.charAt(0).toUpperCase() + t.slice(1); return /[.!?]$/.test(t) ? t : t + "."; })();
+  const grammar = fixedFirst !== first.trim() ? { title: "[MOCK] 句首大寫與句尾標點", wrong: first, fixed: fixedFirst } : null;
   return {
+    vocab,
+    grammar,
     corrections: descriptions.map((d) => {
       const notes: string[] = [];
       let t = d.trim().replace(/\s+/g, " ");

@@ -62,6 +62,11 @@ test("feedback schema accepts the documented shape", () => {
   const r = parseWithSchema('{"corrections":[{"corrected":"Someone adds extra things.","note":"句首要大寫。"},{"corrected":"It is fine.","note":""}]}', FeedbackResultSchema);
   assert.equal(r.corrections.length, 2);
   assert.equal(r.corrections[1].note, "");
+  assert.deepEqual(r.vocab, [], "vocab defaults to empty for older replies");
+  assert.equal(r.grammar, null);
+  const full = parseWithSchema('{"corrections":[{"corrected":"x","note":""}],"vocab":[{"word":"waits for","zh":"等待","example":"He waits for luck."},{"word":"a"},{"word":"b"},{"word":"c"}],"grammar":{"title":"第三人稱單數動詞要加 s","wrong":"he wait","fixed":"He waits."}}', FeedbackResultSchema);
+  assert.equal(full.vocab.length, 3, "at most three vocab items");
+  assert.equal(full.grammar?.title, "第三人稱單數動詞要加 s");
   assert.throws(() => parseWithSchema('{"corrections":["plain string"]}', FeedbackResultSchema), SyntaxError);
 });
 
@@ -74,6 +79,7 @@ test("mock guess always returns a four-character idiom from the bank", () => {
   }
   const fb = mockFeedback(loadIdioms()[0], ["someone adds extra things and i like it"]);
   assert.ok(FeedbackResultSchema.safeParse(fb).success);
+  assert.ok(fb.vocab.length >= 1 && fb.grammar !== null);
   assert.equal(fb.corrections[0].corrected, "Someone adds extra things and I like it.");
   assert.ok(fb.corrections[0].note.includes("大寫"));
 });

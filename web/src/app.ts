@@ -1,6 +1,7 @@
 import { api, ApiError, transcribeClip, ttsUrl, type Level, type Mode, type Violation } from "./api.js";
 import { canListen, joinOverlap, startListening, type Listener } from "./speech.js";
 import { canRecord, joinClips, startRecording, type Recording } from "./recorder.js";
+import { addFromFeedback, blankWord, cardCount, keepCard, listCards, removeCard, type Card } from "./vocab.js";
 import { MAX_ATTEMPTS, MAX_CHARS, MIN_WORDS, SENTENCE_BONUS, countWords, getBest, recordScore, scoreFor, type Game, type QuestionState, type Screen } from "./state.js";
 
 const root = document.getElementById("app") as HTMLElement;
@@ -273,6 +274,7 @@ function render() {
     case "loading": root.innerHTML = `<section class="card center pad"><span class="spinner"></span>${esc(screen.text)}</section>`; return;
     case "play": return renderPlay(screen.game);
     case "summary": return renderSummary(screen.game, screen.record);
+    case "vocab": return renderVocab();
   }
 }
 
@@ -301,7 +303,8 @@ function renderStart() {
       </button>
     </section>
     ${ui.error ? `<div class="alert error">${esc(ui.error)}</div>` : ""}
-    <button id="start" class="btn lg block">開始</button>`;
+    <button id="start" class="btn lg block">開始</button>
+    <button id="book" class="card bookcard"><span class="l"><span class="icon">📒</span><span><b>詞本</b><span class="small muted">左右滑動複習，記住的就消失</span></span></span><span class="cnt ${cardCount() ? "" : "zero"}">${cardCount()}</span></button>`;
   root.querySelectorAll<HTMLButtonElement>(".mode").forEach((b) =>
     b.addEventListener("click", () => { chosenMode = b.dataset.mode as Mode; render(); }),
   );
@@ -309,6 +312,7 @@ function renderStart() {
     b.addEventListener("click", () => { chosenLevel = b.dataset.level as Level; render(); }),
   );
   (root.querySelector("#start") as HTMLButtonElement).addEventListener("click", () => void startGame());
+  root.querySelector("#book")?.addEventListener("click", () => setScreen({ name: "vocab" }));
 }
 
 function violationText(v: Violation): string {
@@ -479,6 +483,14 @@ function renderPlay(game: Game) {
     }),
   );
   root.querySelector("#details")?.addEventListener("click", () => { qs.showDetails = !qs.showDetails; render(); });
+  root.querySelector("#addbook")?.addEventListener("click", () => {
+    const f = qs.feedback;
+    if (!f) return;
+    // Saved silently: the player sees what was kept only when they open the word book later.
+    addFromFeedback(q.idiom ?? "", f.vocab, f.grammar);
+    qs.addedToBook = true;
+    render();
+  });
   root.querySelectorAll<HTMLButtonElement>(".eye").forEach((b) =>
     b.addEventListener("click", () => {
       const i = Number(b.dataset.i);
@@ -586,8 +598,12 @@ function renderResult(game: Game, qs: QuestionState): string {
   const speakBtn = qs.showDetails && canSpeak && !loading
     ? `<button id="fb-speak" class="iconbtn fbspeak" aria-label="朗讀回饋">🔊</button>`
     : "";
+  const canAdd = game.mode === "forward" && qs.feedback && (qs.feedback.vocab.length > 0 || qs.feedback.grammar);
+  const addBtn = qs.showDetails && canAdd
+    ? `<button id="addbook" class="addbook ${qs.addedToBook ? "done" : ""}" ${qs.addedToBook ? "disabled" : ""}>${qs.addedToBook ? "✓ 已加入" : "＋ 詞本"}</button>`
+    : "";
   return `<section class="card result center">${head}${answer}${game.mode === "reverse" ? transcript : ""}
-    <div class="row" style="justify-content:center;margin-top:8px;gap:8px">${toggle}${speakBtn}</div>
+    <div class="row" style="justify-content:center;margin-top:8px;gap:8px">${toggle}${speakBtn}${addBtn}</div>
     ${qs.showDetails ? `<div class="details-body">${detailsHtml}</div>` : ""}
     <button id="next" class="btn lg block" style="margin-top:16px">${last ? "總結" : "下一題 →"}</button></section>`;
 }
@@ -619,6 +635,83 @@ async function share(text: string): Promise<"shared" | "copied" | "failed"> {
   } catch {
     return "failed";
   }
+}
+
+// ---------- word book ----------
+
+/** Recall within this many seconds (from showing the card to flipping it) counts as known. */
+const RECALL_LIMIT_MS = 10_000;
+const review = { flipped: false, shownAt: 0, flippedAt: 0, done: 0, dragX: 0 };
+
+function renderVocab() {
+  const cards = listCards();
+  const card = cards[0];
+  if (!card) {
+    root.innerHTML = `<section class="card center pad"><div class="big-emoji">📒</div><h2>${review.done ? "今天複習完了" : "詞本是空的"}</h2>
+      <p class="muted">${review.done ? `記住了 ${review.done} 張` : "玩口說模式，在回饋區按「＋ 詞本」就會加進來。"}</p>
+      <button id="home" class="btn lg block" style="margin-top:12px">回首頁</button></section>`;
+    root.querySelector("#home")?.addEventListener("click", () => { review.done = 0; setScreen({ name: "start" }); });
+    return;
+  }
+  if (!review.shownAt) { review.shownAt = Date.now(); review.flipped = false; }
+  const seconds = Math.round(((review.flipped ? review.flippedAt : Date.now()) - review.shownAt) / 1000);
+  const front = card.type === "word"
+    ? `<div class="type">單字 · ${review.flipped ? "背面" : "正面"}</div>
+       ${review.flipped ? `<div class="en">${esc(card.word)}</div>` : `<div class="zh">${esc(card.zh || "？")}</div>`}
+       <div class="ex">${review.flipped ? esc(card.example).replace(new RegExp(`\\b(${card.word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}[a-z']*)`, "i"), "<b>$1</b>") : esc(blankWord(card.example, card.word))}</div>`
+    : `<div class="type">文法 · ${review.flipped ? "背面" : "正面"}</div>
+       <div class="zh gtitle">${esc(card.title)}</div>
+       ${review.flipped ? `<div class="ex fixed">${diffWords(card.wrong, card.fixed)}</div>` : `<div class="ex wrong">${esc(card.wrong)}</div>`}`;
+  root.innerHTML = `<section>
+      <div class="bookhead"><span class="muted small">卡片 ${review.done + 1} / ${review.done + cards.length}</span>
+        <span class="row" style="gap:6px"><button id="say" class="btn ghost sm" ${review.flipped ? "" : "disabled"}>🔊</button><button id="home" class="btn ghost sm">✕</button></span></div>
+      <div class="stack">
+        ${cards[2] ? `<div class="fc back2"></div>` : ""}${cards[1] ? `<div class="fc back1"></div>` : ""}
+        <div id="fc" class="fc live ${card.type}"><span class="timer">⏱ ${seconds} 秒</span><span class="from">${esc(card.source)}</span>${front}
+          <div class="hint">${review.flipped ? `右滑 = 記得（${RECALL_LIMIT_MS / 1000} 秒內翻面會直接畢業）　左滑 = 再來一次` : card.type === "word" ? "想到了就點一下翻面" : "心裡改好再點一下看答案"}</div>
+        </div>
+      </div>
+      <div class="swipe"><button id="no" class="l">← 不記得</button><button id="yes" class="r">記得 →</button></div>
+    </section>`;
+  const fc = root.querySelector<HTMLElement>("#fc")!;
+  const flip = () => { if (review.flipped) return; review.flipped = true; review.flippedAt = Date.now(); render(); };
+  const settle = (known: boolean) => {
+    const recallMs = (review.flipped ? review.flippedAt : Date.now()) - review.shownAt;
+    if (known && recallMs <= RECALL_LIMIT_MS) { removeCard(card.id); review.done += 1; }
+    else keepCard(card.id);
+    review.shownAt = 0; review.flipped = false; review.dragX = 0;
+    render();
+  };
+  root.querySelector("#home")?.addEventListener("click", () => { review.done = 0; review.shownAt = 0; review.flipped = false; setScreen({ name: "start" }); });
+  root.querySelector("#say")?.addEventListener("click", () => speak(card.type === "word" ? `${card.word}. ${card.example}` : card.fixed));
+  root.querySelector("#yes")?.addEventListener("click", () => settle(true));
+  root.querySelector("#no")?.addEventListener("click", () => settle(false));
+  // Tap flips; a horizontal drag of 80px+ swipes.
+  let startX = 0, dragging = false, moved = false;
+  fc.addEventListener("pointerdown", (e) => { startX = e.clientX; dragging = true; moved = false; fc.setPointerCapture(e.pointerId); });
+  fc.addEventListener("pointermove", (e) => {
+    if (!dragging) return;
+    const dx = e.clientX - startX;
+    if (Math.abs(dx) > 6) moved = true;
+    review.dragX = dx;
+    fc.style.transform = `translateX(${dx}px) rotate(${dx / 20}deg)`;
+    fc.classList.toggle("swiping-right", dx > 40);
+    fc.classList.toggle("swiping-left", dx < -40);
+  });
+  const end = () => {
+    if (!dragging) return;
+    dragging = false;
+    const dx = review.dragX;
+    fc.style.transform = "";
+    fc.classList.remove("swiping-right", "swiping-left");
+    if (dx > 80) settle(true);
+    else if (dx < -80) settle(false);
+    else if (!moved) flip();
+    review.dragX = 0;
+  };
+  fc.addEventListener("pointerup", end);
+  fc.addEventListener("pointercancel", end);
+  if (!review.flipped) window.setTimeout(() => { if (screen.name === "vocab" && !review.flipped) { const t = root.querySelector(".timer"); if (t) t.textContent = `⏱ ${Math.round((Date.now() - review.shownAt) / 1000)} 秒`; } }, 1000);
 }
 
 function renderSummary(game: Game, record: { previous: number | null; isNew: boolean }) {

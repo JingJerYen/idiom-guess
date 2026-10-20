@@ -39,6 +39,9 @@ export interface FeedbackResponse {
   ok: true;
   /** One entry per description the player wrote, same order. */
   corrections: { corrected: string; note: string }[];
+  /** Word-book material (added only when the player taps ＋ 詞本). */
+  vocab: { word: string; zh: string; example: string }[];
+  grammar: { title: string; wrong: string; fixed: string } | null;
   reference_english: string;
 }
 

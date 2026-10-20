@@ -33,6 +33,8 @@ export interface QuestionState {
   shownTurn?: number;
   /** Result card: whether the feedback / transcript section is expanded. */
   showDetails?: boolean;
+  /** Forward mode: the feedback's study material was saved to the word book. */
+  addedToBook?: boolean;
   /** Word cards currently flipped to Chinese (by index). */
   flipped?: Set<number>;
   /** Forward mode: sentence-starter panel open. */
@@ -68,7 +70,8 @@ export type Screen =
   | { name: "start" }
   | { name: "loading"; text: string }
   | { name: "play"; game: Game }
-  | { name: "summary"; game: Game; record: RecordResult };
+  | { name: "summary"; game: Game; record: RecordResult }
+  | { name: "vocab" };
 
 /** Outcome of comparing a finished round with the stored best score for its mode + level. */
 export interface RecordResult {

@@ -116,7 +116,7 @@ api.post("/feedback", modelLimiter, async (req, res) => {
     corrected: fb.corrections[i]?.corrected.trim() || d,
     note: fb.corrections[i]?.note ?? "",
   }));
-  res.json({ ok: true, corrections, reference_english: idiom.reference_english });
+  res.json({ ok: true, corrections, vocab: fb.vocab, grammar: fb.grammar, reference_english: idiom.reference_english });
 });
 
 // ---- Audio (optional, needs GAME_OPENAI_KEY) ----
