@@ -8760,31 +8760,6 @@
     "reference_english": "Guests feel as comfortable as if they were at home."
   },
   {
-    "id": "jiao-tian-tian-bu-ying-jiao-di-di-bu-ling",
-    "idiom": "叫天天不應，叫地地不靈",
-    "aliases": [
-      "叫天天不应，叫地地不灵",
-      "叫天不應叫地不靈",
-      "叫天天不應叫地地不靈",
-      "叫天不应叫地不灵",
-      "叫天天不应叫地地不灵"
-    ],
-    "tags": [
-      "俗語"
-    ],
-    "pinyin": "jiao tian tian bu ying jiao di di bu ling",
-    "taboo": [
-      "sky",
-      "heaven",
-      "earth",
-      "call",
-      "answer",
-      "helpless"
-    ],
-    "difficulty": 2,
-    "reference_english": "Being in deep trouble with nobody at all to turn to for help."
-  },
-  {
     "id": "tian-sheng-wo-cai-bi-you-yong",
     "idiom": "天生我材必有用",
     "aliases": [
@@ -8803,50 +8778,6 @@
     ],
     "difficulty": 2,
     "reference_english": "Everyone is born with some talent that will be useful one day."
-  },
-  {
-    "id": "tian-xia-mei-you-bu-san-de-yan-xi",
-    "idiom": "天下沒有不散的筵席",
-    "aliases": [
-      "天下没有不散的筵席",
-      "天下無不散的筵席",
-      "天下无不散的筵席"
-    ],
-    "tags": [
-      "俗語"
-    ],
-    "pinyin": "tian xia mei you bu san de yan xi",
-    "taboo": [
-      "party",
-      "feast",
-      "end",
-      "goodbye",
-      "forever"
-    ],
-    "difficulty": 2,
-    "reference_english": "Every gathering must come to an end; people always part someday."
-  },
-  {
-    "id": "tian-xia-wu-nan-shi-zhi-pa-you-xin-ren",
-    "idiom": "天下無難事，只怕有心人",
-    "aliases": [
-      "天下无难事，只怕有心人",
-      "天下無難事",
-      "天下无难事"
-    ],
-    "tags": [
-      "俗語"
-    ],
-    "pinyin": "tian xia wu nan shi zhi pa you xin ren",
-    "taboo": [
-      "hard",
-      "heart",
-      "determined",
-      "nothing",
-      "world"
-    ],
-    "difficulty": 2,
-    "reference_english": "Nothing is impossible if you are determined enough."
   },
   {
     "id": "you-qian-neng-shi-gui-tui-mo",
@@ -8934,28 +8865,6 @@
     "reference_english": "No matter how good you are, there is always someone better."
   },
   {
-    "id": "liu-de-qing-shan-zai-bu-pa-mei-chai-shao",
-    "idiom": "留得青山在，不怕沒柴燒",
-    "aliases": [
-      "留得青山在，不怕没柴烧",
-      "留得青山在"
-    ],
-    "tags": [
-      "俗語"
-    ],
-    "pinyin": "liu de qing shan zai bu pa mei chai shao",
-    "taboo": [
-      "mountain",
-      "green",
-      "firewood",
-      "wood",
-      "fire",
-      "burn"
-    ],
-    "difficulty": 3,
-    "reference_english": "As long as you are still alive and well, there is always hope for the future."
-  },
-  {
     "id": "chuan-dao-qiao-tou-zi-ran-zhi",
     "idiom": "船到橋頭自然直",
     "aliases": [
@@ -8994,49 +8903,6 @@
     ],
     "difficulty": 3,
     "reference_english": "A wise person avoids a fight they are sure to lose right now."
-  },
-  {
-    "id": "chi-de-ku-zhong-ku-fang-wei-ren-shang-ren",
-    "idiom": "吃得苦中苦，方為人上人",
-    "aliases": [
-      "吃得苦中苦，方为人上人"
-    ],
-    "tags": [
-      "俗語"
-    ],
-    "pinyin": "chi de ku zhong ku fang wei ren shang ren",
-    "taboo": [
-      "bitter",
-      "eat",
-      "hard",
-      "top",
-      "success"
-    ],
-    "difficulty": 3,
-    "reference_english": "Only by enduring great hardship can you rise above others."
-  },
-  {
-    "id": "san-ge-chou-pi-jiang-sheng-guo-yi-ge-zhu-ge-liang",
-    "idiom": "三個臭皮匠，勝過一個諸葛亮",
-    "aliases": [
-      "三个臭皮匠，胜过一个诸葛亮",
-      "三個臭皮匠勝過一個諸葛亮",
-      "三个臭皮匠胜过一个诸葛亮"
-    ],
-    "tags": [
-      "俗語"
-    ],
-    "pinyin": "san ge chou pi jiang sheng guo yi ge zhu ge liang",
-    "taboo": [
-      "three",
-      "shoemaker",
-      "genius",
-      "team",
-      "leather",
-      "smart"
-    ],
-    "difficulty": 2,
-    "reference_english": "Several ordinary people working together can beat one genius."
   },
   {
     "id": "jiang-shi-lao-de-la",
@@ -9203,67 +9069,6 @@
     ],
     "difficulty": 2,
     "reference_english": "Illness comes on suddenly and hits hard."
-  },
-  {
-    "id": "san-bai-liu-shi-hang-hang-hang-chu-zhuang-yuan",
-    "idiom": "三百六十行，行行出狀元",
-    "aliases": [
-      "三百六十行，行行出状元",
-      "行行出狀元",
-      "行行出状元"
-    ],
-    "tags": [
-      "俗語"
-    ],
-    "pinyin": "san bai liu shi hang hang hang chu zhuang yuan",
-    "taboo": [
-      "job",
-      "hundred",
-      "sixty",
-      "best",
-      "champion",
-      "work"
-    ],
-    "difficulty": 2,
-    "reference_english": "Every kind of job has its own top experts."
-  },
-  {
-    "id": "zai-jia-kao-fu-mu-chu-wai-kao-peng-you",
-    "idiom": "在家靠父母，出外靠朋友",
-    "aliases": [],
-    "tags": [
-      "俗語"
-    ],
-    "pinyin": "zai jia kao fu mu chu wai kao peng you",
-    "taboo": [
-      "parent",
-      "friend",
-      "home",
-      "father",
-      "mother"
-    ],
-    "difficulty": 1,
-    "reference_english": "At home you rely on your parents; away from home you rely on friends."
-  },
-  {
-    "id": "luo-ma-bu-shi-yi-tian-zao-cheng-de",
-    "idiom": "羅馬不是一天造成的",
-    "aliases": [
-      "罗马不是一天造成的",
-      "羅馬不是一天建成的",
-      "罗马不是一天建成的"
-    ],
-    "tags": [
-      "俗語"
-    ],
-    "pinyin": "luo ma bu shi yi tian zao cheng de",
-    "taboo": [
-      "rome",
-      "day",
-      "build"
-    ],
-    "difficulty": 1,
-    "reference_english": "Great things take a long time to achieve."
   },
   {
     "id": "tiao-tiao-da-lu-tong-luo-ma",
@@ -9499,27 +9304,6 @@
     "reference_english": "Bad people are the same everywhere."
   },
   {
-    "id": "chi-ren-de-zui-ruan-na-ren-de-shou-duan",
-    "idiom": "吃人的嘴軟，拿人的手短",
-    "aliases": [
-      "吃人的嘴软，拿人的手短"
-    ],
-    "tags": [
-      "俗語"
-    ],
-    "pinyin": "chi ren de zui ruan na ren de shou duan",
-    "taboo": [
-      "mouth",
-      "hand",
-      "soft",
-      "short",
-      "gift",
-      "eat"
-    ],
-    "difficulty": 3,
-    "reference_english": "Once you accept a favor, it is hard to say no to the giver."
-  },
-  {
     "id": "chu-sheng-zhi-du-bu-wei-hu",
     "idiom": "初生之犢不畏虎",
     "aliases": [
@@ -9541,27 +9325,6 @@
     ],
     "difficulty": 3,
     "reference_english": "Young people are fearless because they don't know the danger."
-  },
-  {
-    "id": "fan-hou-bai-bu-zou-huo-dao-jiu-shi-jiu",
-    "idiom": "飯後百步走，活到九十九",
-    "aliases": [
-      "饭后百步走，活到九十九"
-    ],
-    "tags": [
-      "俗語"
-    ],
-    "pinyin": "fan hou bai bu zou huo dao jiu shi jiu",
-    "taboo": [
-      "walk",
-      "meal",
-      "hundred",
-      "step",
-      "ninety",
-      "live"
-    ],
-    "difficulty": 1,
-    "reference_english": "Taking a walk after meals keeps you healthy and helps you live long."
   },
   {
     "id": "xiao-yi-xiao-shi-nian-shao",
@@ -9858,29 +9621,6 @@
     "reference_english": "Backing out of something you had planned to do."
   },
   {
-    "id": "qian-li-song-e-mao-li-qing-qing-yi-zhong",
-    "idiom": "千里送鵝毛，禮輕情意重",
-    "aliases": [
-      "千里送鹅毛，礼轻情意重",
-      "千里送鵝毛",
-      "千里送鹅毛"
-    ],
-    "tags": [
-      "俗語"
-    ],
-    "pinyin": "qian li song e mao li qing qing yi zhong",
-    "taboo": [
-      "goose",
-      "feather",
-      "gift",
-      "thousand",
-      "mile",
-      "light"
-    ],
-    "difficulty": 2,
-    "reference_english": "A small gift can carry deep feelings."
-  },
-  {
     "id": "tou-ji-bu-zhao-shi-ba-mi",
     "idiom": "偷雞不著蝕把米",
     "aliases": [
@@ -9900,26 +9640,5 @@
     ],
     "difficulty": 3,
     "reference_english": "Trying to gain something by cheating and losing instead."
-  },
-  {
-    "id": "ban-qi-shi-tou-za-zi-ji-de-jiao",
-    "idiom": "搬起石頭砸自己的腳",
-    "aliases": [
-      "搬起石头砸自己的脚"
-    ],
-    "tags": [
-      "俗語"
-    ],
-    "pinyin": "ban qi shi tou za zi ji de jiao",
-    "taboo": [
-      "stone",
-      "rock",
-      "foot",
-      "feet",
-      "drop",
-      "hurt"
-    ],
-    "difficulty": 2,
-    "reference_english": "Hurting yourself with your own plan to harm others."
   }
 ]
