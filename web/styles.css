@@ -228,7 +228,7 @@ ul.fb .fi { text-align: center; }
 .addbook { border: 2px solid var(--line); background: transparent; border-radius: 999px; padding: 6px 14px; font-weight: 700; color: var(--ink); cursor: pointer; }
 .addbook.done { border-color: var(--ok); color: var(--ok); background: var(--ok-soft); }
 .bookhead { display: flex; justify-content: space-between; align-items: center; }
-.stack { position: relative; height: 320px; margin-top: 12px; }
+.stack { position: relative; height: 300px; margin-top: 12px; }
 .fc { position: absolute; inset: 0; background: var(--card); border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--shadow); padding: 22px; display: flex; flex-direction: column; justify-content: center; text-align: center; touch-action: pan-y; user-select: none; }
 .fc.live { cursor: pointer; transition: box-shadow 0.15s; }
 .fc.back1 { transform: scale(0.96) translateY(10px); opacity: 0.6; }

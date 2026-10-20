@@ -653,36 +653,36 @@ function renderVocab() {
     root.querySelector("#home")?.addEventListener("click", () => { review.done = 0; setScreen({ name: "start" }); });
     return;
   }
-  if (!review.shownAt) { review.shownAt = Date.now(); review.flipped = false; }
-  const seconds = Math.round(((review.flipped ? review.flippedAt : Date.now()) - review.shownAt) / 1000);
+  if (!review.shownAt) { review.shownAt = Date.now(); review.flipped = false; review.flippedAt = 0; }
+  const seconds = Math.round(((review.flippedAt || Date.now()) - review.shownAt) / 1000);
   const front = card.type === "word"
-    ? `<div class="type">單字 · ${review.flipped ? "背面" : "正面"}</div>
-       ${review.flipped ? `<div class="en">${esc(card.word)}</div>` : `<div class="zh">${esc(card.zh || "？")}</div>`}
+    ? `${review.flipped ? `<div class="en">${esc(card.word)}</div>` : `<div class="zh">${esc(card.zh || "？")}</div>`}
        <div class="ex">${review.flipped ? esc(card.example).replace(new RegExp(`\\b(${card.word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}[a-z']*)`, "i"), "<b>$1</b>") : esc(blankWord(card.example, card.word))}</div>`
-    : `<div class="type">文法 · ${review.flipped ? "背面" : "正面"}</div>
-       <div class="zh gtitle">${esc(card.title)}</div>
+    : `<div class="zh gtitle">${esc(card.title)}</div>
        ${review.flipped ? `<div class="ex fixed">${diffWords(card.wrong, card.fixed)}</div>` : `<div class="ex wrong">${esc(card.wrong)}</div>`}`;
   root.innerHTML = `<section>
       <div class="bookhead"><span class="muted small">卡片 ${review.done + 1} / ${review.done + cards.length}</span>
         <span class="row" style="gap:6px"><button id="say" class="btn ghost sm" ${review.flipped ? "" : "disabled"}>🔊</button><button id="home" class="btn ghost sm">✕</button></span></div>
       <div class="stack">
         ${cards[2] ? `<div class="fc back2"></div>` : ""}${cards[1] ? `<div class="fc back1"></div>` : ""}
-        <div id="fc" class="fc live ${card.type}"><span class="timer">⏱ ${seconds} 秒</span><span class="from">${esc(card.source)}</span>${front}
-          <div class="hint">${review.flipped ? `右滑 = 記得（${RECALL_LIMIT_MS / 1000} 秒內翻面會直接畢業）　左滑 = 再來一次` : card.type === "word" ? "想到了就點一下翻面" : "心裡改好再點一下看答案"}</div>
-        </div>
+        <div id="fc" class="fc live ${card.type}"><span class="timer">⏱ ${seconds} 秒</span><span class="from">${esc(card.source)}</span>${front}</div>
       </div>
       <div class="swipe"><button id="no" class="l">← 不記得</button><button id="yes" class="r">記得 →</button></div>
     </section>`;
   const fc = root.querySelector<HTMLElement>("#fc")!;
-  const flip = () => { if (review.flipped) return; review.flipped = true; review.flippedAt = Date.now(); render(); };
-  const settle = (known: boolean) => {
-    const recallMs = (review.flipped ? review.flippedAt : Date.now()) - review.shownAt;
-    if (known && recallMs <= RECALL_LIMIT_MS) { removeCard(card.id); review.done += 1; }
-    else keepCard(card.id);
-    review.shownAt = 0; review.flipped = false; review.dragX = 0;
+  const flip = () => {
+    if (!review.flipped && !review.flippedAt) review.flippedAt = Date.now(); // first reveal sets the recall time
+    review.flipped = !review.flipped;
     render();
   };
-  root.querySelector("#home")?.addEventListener("click", () => { review.done = 0; review.shownAt = 0; review.flipped = false; setScreen({ name: "start" }); });
+  const settle = (known: boolean) => {
+    const recallMs = (review.flippedAt || Date.now()) - review.shownAt;
+    if (known && recallMs <= RECALL_LIMIT_MS) { removeCard(card.id); review.done += 1; }
+    else keepCard(card.id);
+    review.shownAt = 0; review.flipped = false; review.flippedAt = 0; review.dragX = 0;
+    render();
+  };
+  root.querySelector("#home")?.addEventListener("click", () => { review.done = 0; review.shownAt = 0; review.flipped = false; review.flippedAt = 0; setScreen({ name: "start" }); });
   root.querySelector("#say")?.addEventListener("click", () => speak(card.type === "word" ? `${card.word}. ${card.example}` : card.fixed));
   root.querySelector("#yes")?.addEventListener("click", () => settle(true));
   root.querySelector("#no")?.addEventListener("click", () => settle(false));
@@ -711,7 +711,7 @@ function renderVocab() {
   };
   fc.addEventListener("pointerup", end);
   fc.addEventListener("pointercancel", end);
-  if (!review.flipped) window.setTimeout(() => { if (screen.name === "vocab" && !review.flipped) { const t = root.querySelector(".timer"); if (t) t.textContent = `⏱ ${Math.round((Date.now() - review.shownAt) / 1000)} 秒`; } }, 1000);
+  if (!review.flippedAt) window.setTimeout(() => { if (screen.name === "vocab" && !review.flippedAt) { const t = root.querySelector(".timer"); if (t) t.textContent = `⏱ ${Math.round((Date.now() - review.shownAt) / 1000)} 秒`; } }, 1000);
 }
 
 function renderSummary(game: Game, record: { previous: number | null; isNew: boolean }) {
