@@ -112,7 +112,7 @@ let useWhisper = false;
 let whisperRec: Recording | null = null;
 let whisperBusy = false;
 /** Whisper is billed per second of audio, so a single clip is capped; it auto-submits at the limit. */
-const WHISPER_MAX_SECONDS = 60;
+const WHISPER_MAX_SECONDS = 30;
 let whisperTimer: number | null = null;
 let whisperStartedAt = 0;
 
