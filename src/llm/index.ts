@@ -3,14 +3,17 @@ import { AppError } from "../errors.js";
 import { log } from "../logger.js";
 import { allTags, type Idiom } from "../game/idioms.js";
 import { callJson, salvageGuess } from "./callJson.js";
-import { mockDescribe, mockFeedback, mockGuess } from "./mock.js";
+import { mockClueVocab, mockDescribe, mockFeedback, mockGuess } from "./mock.js";
+import { CLUE_VOCAB_SYSTEM_PROMPT, buildClueVocabUserMessage } from "../prompts/clueVocab.js";
 import { buildGuessSystemPrompt, buildGuessUserMessage, respectsConfirmed, type PreviousGuess } from "../prompts/guess.js";
 import { FEEDBACK_SYSTEM_PROMPT, buildFeedbackUserMessage } from "../prompts/feedback.js";
 import { DESCRIBE_SYSTEM_PROMPT, buildDescribeUserMessage } from "../prompts/describe.js";
 import {
+  ClueVocabResultSchema,
   DescribeResultSchema,
   FeedbackResultSchema,
   GuessResultSchema,
+  type ClueVocabResult,
   type DescribeResult,
   type FeedbackResult,
   type GuessResult,
@@ -86,6 +89,18 @@ export async function getFeedback(
     }),
     maxTokens: config.maxTokens.feedback,
     schema: FeedbackResultSchema,
+  }));
+}
+
+/** Listening mode word book: study words picked from the clues the AI read. Runs only when the player asks. */
+export async function getClueVocab(idiom: Idiom, clues: string[]): Promise<ClueVocabResult> {
+  if (config.mockMode) return mockClueVocab(clues);
+  return withFallback("clue-vocab", () => mockClueVocab(clues), () => callJson({
+    kind: "clue-vocab",
+    system: CLUE_VOCAB_SYSTEM_PROMPT,
+    user: buildClueVocabUserMessage({ idiom: idiom.idiom, tags: idiom.tags, clues }),
+    maxTokens: config.maxTokens.clueVocab,
+    schema: ClueVocabResultSchema,
   }));
 }
 

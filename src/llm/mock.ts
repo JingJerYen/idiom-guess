@@ -1,7 +1,7 @@
 import { config } from "../config.js";
 import { loadIdioms, type Idiom } from "../game/idioms.js";
 import { respectsConfirmed, type PreviousGuess } from "../prompts/guess.js";
-import type { GuessResult, FeedbackResult, DescribeResult } from "./types.js";
+import type { GuessResult, FeedbackResult, DescribeResult, ClueVocabResult } from "./types.js";
 
 const STOP = new Set(
   "a an the and or but of to in on at for with by from is are was were be been being it its this that these those someone something somebody who which what when you your they them their he she his her we our i me my not no do does did done doing have has had very really just only also even still about into over after before than then there here".split(" "),
@@ -86,6 +86,21 @@ export function mockFeedback(idiom: Idiom, descriptions: string[]): FeedbackResu
       return { corrected: t, note: notes.length ? `[MOCK] ${notes.join("；")}。` : "" };
     }),
   };
+}
+
+/** Listening mode: the three longest distinct words across the clues, each with its clue as example. */
+export function mockClueVocab(clues: string[]): ClueVocabResult {
+  const seen = new Set<string>();
+  const items: ClueVocabResult["vocab"] = [];
+  const words = clues.flatMap((c) => (c.match(/[A-Za-z]{7,}/g) ?? []).map((w) => ({ w: w.toLowerCase(), c })));
+  words.sort((a, b) => b.w.length - a.w.length);
+  for (const { w, c } of words) {
+    if (seen.has(w)) continue;
+    seen.add(w);
+    items.push({ word: w, zh: `[MOCK] ${w} 的中文`, example: c });
+    if (items.length === 3) break;
+  }
+  return { vocab: items };
 }
 
 export function mockDescribe(idiom: Idiom, attempt: number, previous: string[], literal: { position: number; category: string; english: string } | null = null): DescribeResult {

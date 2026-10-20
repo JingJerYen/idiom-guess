@@ -102,6 +102,11 @@ export function ttsUrl(text: string, speed: number): string {
   return `/api/tts?text=${encodeURIComponent(text)}&speed=${speed}`;
 }
 
+export interface ClueVocabResponse {
+  ok: true;
+  vocab: { word: string; zh: string; example: string }[];
+}
+
 export const api = {
   round: (mode: Mode, level: Level) => request<RoundResponse>(`/api/round?mode=${mode}&level=${level}`),
   guess: (idiomId: string, level: Level, forbidden: string[], descriptions: string[], previousGuesses: string[]) =>
@@ -113,6 +118,8 @@ export const api = {
     }),
   describe: (idiomId: string, attempt: number, previousClues: string[], knownPositions: number[]) =>
     request<DescribeResponse>("/api/describe", { method: "POST", body: JSON.stringify({ idiomId, attempt, previousClues, knownPositions }) }),
+  clueVocab: (idiomId: string, clues: string[]) =>
+    request<ClueVocabResponse>("/api/clue-vocab", { method: "POST", body: JSON.stringify({ idiomId, clues }) }),
   giveUp: (idiomId: string) => request<GiveUpResponse>("/api/give-up", { method: "POST", body: JSON.stringify({ idiomId }) }),
   reverseGuess: (idiomId: string, guess: string, attempt: number) =>
     request<ReverseGuessResponse>("/api/reverse-guess", { method: "POST", body: JSON.stringify({ idiomId, guess, attempt }) }),

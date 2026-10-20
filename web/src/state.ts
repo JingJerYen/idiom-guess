@@ -33,8 +33,12 @@ export interface QuestionState {
   shownTurn?: number;
   /** Result card: whether the feedback / transcript section is expanded. */
   showDetails?: boolean;
-  /** Forward mode: the feedback's study material was saved to the word book. */
+  /** The question's study material was saved to the word book. */
   addedToBook?: boolean;
+  /** Reverse mode: the word-book request is in flight. */
+  addingToBook?: boolean;
+  /** Reverse mode: how many cards the last add stored (0 = nothing worth keeping). */
+  addedCount?: number;
   /** Word cards currently flipped to Chinese (by index). */
   flipped?: Set<number>;
   /** Forward mode: sentence-starter panel open. */

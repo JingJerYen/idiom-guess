@@ -29,6 +29,12 @@ export const FeedbackBodySchema = z.object({
   attempts: z.number().int().min(1).max(config.maxGuesses),
 });
 
+/** Listening mode word book: the clues the client played for this question (client-held, treated as data). */
+export const ClueVocabBodySchema = z.object({
+  idiomId: z.string().min(1).max(64),
+  clues: z.array(z.string().trim().min(1).max(500)).min(1).max(config.maxGuesses),
+});
+
 export const DescribeBodySchema = z.object({
   idiomId: z.string().min(1).max(64),
   attempt: z.number().int().min(1).max(config.maxGuesses),

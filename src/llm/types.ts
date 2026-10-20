@@ -41,6 +41,11 @@ export const FeedbackResultSchema = z.object({
 });
 export type FeedbackResult = z.infer<typeof FeedbackResultSchema>;
 
+export const ClueVocabResultSchema = z.object({
+  vocab: z.array(VocabItemSchema).default([]).transform((a) => a.slice(0, 3)),
+});
+export type ClueVocabResult = z.infer<typeof ClueVocabResultSchema>;
+
 export const DescribeResultSchema = z.object({
   description: z.string().trim().min(1).transform((s) => s.slice(0, 400)),
 });

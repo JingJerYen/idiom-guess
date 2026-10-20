@@ -509,10 +509,11 @@ function renderPlay(game: Game) {
   );
   root.querySelector("#details")?.addEventListener("click", () => { qs.showDetails = !qs.showDetails; render(); });
   root.querySelector("#addbook")?.addEventListener("click", () => {
+    if (game.mode === "reverse") { void addCluesToBook(game, qs); return; }
     const f = qs.feedback;
     if (!f) return;
     // Saved silently: the player sees what was kept only when they open the word book later.
-    addFromFeedback(q.idiom ?? "", f.vocab, f.grammar);
+    qs.addedCount = addFromFeedback(q.idiom ?? "", f.vocab, f.grammar);
     qs.addedToBook = true;
     render();
   });
@@ -623,14 +624,34 @@ function renderResult(game: Game, qs: QuestionState): string {
   const speakBtn = qs.showDetails && canSpeak && !loading
     ? `<button id="fb-speak" class="iconbtn fbspeak" aria-label="朗讀回饋">🔊</button>`
     : "";
-  const canAdd = game.mode === "forward" && qs.feedback && (qs.feedback.vocab.length > 0 || qs.feedback.grammar);
-  const addBtn = qs.showDetails && canAdd
-    ? `<button id="addbook" class="addbook ${qs.addedToBook ? "done" : ""}" ${qs.addedToBook ? "disabled" : ""}>${qs.addedToBook ? "✓ 已加入" : "＋ 詞本"}</button>`
+  const canAdd = game.mode === "forward"
+    ? qs.showDetails && qs.feedback && (qs.feedback.vocab.length > 0 || qs.feedback.grammar)
+    : qs.clues.length > 0; // listening: the AI's clues are the study material, fetched on demand
+  const addLabel = qs.addingToBook ? '<span class="spinner"></span>' : qs.addedToBook ? (qs.addedCount === 0 ? "沒有新單字" : "✓ 已加入") : "＋ 詞本";
+  const addBtn = canAdd
+    ? `<button id="addbook" class="addbook ${qs.addedToBook ? "done" : ""}" ${qs.addedToBook || qs.addingToBook ? "disabled" : ""}>${addLabel}</button>`
     : "";
   return `<section class="card result center">${head}${answer}${game.mode === "reverse" ? transcript : ""}
     <div class="row" style="justify-content:center;margin-top:8px;gap:8px">${toggle}${speakBtn}${addBtn}</div>
     ${qs.showDetails ? `<div class="details-body">${detailsHtml}</div>` : ""}
     <button id="next" class="btn lg block" style="margin-top:16px">${last ? "總結" : "下一題 →"}</button></section>`;
+}
+
+/** Listening mode: ask the server for study words from this question's clues, then store them. */
+async function addCluesToBook(game: Game, qs: QuestionState): Promise<void> {
+  if (qs.addingToBook || qs.addedToBook) return;
+  qs.addingToBook = true;
+  render();
+  try {
+    const r = await api.clueVocab(qs.q.id, qs.clues);
+    qs.addedCount = addFromFeedback(qs.answer ?? qs.q.idiom ?? "", r.vocab, null);
+    qs.addedToBook = true;
+  } catch (err) {
+    ui.error = err instanceof ApiError ? err.message : "詞本加入失敗，請再試一次。";
+  } finally {
+    qs.addingToBook = false;
+    render();
+  }
 }
 
 /** Wordle-style share text: score, one square per question, link. */

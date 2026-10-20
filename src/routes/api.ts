@@ -6,10 +6,12 @@ import { getIdiomById, loadIdioms, pickRound, toPublic, type Idiom } from "../ga
 import { isCorrectGuess, normalizeIdiom, positionMatches } from "../game/match.js";
 import { CATEGORY_LABEL, numbersIn, pickLiteralHint } from "../game/literal.js";
 import { validateDescription } from "../game/validate.js";
-import { describeIdiom, getFeedback, guessIdiom } from "../llm/index.js";
+import { anchorToClues } from "../game/clueVocab.js";
+import { describeIdiom, getClueVocab, getFeedback, guessIdiom } from "../llm/index.js";
 import { sttEnabled, synthesize, transcribe, ttsEnabled } from "../llm/openai.js";
 import { lightLimiter, modelLimiter } from "../middleware/rateLimit.js";
 import {
+  ClueVocabBodySchema,
   DescribeBodySchema,
   FeedbackBodySchema,
   GiveUpBodySchema,
@@ -117,6 +119,14 @@ api.post("/feedback", modelLimiter, async (req, res) => {
     note: fb.corrections[i]?.note ?? "",
   }));
   res.json({ ok: true, corrections, vocab: fb.vocab, grammar: fb.grammar, reference_english: idiom.reference_english });
+});
+
+/** Listening mode word book: study words from this question's clues, on demand. */
+api.post("/clue-vocab", modelLimiter, async (req, res) => {
+  const body = parseBody(req, ClueVocabBodySchema);
+  const idiom = requireIdiom(body.idiomId);
+  const result = await getClueVocab(idiom, body.clues);
+  res.json({ ok: true, vocab: anchorToClues(result.vocab, body.clues) });
 });
 
 // ---- Audio (optional, needs GAME_OPENAI_KEY) ----

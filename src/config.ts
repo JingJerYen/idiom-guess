@@ -28,7 +28,7 @@ export const config = {
   trustProxy: process.env.TRUST_PROXY === "1",
   model: "claude-haiku-5-5",
   /** Output caps per call type (thinking is disabled, so these are pure answer budgets). */
-  maxTokens: { guess: 400, feedback: 800, describe: 300 },
+  maxTokens: { guess: 400, feedback: 800, describe: 300, clueVocab: 400 },
   /**
    * The AI's last guess of a question thinks harder: adaptive thinking at this effort level.
    * FINAL_GUESS_EFFORT=off keeps every guess at the cheap no-thinking setting.
