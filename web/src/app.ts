@@ -217,6 +217,53 @@ function speak(text: string) {
 }
 if (canSpeak) window.speechSynthesis.onvoiceschanged = () => pickVoice();
 
+/** Short beep for a blanked-out word (word-book card front). Best effort; silent where Web Audio is unavailable. */
+function beep(durationMs = 350): Promise<void> {
+  return new Promise((resolve) => {
+    try {
+      const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      if (!Ctx) return resolve();
+      audioCtx ??= new Ctx();
+      void audioCtx.resume().catch(() => undefined);
+      const osc = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = 880;
+      g.gain.value = 0.25;
+      osc.connect(g).connect(audioCtx.destination);
+      osc.onended = () => resolve();
+      osc.start();
+      osc.stop(audioCtx.currentTime + durationMs / 1000);
+      setTimeout(resolve, durationMs + 200); // in case onended never fires
+    } catch {
+      resolve();
+    }
+  });
+}
+
+/** Read text segments in order with a beep between them: "He ＿＿＿ to be strong" -> "He", beep, "to be strong". */
+async function speakWithBeeps(segments: string[]) {
+  if (!canSpeak) return;
+  window.speechSynthesis.cancel();
+  const say = (t: string) => new Promise<void>((resolve) => {
+    if (!t.trim()) return resolve();
+    try {
+      const u = new SpeechSynthesisUtterance(t.replace(/^\[MOCK[^\]]*\]\s*/, ""));
+      u.lang = "en-US";
+      u.rate = speechRate;
+      const v = pickVoice();
+      if (v) u.voice = v;
+      u.onend = () => resolve();
+      u.onerror = () => resolve();
+      window.speechSynthesis.speak(u);
+    } catch { resolve(); }
+  });
+  for (let i = 0; i < segments.length; i++) {
+    if (i > 0) await beep();
+    await say(segments[i]);
+  }
+}
+
 /** Read several English texts one after another (used by the feedback speaker). */
 function speakAll(texts: string[]) {
   if (!canSpeak) return;
@@ -805,12 +852,13 @@ function renderVocab() {
        ${review.flipped ? `<div class="ex fixed">${diffWords(card.wrong, card.fixed)}</div>` : `<div class="ex wrong">${esc(card.wrong)}</div>`}`;
   root.innerHTML = `<section>
       <div class="bookhead"><span class="muted small">卡片 ${review.done + 1} / ${review.done + cards.length}</span>
-        <span class="row" style="gap:6px"><button id="say" class="btn ghost sm" ${review.flipped ? "" : "disabled"}>🔊</button><button id="export" class="btn ghost sm" title="匯出成 txt">⬇</button><button id="home" class="btn ghost sm">✕</button></span></div>
+        <span class="row" style="gap:6px"><button id="export" class="btn ghost sm" title="匯出成 txt">⬇</button><button id="home" class="btn ghost sm">✕</button></span></div>
       <div class="stack">
         ${cards[2] ? `<div class="fc back2"></div>` : ""}${cards[1] ? `<div class="fc back1"></div>` : ""}
         <div id="fc" class="fc live ${card.type}"><span class="timer">⏱ ${seconds} 秒</span><span class="from">${esc(card.source)}</span>${front}</div>
       </div>
       <div class="swipe"><button id="no" class="l">← 不記得</button><button id="yes" class="r">記得 →</button></div>
+      <div class="center" style="margin-top:18px"><button id="say" class="iconbtn saybig" aria-label="朗讀">🔊</button></div>
     </section>`;
   const fc = root.querySelector<HTMLElement>("#fc")!;
   const flip = () => {
@@ -826,7 +874,12 @@ function renderVocab() {
     render();
   };
   root.querySelector("#home")?.addEventListener("click", () => { review.done = 0; review.shownAt = 0; review.flipped = false; review.flippedAt = 0; setScreen({ name: "start" }); });
-  root.querySelector("#say")?.addEventListener("click", () => speak(card.type === "word" ? `${card.word}. ${card.example}` : card.fixed));
+  root.querySelector("#say")?.addEventListener("click", () => {
+    if (card.type !== "word") { speak(review.flipped ? card.fixed : card.wrong); return; }
+    if (review.flipped) { speak(`${card.word}. ${card.example}`); return; }
+    // Front of the card: read the example with a beep where the word is blanked out.
+    void speakWithBeeps(blankWord(card.example, card.word).split("＿＿＿"));
+  });
   root.querySelector("#export")?.addEventListener("click", () => { void exportVocab(); });
   root.querySelector("#yes")?.addEventListener("click", () => settle(true));
   root.querySelector("#no")?.addEventListener("click", () => settle(false));
