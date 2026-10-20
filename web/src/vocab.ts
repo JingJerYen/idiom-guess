@@ -59,20 +59,32 @@ function newId(): string {
 export interface NewWord { word: string; zh: string; example: string }
 export interface NewGrammar { title: string; wrong: string; fixed: string }
 
-/** Add cards from one question's feedback. Existing words are updated (newer example), not duplicated. */
+/** A usable example actually contains the word, so the front of the card can blank it out. */
+export function exampleUsable(example: string, word: string): boolean {
+  const ex = example.trim();
+  return ex.length > 0 && blankWord(ex, word) !== ex;
+}
+
+/**
+ * Add cards from one question's feedback. Existing words are updated (newer example), not duplicated.
+ * Words whose example does not contain the word are skipped: the model occasionally writes an
+ * example without the target word, and such a card has nothing to blank out.
+ */
 export function addFromFeedback(source: string, words: NewWord[], grammar: NewGrammar | null): number {
   const cards = read();
   let added = 0;
   for (const w of words) {
     const word = w.word.trim();
     if (!word) continue;
+    const usable = exampleUsable(w.example ?? "", word);
     const existing = cards.find((c): c is WordCard => c.type === "word" && c.word.toLowerCase() === word.toLowerCase());
     if (existing) {
-      if (w.example) existing.example = w.example;
+      if (usable) existing.example = w.example.trim();
       if (w.zh) existing.zh = w.zh;
       continue;
     }
-    cards.push({ id: newId(), type: "word", word, zh: w.zh, example: w.example, source, createdAt: Date.now(), misses: 0 });
+    if (!usable) continue;
+    cards.push({ id: newId(), type: "word", word, zh: w.zh, example: w.example.trim(), source, createdAt: Date.now(), misses: 0 });
     added++;
   }
   if (grammar && grammar.title.trim() && grammar.wrong.trim() && grammar.fixed.trim()) {
