@@ -116,7 +116,7 @@ button, input, textarea { font: inherit; color: inherit; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
 .chip { background: var(--chip); border-radius: 999px; padding: 3px 10px; font-size: 13px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; border: 0; }
 .chip.ban { background: transparent; padding: 3px 2px; }
-.chip.word { cursor: pointer; transition: transform 0.15s, background 0.15s; min-width: 44px; }
+.chip.word { cursor: pointer; transition: transform 0.15s, background 0.15s; min-width: 52px; font-size: 16px; padding: 5px 14px; }
 .chip.word:active { transform: rotateX(90deg); }
 .chip.word.zh { background: var(--accent-soft); color: var(--accent); font-family: inherit; }
 .chips.hard .chip.word { background: var(--accent-soft); color: var(--accent); }
