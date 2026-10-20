@@ -1,4 +1,4 @@
-import { config } from "../config.js";
+import { config, type Effort } from "../config.js";
 import { AppError } from "../errors.js";
 import { log } from "../logger.js";
 import { allTags, type Idiom } from "../game/idioms.js";
@@ -21,14 +21,24 @@ export type GuessOutcome = GuessResult & {
   fallback?: boolean;
 };
 
-/** The guesser never receives the idiom; only the player's descriptions and its own earlier guesses. */
-export async function guessIdiom(descriptions: string[], previousGuesses: PreviousGuess[] = []): Promise<GuessOutcome> {
+/** Call settings for one guess: the final guess of a question thinks harder (unless disabled). */
+export function guessCallSettings(final: boolean): { thinkingEffort: Effort | null; maxTokens: number } {
+  const effort = final ? config.finalGuessEffort : null;
+  return { thinkingEffort: effort, maxTokens: effort ? config.maxTokensThinkingGuess : config.maxTokens.guess };
+}
+
+/**
+ * The guesser never receives the idiom; only the player's descriptions and its own earlier guesses.
+ * `final` marks the last allowed guess, which runs with thinking so the AI uses the whole picture.
+ */
+export async function guessIdiom(descriptions: string[], previousGuesses: PreviousGuess[] = [], opts: { final?: boolean } = {}): Promise<GuessOutcome> {
   const prior = previousGuesses.map((p) => p.guess);
   if (config.mockMode) return mockGuess(descriptions, prior, previousGuesses);
   try {
     const system = buildGuessSystemPrompt(allTags());
     const user = buildGuessUserMessage({ descriptions, previousGuesses });
-    const call = (u: string) => callJson({ kind: "guess", system, user: u, maxTokens: config.maxTokens.guess, schema: GuessResultSchema, salvage: salvageGuess });
+    const settings = guessCallSettings(Boolean(opts.final));
+    const call = (u: string) => callJson({ kind: "guess", system, user: u, ...settings, schema: GuessResultSchema, salvage: salvageGuess });
     let result = await call(user);
     // Low-effort models sometimes drop a confirmed character; ask once more with the violation spelled out.
     if (!respectsConfirmed(result.guess, previousGuesses)) {

@@ -83,3 +83,14 @@ test("mock guess always returns a four-character idiom from the bank", () => {
   assert.equal(fb.corrections[0].corrected, "Someone adds extra things and I like it.");
   assert.ok(fb.corrections[0].note.includes("大寫"));
 });
+
+test("only the final guess runs with thinking", async () => {
+  const { guessCallSettings } = await import("../src/llm/index.js");
+  const { config } = await import("../src/config.js");
+  const early = guessCallSettings(false);
+  assert.equal(early.thinkingEffort, null);
+  assert.equal(early.maxTokens, config.maxTokens.guess);
+  const last = guessCallSettings(true);
+  assert.equal(last.thinkingEffort, "medium");
+  assert.equal(last.maxTokens, config.maxTokensThinkingGuess);
+});

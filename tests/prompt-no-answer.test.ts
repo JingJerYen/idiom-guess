@@ -75,6 +75,6 @@ test("guess prompt module never imports the question bank", () => {
 
 test("guess route handler passes only descriptions to the guesser", () => {
   const src = readFileSync(new URL("../src/routes/api.ts", import.meta.url), "utf8");
-  assert.ok(/guessIdiom\(body\.descriptions, previousGuesses\)/.test(src), "guessIdiom must be called with descriptions and the AI's own earlier guesses only");
+  assert.ok(/guessIdiom\(body\.descriptions, previousGuesses, \{ final: [^}]*\}\)/.test(src), "guessIdiom must be called with descriptions and the AI's own earlier guesses only");
   assert.equal(/guessIdiom\([^)]*idiom\b/.test(src), false, "the idiom object must never be passed to the guesser");
 });

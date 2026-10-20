@@ -90,9 +90,9 @@ api.post("/guess", modelLimiter, async (req, res) => {
   });
 
   // The guesser gets descriptions plus its own earlier guesses; the full answer never leaves this handler.
-  const result = await guessIdiom(body.descriptions, previousGuesses);
-  const correct = isCorrectGuess(result.guess, idiom);
   const attempt = body.descriptions.length;
+  const result = await guessIdiom(body.descriptions, previousGuesses, { final: attempt >= config.maxGuesses });
+  const correct = isCorrectGuess(result.guess, idiom);
   res.json({
     ok: true,
     guess: result.guess,

@@ -113,8 +113,11 @@ API 無狀態：前端持有這一輪的題目與每題的描述歷史，伺服�
 
 ## 模型呼叫與成本
 
-- 模型 `claude-haiku-5-5`，`thinking: { type: "disabled" }`、`output_config.effort: "low"`；
+- 模型 `claude-haiku-5-5`，預設 `thinking: { type: "disabled" }`、`output_config.effort: "low"`；
   不傳 temperature 等取樣參數，不用 assistant prefill。
+- **最後一次猜測會想久一點**：口說模式第 3 次（`MAX_GUESSES`）猜測改用 adaptive thinking、
+  `effort: "medium"`，`max_tokens` 3000（思考 token 也算在內）。環境變數 `FINAL_GUESS_EFFORT`
+  可設 `low`／`medium`／`high`，或 `off` 關閉。每題最多多花約 1,000～2,000 個輸出 token（不到 US$0.001）。
 - `max_tokens`：猜測 400、回饋 800、反向描述 300（thinking 關閉，所以是純輸出預算；上限只是保險，實際輸出通常遠低於此）。
 - 每次呼叫把 `input_tokens`／`output_tokens`、`stop_reason`、耗時寫到伺服器日誌（JSON 一行）。
 - 價格（≤100K 輸入）：輸入 US$0.10 / 百萬 token，輸出 US$0.50 / 百萬 token。
