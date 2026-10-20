@@ -225,6 +225,15 @@ ul.fb .fi { text-align: center; }
 .bookcard b { font-size: 17px; }
 .bookcard .cnt { font-weight: 800; background: var(--accent); color: #fff; border-radius: 999px; padding: 3px 12px; }
 .bookcard .cnt.zero { background: var(--chip); color: var(--muted); }
+.bookcard .chev { font-size: 26px; color: var(--muted); padding-right: 4px; }
+.weeks { list-style: none; padding: 0; margin: 12px 0 0; display: grid; gap: 10px; }
+.weeks li { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px; display: grid; gap: 6px; }
+.weeks li.empty { opacity: 0.55; }
+.weeks .wk { display: flex; justify-content: space-between; align-items: baseline; }
+.weeks .wk b { font-size: 22px; font-weight: 900; }
+.weeks .wk small { font-size: 12px; font-weight: 600; color: var(--muted); }
+.weeks .bar { height: 8px; background: var(--chip); border-radius: 999px; overflow: hidden; }
+.weeks .bar i { display: block; height: 100%; background: var(--ok); border-radius: 999px; }
 .addbook { border: 2px solid var(--line); background: transparent; border-radius: 999px; padding: 6px 14px; font-weight: 700; color: var(--ink); cursor: pointer; }
 .addbook.done { border-color: var(--ok); color: var(--ok); background: var(--ok-soft); }
 .bookhead { display: flex; justify-content: space-between; align-items: center; }

@@ -2,6 +2,7 @@ import { api, ApiError, transcribeClip, ttsUrl, type Level, type Mode, type Viol
 import { canListen, joinOverlap, startListening, type Listener } from "./speech.js";
 import { canRecord, joinClips, startRecording, type Recording } from "./recorder.js";
 import { addFromFeedback, blankWord, cardCount, dateStamp, exportText, keepCard, listCards, removeCard, type Card } from "./vocab.js";
+import { listRounds, recordRound, weekLabel, weeklyTotals } from "./history.js";
 import { MAX_ATTEMPTS, MAX_CHARS, MIN_WORDS, SENTENCE_BONUS, countWords, getBest, recordScore, scoreFor, type Game, type QuestionState, type Screen } from "./state.js";
 
 const root = document.getElementById("app") as HTMLElement;
@@ -275,6 +276,7 @@ function render() {
     case "play": return renderPlay(screen.game);
     case "summary": return renderSummary(screen.game, screen.record);
     case "vocab": return renderVocab();
+    case "stats": return renderStats();
   }
 }
 
@@ -304,7 +306,9 @@ function renderStart() {
     </section>
     ${ui.error ? `<div class="alert error">${esc(ui.error)}</div>` : ""}
     <button id="start" class="btn lg block">開始</button>
-    <button id="book" class="card bookcard"><span class="l"><span class="icon">📒</span><span><b>詞本</b><span class="small muted">左右滑動複習，記住的就消失</span></span></span><span class="cnt ${cardCount() ? "" : "zero"}">${cardCount()}</span></button>`;
+    <button id="book" class="card bookcard"><span class="l"><span class="icon">📒</span><span><b>詞本</b><span class="small muted">左右滑動複習，記住的就消失</span></span></span><span class="cnt ${cardCount() ? "" : "zero"}">${cardCount()}</span></button>
+    ${weekCard()}`;
+  root.querySelector("#stats")?.addEventListener("click", () => setScreen({ name: "stats" }));
   root.querySelectorAll<HTMLButtonElement>(".mode").forEach((b) =>
     b.addEventListener("click", () => { chosenMode = b.dataset.mode as Mode; render(); }),
   );
@@ -313,6 +317,27 @@ function renderStart() {
   );
   (root.querySelector("#start") as HTMLButtonElement).addEventListener("click", () => void startGame());
   root.querySelector("#book")?.addEventListener("click", () => setScreen({ name: "vocab" }));
+}
+
+/** Start-screen card with this week's total; opens the weekly stats screen. */
+function weekCard(): string {
+  const [week] = weeklyTotals(listRounds(), 1);
+  return `<button id="stats" class="card bookcard"><span class="l"><span class="icon">📈</span><span><b>本週 ${week.total} 分</b><span class="small muted">${week.rounds ? `${week.rounds} 局，單局最高 ${week.best}` : "這週還沒玩，來一局吧"}</span></span></span><span class="chev">›</span></button>`;
+}
+
+function renderStats() {
+  const weeks = weeklyTotals(listRounds(), 8);
+  const max = Math.max(1, ...weeks.map((w) => w.total));
+  const rows = weeks.map((w, i) => `<li class="${w.rounds ? "" : "empty"}">
+      <div class="wk"><span>${i === 0 ? "本週" : i === 1 ? "上週" : weekLabel(w.start)}</span><b>${w.total}<small> 分</small></b></div>
+      <div class="bar"><i style="width:${Math.round((w.total / max) * 100)}%"></i></div>
+      <div class="small muted">${w.rounds ? `${w.rounds} 局 · 🗣️ ${w.forward} · 👂 ${w.reverse} · 單局最高 ${w.best}` : "沒有紀錄"}</div>
+    </li>`).join("");
+  root.innerHTML = `<section>
+      <div class="bookhead"><span class="muted small">每週總分（週一到週日）</span><button id="home" class="btn ghost sm">✕</button></div>
+      <ul class="weeks">${rows}</ul>
+    </section>`;
+  root.querySelector("#home")?.addEventListener("click", () => setScreen({ name: "start" }));
 }
 
 function violationText(v: Violation): string {
@@ -760,6 +785,7 @@ function renderSummary(game: Game, record: { previous: number | null; isNew: boo
       <div class="small muted">${game.mode === "forward" ? "🗣️ 口說" : "👂 聽力"} ${game.level === "easy" ? "🌱" : "🔥"}</div>
       <div class="big">${total}<small>分</small></div>
       ${recordHtml}
+      <div class="small muted">本週累計 ${weeklyTotals(listRounds(), 1)[0].total} 分</div>
       <div class="stats"><span class="num ok" aria-label="答對">${solved}</span><span class="num no" aria-label="答錯">${qs.length - solved}</span></div>
       <ul class="list">${rows}</ul>
       <button id="again" class="btn lg block" style="margin-top:16px">再玩</button>
@@ -1215,6 +1241,7 @@ async function nextQuestion(game: Game) {
   releaseQuestionAudio(game.questions[game.index]);
   if (game.index + 1 >= game.questions.length) {
     const total = game.questions.reduce((n, q) => n + q.score, 0);
+    recordRound(game.mode, game.level, total);
     setScreen({ name: "summary", game, record: recordScore(game.mode, game.level, total) });
     return;
   }

@@ -71,7 +71,8 @@ export type Screen =
   | { name: "loading"; text: string }
   | { name: "play"; game: Game }
   | { name: "summary"; game: Game; record: RecordResult }
-  | { name: "vocab" };
+  | { name: "vocab" }
+  | { name: "stats" };
 
 /** Outcome of comparing a finished round with the stored best score for its mode + level. */
 export interface RecordResult {
