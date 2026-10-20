@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { buildGuessSystemPrompt, buildGuessUserMessage } from "../src/prompts/guess.js";
+import { buildGuessSystemPrompt, buildGuessUserMessage, respectsConfirmed } from "../src/prompts/guess.js";
 import { allTags, loadIdioms } from "../src/game/idioms.js";
 
 const idioms = loadIdioms();
@@ -49,6 +49,16 @@ test("with earlier guesses, the prompt reveals only confirmed characters, never 
   assert.deepEqual(han, ["之", "亡", "歎", "羊"]);
 });
 
+test("confirmed characters become a hard constraint and are checked", () => {
+  const prev = [{ guess: "亡羊之歎", confirmed: ["亡", "羊", null, null] }];
+  const user = buildGuessUserMessage({ descriptions: ["x", "y"], previousGuesses: prev });
+  assert.ok(user.includes("HARD CONSTRAINT: the 1st character MUST be 亡, the 2nd character MUST be 羊"));
+  assert.equal(respectsConfirmed("亡羊補牢", prev), true);
+  assert.equal(respectsConfirmed("羊入虎口", prev), false);
+  assert.equal(respectsConfirmed("亡 羊 補 牢", prev), true, "spaces are ignored");
+  assert.equal(respectsConfirmed("守株待兔", []), true, "no constraint when nothing is confirmed");
+});
+
 test("guess prompt wraps player text as data and includes every prior description", () => {
   const descs = ["first attempt here", "second attempt with more detail"];
   const user = buildGuessUserMessage({ descriptions: descs });
@@ -65,6 +75,6 @@ test("guess prompt module never imports the question bank", () => {
 
 test("guess route handler passes only descriptions to the guesser", () => {
   const src = readFileSync(new URL("../src/routes/api.ts", import.meta.url), "utf8");
-  assert.ok(/guessIdiom\(body\.descriptions, previousGuesses\)/.test(src), "guessIdiom must be called with descriptions and the AI's own earlier guesses only");
+  assert.ok(/guessIdiom\(body\.descriptions, previousGuesses, \{ final: [^}]*\}\)/.test(src), "guessIdiom must be called with descriptions and the AI's own earlier guesses only");
   assert.equal(/guessIdiom\([^)]*idiom\b/.test(src), false, "the idiom object must never be passed to the guesser");
 });

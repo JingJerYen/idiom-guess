@@ -18,9 +18,26 @@ export const CorrectionSchema = z.object({
 });
 export type Correction = z.infer<typeof CorrectionSchema>;
 
+export const VocabItemSchema = z.object({
+  word: z.string().trim().min(1).transform((s) => s.slice(0, 60)),
+  zh: z.string().trim().default("").transform((s) => s.slice(0, 60)),
+  example: z.string().trim().default("").transform((s) => s.slice(0, 300)),
+});
+export type VocabItem = z.infer<typeof VocabItemSchema>;
+
+export const GrammarPointSchema = z.object({
+  title: z.string().trim().min(1).transform((s) => s.slice(0, 80)),
+  wrong: z.string().trim().default("").transform((s) => s.slice(0, 300)),
+  fixed: z.string().trim().default("").transform((s) => s.slice(0, 300)),
+});
+export type GrammarPoint = z.infer<typeof GrammarPointSchema>;
+
 export const FeedbackResultSchema = z.object({
   /** One entry per description, same order. */
   corrections: z.array(CorrectionSchema).min(1).max(10),
+  /** Word-book material; optional so older replies still validate. */
+  vocab: z.array(VocabItemSchema).default([]).transform((a) => a.slice(0, 3)),
+  grammar: GrammarPointSchema.nullable().default(null),
 });
 export type FeedbackResult = z.infer<typeof FeedbackResultSchema>;
 

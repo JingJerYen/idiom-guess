@@ -18,6 +18,8 @@ export interface RoundResponse {
   mode: Mode;
   maxGuesses: number;
   mock: boolean;
+  /** Server-side audio features (need GAME_OPENAI_KEY); the client falls back to browser APIs when false. */
+  features?: { stt: boolean; tts: boolean };
   questions: Question[];
 }
 
@@ -37,10 +39,19 @@ export interface FeedbackResponse {
   ok: true;
   /** One entry per description the player wrote, same order. */
   corrections: { corrected: string; note: string }[];
+  /** Word-book material (added only when the player taps ＋ 詞本). */
+  vocab: { word: string; zh: string; example: string }[];
+  grammar: { title: string; wrong: string; fixed: string } | null;
   reference_english: string;
 }
 
-export interface DescribeResponse { ok: true; description: string; attempt: number }
+export interface DescribeResponse {
+  ok: true;
+  description: string;
+  attempt: number;
+  /** Present on the last clue: one character of the answer, shown in the slots. */
+  reveal: { index: number; char: string } | null;
+}
 
 export interface GiveUpResponse { ok: true; answer: string; tags: string[]; reference_english: string }
 
@@ -74,6 +85,23 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return data as T;
 }
 
+/** Upload a recorded clip; returns the transcript. */
+export async function transcribeClip(blob: Blob): Promise<string> {
+  let res: Response;
+  try {
+    res = await fetch("/api/transcribe", { method: "POST", headers: { "content-type": blob.type || "audio/webm" }, body: blob });
+  } catch {
+    throw new ApiError("NETWORK", "連不上伺服器，請檢查網路。", 0);
+  }
+  const data = (await res.json().catch(() => null)) as { ok?: boolean; text?: string; error?: { code: string; message: string } } | null;
+  if (!res.ok || !data?.ok) throw new ApiError(data?.error?.code ?? "STT", data?.error?.message ?? "語音辨識失敗", res.status);
+  return data.text ?? "";
+}
+
+export function ttsUrl(text: string, speed: number): string {
+  return `/api/tts?text=${encodeURIComponent(text)}&speed=${speed}`;
+}
+
 export const api = {
   round: (mode: Mode, level: Level) => request<RoundResponse>(`/api/round?mode=${mode}&level=${level}`),
   guess: (idiomId: string, level: Level, forbidden: string[], descriptions: string[], previousGuesses: string[]) =>
@@ -83,8 +111,8 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ idiomId, descriptions, guessedCorrectly, attempts }),
     }),
-  describe: (idiomId: string, attempt: number, previousClues: string[]) =>
-    request<DescribeResponse>("/api/describe", { method: "POST", body: JSON.stringify({ idiomId, attempt, previousClues }) }),
+  describe: (idiomId: string, attempt: number, previousClues: string[], knownPositions: number[]) =>
+    request<DescribeResponse>("/api/describe", { method: "POST", body: JSON.stringify({ idiomId, attempt, previousClues, knownPositions }) }),
   giveUp: (idiomId: string) => request<GiveUpResponse>("/api/give-up", { method: "POST", body: JSON.stringify({ idiomId }) }),
   reverseGuess: (idiomId: string, guess: string, attempt: number) =>
     request<ReverseGuessResponse>("/api/reverse-guess", { method: "POST", body: JSON.stringify({ idiomId, guess, attempt }) }),

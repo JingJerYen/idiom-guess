@@ -1,10 +1,10 @@
-import { config } from "../config.js";
+import { config, type Effort } from "../config.js";
 import { AppError } from "../errors.js";
 import { log } from "../logger.js";
 import { allTags, type Idiom } from "../game/idioms.js";
 import { callJson, salvageGuess } from "./callJson.js";
 import { mockDescribe, mockFeedback, mockGuess } from "./mock.js";
-import { buildGuessSystemPrompt, buildGuessUserMessage, type PreviousGuess } from "../prompts/guess.js";
+import { buildGuessSystemPrompt, buildGuessUserMessage, respectsConfirmed, type PreviousGuess } from "../prompts/guess.js";
 import { FEEDBACK_SYSTEM_PROMPT, buildFeedbackUserMessage } from "../prompts/feedback.js";
 import { DESCRIBE_SYSTEM_PROMPT, buildDescribeUserMessage } from "../prompts/describe.js";
 import {
@@ -21,20 +21,33 @@ export type GuessOutcome = GuessResult & {
   fallback?: boolean;
 };
 
-/** The guesser never receives the idiom; only the player's descriptions and its own earlier guesses. */
-export async function guessIdiom(descriptions: string[], previousGuesses: PreviousGuess[] = []): Promise<GuessOutcome> {
+/** Call settings for one guess: the final guess of a question thinks harder (unless disabled). */
+export function guessCallSettings(final: boolean): { thinkingEffort: Effort | null; maxTokens: number } {
+  const effort = final ? config.finalGuessEffort : null;
+  return { thinkingEffort: effort, maxTokens: effort ? config.maxTokensThinkingGuess : config.maxTokens.guess };
+}
+
+/**
+ * The guesser never receives the idiom; only the player's descriptions and its own earlier guesses.
+ * `final` marks the last allowed guess, which runs with thinking so the AI uses the whole picture.
+ */
+export async function guessIdiom(descriptions: string[], previousGuesses: PreviousGuess[] = [], opts: { final?: boolean } = {}): Promise<GuessOutcome> {
   const prior = previousGuesses.map((p) => p.guess);
-  if (config.mockMode) return mockGuess(descriptions, prior);
+  if (config.mockMode) return mockGuess(descriptions, prior, previousGuesses);
   try {
-    return await callJson({
-      kind: "guess",
-      // The guesser learns which kinds of terms exist in the bank, never which kind this item is.
-      system: buildGuessSystemPrompt(allTags()),
-      user: buildGuessUserMessage({ descriptions, previousGuesses }),
-      maxTokens: config.maxTokens.guess,
-      schema: GuessResultSchema,
-      salvage: salvageGuess,
-    });
+    const system = buildGuessSystemPrompt(allTags());
+    const user = buildGuessUserMessage({ descriptions, previousGuesses });
+    const settings = guessCallSettings(Boolean(opts.final));
+    const call = (u: string) => callJson({ kind: "guess", system, user: u, ...settings, schema: GuessResultSchema, salvage: salvageGuess });
+    let result = await call(user);
+    // Low-effort models sometimes drop a confirmed character; ask once more with the violation spelled out.
+    if (!respectsConfirmed(result.guess, previousGuesses)) {
+      log.warn("guess ignored confirmed characters; retrying", { guess: result.guess });
+      const retry = await call(`${user}\n\nYour previous answer "${result.guess}" breaks the HARD CONSTRAINT above. Give a different guess that satisfies it.`);
+      if (respectsConfirmed(retry.guess, previousGuesses)) result = retry;
+      else log.warn("guess still ignores confirmed characters", { guess: retry.guess });
+    }
+    return result;
   } catch (err) {
     // Unreadable output (after salvage and one retry): keep the game moving with a blind guess.
     // API/network failures still surface as errors, because then nothing is working.
@@ -96,8 +109,14 @@ async function withFallback<T>(kind: string, fallback: () => T, call: () => Prom
   }
 }
 
-export async function describeIdiom(idiom: Idiom, attempt: number, previousClues: string[]): Promise<DescribeResult> {
-  if (config.mockMode) return mockDescribe(idiom, attempt, previousClues);
+export interface DescribeOptions {
+  /** Literal fact for the last clue, chosen by the route (so it can differ from the revealed tile). */
+  literal?: { position: number; category: string; english: string } | null;
+  numbers?: string[];
+}
+
+export async function describeIdiom(idiom: Idiom, attempt: number, previousClues: string[], opts: DescribeOptions = {}): Promise<DescribeResult> {
+  if (config.mockMode) return mockDescribe(idiom, attempt, previousClues, opts.literal ?? null);
   return withFallback("describe", () => mockDescribe(idiom, attempt, previousClues), () => callJson({
     kind: "describe",
     system: DESCRIBE_SYSTEM_PROMPT,
@@ -107,6 +126,9 @@ export async function describeIdiom(idiom: Idiom, attempt: number, previousClues
       referenceEnglish: idiom.reference_english,
       forbidden: idiom.taboo,
       attempt,
+      isLast: attempt >= config.maxGuesses,
+      literal: opts.literal ?? null,
+      numbers: opts.numbers ?? [],
       previousClues,
     }),
     maxTokens: config.maxTokens.describe,

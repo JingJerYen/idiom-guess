@@ -33,6 +33,8 @@ export const DescribeBodySchema = z.object({
   idiomId: z.string().min(1).max(64),
   attempt: z.number().int().min(1).max(config.maxGuesses),
   previousClues: z.array(z.string().max(500)).max(config.maxGuesses).default([]),
+  /** Positions the player already has green; the last clue reveals the first position not in this list. */
+  knownPositions: z.array(z.number().int().min(0).max(40)).max(40).default([]),
 });
 
 export const GiveUpBodySchema = z.object({

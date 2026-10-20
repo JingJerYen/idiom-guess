@@ -1,11 +1,13 @@
-import { Router, type Request } from "express";
-import type { z } from "zod";
+import express, { Router, type Request } from "express";
+import { z } from "zod";
 import { config } from "../config.js";
 import { AppError } from "../errors.js";
 import { getIdiomById, loadIdioms, pickRound, toPublic, type Idiom } from "../game/idioms.js";
 import { isCorrectGuess, normalizeIdiom, positionMatches } from "../game/match.js";
+import { CATEGORY_LABEL, numbersIn, pickLiteralHint } from "../game/literal.js";
 import { validateDescription } from "../game/validate.js";
 import { describeIdiom, getFeedback, guessIdiom } from "../llm/index.js";
+import { sttEnabled, synthesize, transcribe, ttsEnabled } from "../llm/openai.js";
 import { lightLimiter, modelLimiter } from "../middleware/rateLimit.js";
 import {
   DescribeBodySchema,
@@ -55,7 +57,7 @@ function checkDescriptions(descriptions: string[], idiom: Idiom, forbidden: stri
 }
 
 api.get("/health", (_req, res) => {
-  res.json({ ok: true, mock: config.mockMode, mockReason: config.mockReason, model: config.model });
+  res.json({ ok: true, mock: config.mockMode, mockReason: config.mockReason, model: config.model, stt: sttEnabled, tts: ttsEnabled });
 });
 
 api.get("/round", lightLimiter, (req, res) => {
@@ -64,7 +66,7 @@ api.get("/round", lightLimiter, (req, res) => {
   const level = LevelSchema.safeParse(req.query.level ?? "hard");
   if (!level.success) throw new AppError("BAD_REQUEST", "level 必須是 easy 或 hard。");
   const questions = pickRound(loadIdioms()).map((q) => toPublic(q, mode.data, level.data));
-  res.json({ ok: true, mode: mode.data, level: level.data, maxGuesses: config.maxGuesses, mock: config.mockMode, questions });
+  res.json({ ok: true, mode: mode.data, level: level.data, maxGuesses: config.maxGuesses, mock: config.mockMode, features: { stt: sttEnabled, tts: ttsEnabled }, questions });
 });
 
 api.post("/guess", modelLimiter, async (req, res) => {
@@ -88,9 +90,9 @@ api.post("/guess", modelLimiter, async (req, res) => {
   });
 
   // The guesser gets descriptions plus its own earlier guesses; the full answer never leaves this handler.
-  const result = await guessIdiom(body.descriptions, previousGuesses);
-  const correct = isCorrectGuess(result.guess, idiom);
   const attempt = body.descriptions.length;
+  const result = await guessIdiom(body.descriptions, previousGuesses, { final: attempt >= config.maxGuesses });
+  const correct = isCorrectGuess(result.guess, idiom);
   res.json({
     ok: true,
     guess: result.guess,
@@ -114,7 +116,34 @@ api.post("/feedback", modelLimiter, async (req, res) => {
     corrected: fb.corrections[i]?.corrected.trim() || d,
     note: fb.corrections[i]?.note ?? "",
   }));
-  res.json({ ok: true, corrections, reference_english: idiom.reference_english });
+  res.json({ ok: true, corrections, vocab: fb.vocab, grammar: fb.grammar, reference_english: idiom.reference_english });
+});
+
+// ---- Audio (optional, needs GAME_OPENAI_KEY) ----
+
+/** Whisper speech-to-text. Body is the raw audio blob the browser recorded. */
+api.post("/transcribe", modelLimiter, express.raw({ type: ["audio/*", "video/webm", "application/octet-stream"], limit: "8mb" }), async (req, res) => {
+  if (!sttEnabled) throw new AppError("UPSTREAM_ERROR", "語音辨識未啟用。", 503);
+  const body = req.body as Buffer | undefined;
+  if (!body || !Buffer.isBuffer(body) || body.length < 1000) throw new AppError("BAD_REQUEST", "沒有收到音訊。");
+  const text = await transcribe(body, (req.headers["content-type"] ?? "audio/webm").split(";")[0]);
+  res.json({ ok: true, text });
+});
+
+const TtsQuery = z.object({
+  text: z.string().trim().min(1).max(400),
+  speed: z.coerce.number().min(0.5).max(1.5).default(1),
+});
+
+/** Text-to-speech for listening clues; returns mp3. */
+api.get("/tts", modelLimiter, async (req, res) => {
+  if (!ttsEnabled) throw new AppError("UPSTREAM_ERROR", "語音合成未啟用。", 503);
+  const q = TtsQuery.safeParse(req.query);
+  if (!q.success) throw new AppError("BAD_REQUEST", "text 或 speed 不正確。");
+  const audio = await synthesize(q.data.text, q.data.speed);
+  res.setHeader("content-type", "audio/mpeg");
+  res.setHeader("cache-control", "private, max-age=3600");
+  res.send(audio);
 });
 
 /** Player gives up: zero points, reveal the answer. */
@@ -129,8 +158,23 @@ api.post("/give-up", lightLimiter, (req, res) => {
 api.post("/describe", modelLimiter, async (req, res) => {
   const body = parseBody(req, DescribeBodySchema);
   const idiom = requireIdiom(body.idiomId);
-  const out = await describeIdiom(idiom, body.attempt, body.previousClues);
-  res.json({ ok: true, description: out.description, attempt: body.attempt });
+  const last = body.attempt >= config.maxGuesses;
+  // Last clue: reveal one character (the first the player does not have yet) AND give the model a
+  // literal fact about a different character when possible, so the player gets two distinct hints.
+  let reveal: { index: number; char: string } | null = null;
+  let literal: { position: number; category: string; english: string } | null = null;
+  const term = normalizeIdiom(idiom.idiom);
+  if (last) {
+    const chars = Array.from(term);
+    const idx = chars.findIndex((_, i) => !body.knownPositions.includes(i));
+    if (idx >= 0) reveal = { index: idx, char: chars[idx] };
+    // Character glosses are literal in idioms (兔 = rabbit) but misleading in compounds
+    // (節目's 目 is not an eye), so only idioms get a literal fact.
+    const hint = idiom.tags.includes("成語") ? pickLiteralHint(term, [...body.knownPositions, ...(reveal ? [reveal.index] : [])]) : null;
+    if (hint) literal = { position: hint.index, category: CATEGORY_LABEL[hint.category], english: hint.english };
+  }
+  const out = await describeIdiom(idiom, body.attempt, body.previousClues, last ? { literal, numbers: numbersIn(term) } : {});
+  res.json({ ok: true, description: out.description, attempt: body.attempt, reveal });
 });
 
 api.post("/reverse-guess", modelLimiter, (req, res) => {

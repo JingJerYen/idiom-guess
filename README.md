@@ -9,6 +9,11 @@
 - 描述中不能出現中文字、該詞的拼音，違規由伺服器端程式檢查，不呼叫 AI、不扣次數。
   直譯單字：「簡單」模式把整份單字當提示顯示、全部可用；「困難」模式每題從該詞的單字庫隨機抽 2 個當禁用詞顯示並由伺服器檢查
   （前端送猜測時把這 2 個字帶回，伺服器驗證它們屬於該題的單字庫）。單字牌點一下翻成中文、再點翻回英文（翻譯來自 `data/glossary.json`）。
+- 總結頁有「分享成績」：產生 Wordle 風格的文字（分數、每題一個色塊 🟩🟨🟧⬛🏳️、連結），手機用系統分享面板，電腦端複製到剪貼簿。
+- 詞本：口說模式的回饋呼叫會額外回傳三個單字（含中文與例句）和一條文法規則，按回饋區的「＋ 詞本」靜默存進瀏覽器的 localStorage，
+  不預覽、不打 API。首頁入口顯示張數；複習頁是滑卡：正面看中文與挖空例句（文法卡是規則標題與原錯句），點一下翻面，
+  右滑「記得」且 10 秒內翻面就從詞本刪除，超過 10 秒或左滑則保留並排到最後。
+- 最高分依「模式 + 難度」分開記在瀏覽器的 localStorage，首頁模式卡顯示目前難度的最高分，結算畫面標示是否破紀錄。
 - 頂列顯示品牌、難度圖示、答對數（綠）、答錯數（紅）、第幾題與總分；回饋區有一顆 🔊 依序朗讀參考答案與修正後的句子。
 - 💡 提示按鈕：不知道怎麼開口時，依題目類型給三個英文開頭句型，點一下填進輸入框。
 - 每題結束給你回饋：題庫的參考說法，加上你每一句描述的修正版英文（只修文法、拼字、用字，改動的字會標示），
@@ -82,7 +87,7 @@ docker run -p 3000:3000 -e GAME_ANTHROPIC_KEY=sk-ant-... -e TRUST_PROXY=1 idiom-
 | `POST /api/guess` | `{ idiomId, level: "easy"\|"hard", forbidden[], descriptions[], previousGuesses[] }` → 程式檢查違規回 422 `{ violations }`；通過則回 `{ guess, reason, correct, positions[], perfectSentence, grammarNote, attempt, remaining }` |
 | `POST /api/feedback` | `{ idiomId, descriptions[], guessedCorrectly, attempts }` → `{ corrections: [{ corrected, note }], reference_english }`（每句描述一筆，順序相同） |
 | `POST /api/give-up` | `{ idiomId }` → `{ answer, tags, reference_english }`（放棄：0 分並揭露答案） |
-| `POST /api/describe` | 反向模式：`{ idiomId, attempt, previousClues[] }` → `{ description }` |
+| `POST /api/describe` | 反向模式：`{ idiomId, attempt, previousClues[], knownPositions[] }` → `{ description, reveal? }`（最後一次線索附帶揭露一個字：玩家尚未猜對的第一個位置） |
 | `POST /api/reverse-guess` | 反向模式：`{ idiomId, guess, attempt }` → `{ correct, positions[], remaining, answer? }`（答案只在猜中或用完次數時揭露） |
 
 `positions` 是 Wordle 式的逐字結果：每個字一個布林值，`true` 代表「字對、位置也對」，前端顯示為綠格。
@@ -108,8 +113,11 @@ API 無狀態：前端持有這一輪的題目與每題的描述歷史，伺服�
 
 ## 模型呼叫與成本
 
-- 模型 `claude-haiku-5-5`，`thinking: { type: "disabled" }`、`output_config.effort: "low"`；
+- 模型 `claude-haiku-5-5`，預設 `thinking: { type: "disabled" }`、`output_config.effort: "low"`；
   不傳 temperature 等取樣參數，不用 assistant prefill。
+- **最後一次猜測會想久一點**：口說模式第 3 次（`MAX_GUESSES`）猜測改用 adaptive thinking、
+  `effort: "medium"`，`max_tokens` 3000（思考 token 也算在內）。環境變數 `FINAL_GUESS_EFFORT`
+  可設 `low`／`medium`／`high`，或 `off` 關閉。每題最多多花約 1,000～2,000 個輸出 token（不到 US$0.001）。
 - `max_tokens`：猜測 400、回饋 800、反向描述 300（thinking 關閉，所以是純輸出預算；上限只是保險，實際輸出通常遠低於此）。
 - 每次呼叫把 `input_tokens`／`output_tokens`、`stop_reason`、耗時寫到伺服器日誌（JSON 一行）。
 - 價格（≤100K 輸入）：輸入 US$0.10 / 百萬 token，輸出 US$0.50 / 百萬 token。
@@ -164,18 +172,32 @@ data/idioms.json       題庫
 tests/                 node:test
 ```
 
-## 聽力模式的語音
+## 聽力模式的語音（瀏覽器內建，無 OpenAI 金鑰時）
 
 AI 的描述用瀏覽器內建的 Web Speech API（`speechSynthesis`）朗讀，不經過伺服器、不花 API 費用。
 猜題進行中只有 🔊 按鈕可以重播每一句線索，看不到文字；題目結束後才在答案下方列出全部線索文字並可回放。
-簡單模式語速 0.6、困難模式 0.8（瀏覽器語速倍率）。瀏覽器不支援語音合成時會直接顯示文字。描述 prompt 要求 A2～B1 程度的常用字、30 字以內、適合朗讀。
+簡單模式語速 0.6、困難模式 0.8（瀏覽器語速倍率）。最後一句線索會更直接：伺服器用 `src/game/literal.ts` 的具象字字典（數字、身體部位、顏色、動物、人物、自然、物品、方位）挑出成語裡一個字和它的英文意思，告訴模型「照這個事實說」，模型不自行判斷，避免編造不存在的數字；同時答案格子亮出另一個字（優先第一個字，已猜對就換下一個），兩個提示不同。非成語類題目只給更直接的意思線索。瀏覽器不支援語音合成時會直接顯示文字。描述 prompt 要求 A2～B1 程度的常用字、30 字以內、適合朗讀。
 
-## 口說模式的語音輸入
+## 選用：OpenAI 語音（Whisper 辨識與 TTS 線索）
+
+設定 `GAME_OPENAI_KEY` 後自動啟用，沒設定就用下面兩節的瀏覽器內建方案，功能照常。
+
+- **口說**：🎤 變成「按一下錄音、再按一下停止並送出辨識」，音檔經 `POST /api/transcribe` 轉給 OpenAI 語音辨識（預設 `gpt-4o-mini-transcribe`，約 Whisper 半價；可用 `STT_MODEL` 換成 `whisper-1` 或更新的模型），
+  文字在停止後一兩秒一次出現；錄音同時保留給猜測列的 🔊 回放，所有裝置行為一致。
+- **聽力**：線索改由 `GET /api/tts?text=&speed=` 以 OpenAI TTS（`tts-1`、聲音 `nova`，可用 `TTS_MODEL`、`TTS_VOICE` 換）合成 mp3，
+  簡單模式語速 0.8、困難 1.0。每句線索的音檔前端只抓一次並存成本地物件 URL，重播不再向伺服器請求；伺服器另有記憶體快取，同一句不會重複呼叫 OpenAI。
+  回饋區與猜測列的 🔊 維持瀏覽器內建語音，不用 OpenAI。
+- 成本量級（請以 OpenAI 定價頁為準）：gpt-4o-mini-transcribe 約每分鐘 US$0.003（whisper-1 為 US$0.006），tts-1 每百萬字元 US$15，一輪約 US$0.05。
+- `DISABLE_STT=1`、`DISABLE_TTS=1` 可個別關閉。音檔上限 8 MB，TTS 文字上限 400 字元，兩者都受模型端點的限流。
+- 日誌有 `stt usage`／`tts usage` 兩種紀錄（位元組數、字元數、耗時）方便估算費用。
+
+## 口說模式的語音輸入（瀏覽器內建，無 OpenAI 金鑰時）
 
 🎤 用瀏覽器內建的 Web Speech API（`SpeechRecognition`）把英文語音即時轉成文字填進描述框，
 辨識中的字會先以暫定文字出現，玩家可以修改後再送出。不經過伺服器、不花 API 費用。
 錄音時同步用 MediaRecorder 存下玩家的聲音，每次猜測右邊的 🔊 會回放真實錄音；用打字的則改用語音合成念出句子。
-實作上刻意不用 `continuous` 模式（Android Chrome 會重複送出結果導致字重複），改成一次辨識一句、
-講到停頓自動結束並接上下一段，直到玩家按停止。
+使用 `continuous` 模式（一次辨識一句的模式在部分 Android 裝置上完全收不到事件）；Android Chrome 會重複送出結果，
+程式每次都從完整結果重建文字並去掉重疊的字來避免重複。瀏覽器因靜音自動結束時按鈕回到 🎤，再按即可接著說。
+Android 裝置不會同時錄音（系統語音服務需要獨占麥克風），🔊 改用語音合成念出句子。
 Chrome、Edge、Safari 支援；Firefox 不支援時按鈕會顯示為停用。需要 https 與麥克風權限。
 若日後辨識品質不夠，可把 🎤 背後換成錄音上傳到後端再呼叫第三方語音辨識服務，前端介面不需改動。

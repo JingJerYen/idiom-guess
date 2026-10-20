@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { z } from "zod";
-import { config } from "../config.js";
+import { config, type Effort } from "../config.js";
 import { log } from "../logger.js";
 import { AppError } from "../errors.js";
 import { getClient } from "./client.js";
@@ -11,6 +11,11 @@ export interface JsonCallOptions<S extends z.ZodTypeAny> {
   system: string;
   user: string;
   maxTokens: number;
+  /**
+   * Think before answering, at this effort level. Default: no thinking, effort "low",
+   * which keeps max_tokens a pure answer budget. Used for the AI's final guess.
+   */
+  thinkingEffort?: Effort | null;
   schema: S;
   /**
    * Last resort when the reply is not valid JSON (e.g. cut off by max_tokens): build a
@@ -56,7 +61,7 @@ export function parseWithSchema<S extends z.ZodTypeAny>(text: string, schema: S)
   return result.data;
 }
 
-async function requestOnce(opts: { system: string; user: string; maxTokens: number }, attempt: number) {
+async function requestOnce(opts: { system: string; user: string; maxTokens: number; thinkingEffort?: Effort | null }, attempt: number) {
   const client = getClient();
   const started = Date.now();
   const response = await client.messages.create({
@@ -64,9 +69,11 @@ async function requestOnce(opts: { system: string; user: string; maxTokens: numb
     max_tokens: opts.maxTokens,
     system: opts.system,
     messages: [{ role: "user", content: opts.user }],
-    // Lowest effort and no thinking: max_tokens is then a pure answer budget.
-    thinking: { type: "disabled" },
-    output_config: { effort: "low" },
+    ...(opts.thinkingEffort
+      // Adaptive thinking: the model decides how much to think within max_tokens.
+      ? { thinking: { type: "adaptive" }, output_config: { effort: opts.thinkingEffort } }
+      // Lowest effort and no thinking: max_tokens is then a pure answer budget.
+      : { thinking: { type: "disabled" }, output_config: { effort: "low" } }),
   });
   const text = response.content
     .filter((b): b is Anthropic.TextBlock => b.type === "text")
@@ -97,6 +104,8 @@ export async function callJson<S extends z.ZodTypeAny>(opts: JsonCallOptions<S>)
       kind: opts.kind,
       attempt,
       model: r.response.model,
+      effort: opts.thinkingEffort ?? "low",
+      thinking: Boolean(opts.thinkingEffort),
       input_tokens: u.input_tokens,
       output_tokens: u.output_tokens,
       stop_reason: r.response.stop_reason,

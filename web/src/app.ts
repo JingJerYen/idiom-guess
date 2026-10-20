@@ -1,7 +1,8 @@
-import { api, ApiError, type Level, type Mode, type Violation } from "./api.js";
-import { canListen, startListening, type Listener } from "./speech.js";
-import { joinClips, startRecording, type Recording } from "./recorder.js";
-import { MAX_ATTEMPTS, MAX_CHARS, MIN_WORDS, SCORES, SENTENCE_BONUS, countWords, maxScore, scoreFor, type Game, type QuestionState, type Screen } from "./state.js";
+import { api, ApiError, transcribeClip, ttsUrl, type Level, type Mode, type Violation } from "./api.js";
+import { canListen, joinOverlap, startListening, type Listener } from "./speech.js";
+import { canRecord, joinClips, startRecording, type Recording } from "./recorder.js";
+import { addFromFeedback, blankWord, cardCount, keepCard, listCards, removeCard, type Card } from "./vocab.js";
+import { MAX_ATTEMPTS, MAX_CHARS, MIN_WORDS, SENTENCE_BONUS, countWords, getBest, recordScore, scoreFor, type Game, type QuestionState, type Screen } from "./state.js";
 
 const root = document.getElementById("app") as HTMLElement;
 const topbar = document.getElementById("topbar") as HTMLElement;
@@ -20,6 +21,25 @@ let micInterim = "";
 let recording: Recording | null = null;
 let clips: Blob[] = [];
 let currentAudio: HTMLAudioElement | null = null;
+/**
+ * Some devices (Android Chrome in particular) hand the microphone to the system speech service
+ * and refuse a second consumer: holding a MediaRecorder stream starves recognition. Once that is
+ * detected we stop recording on this device and replay guesses with speech synthesis instead.
+ */
+const RECORD_BLOCK_KEY = "idiom.recordBlocked";
+// Android hands the microphone to the system speech service; a second consumer breaks dictation
+// outright, so recording is off there from the start. Elsewhere it is on until a conflict is seen.
+let recordBlocked = /Android/i.test(navigator.userAgent);
+try { if (localStorage.getItem(RECORD_BLOCK_KEY) === "1") recordBlocked = true; } catch { /* storage unavailable */ }
+let emptySessions = 0;
+let micWatchdog: number | null = null;
+/** True between the player pressing ⏹ and the recogniser confirming it ended. */
+let micUserStopped = false;
+/** Consecutive browser-ended sessions without any text; dictation stops itself after MAX_SILENT. */
+let silentSessions = 0;
+const MAX_SILENT = 5;
+/** One-line diagnostic shown under the box while dictating (state and last error code). */
+let micStatus = "";
 
 const MODE_LABEL: Record<Mode, string> = { forward: "口說", reverse: "聽力" };
 
@@ -68,7 +88,7 @@ function slots(length: number, confirmed: (string | null)[], draft: string): str
 
 // ---------- speech (browser TTS, no API cost) ----------
 
-const canSpeak = typeof window !== "undefined" && "speechSynthesis" in window;
+const canSpeak = typeof window !== "undefined" && Boolean(window.speechSynthesis) && typeof window.speechSynthesis.speak === "function";
 
 function pickVoice(): SpeechSynthesisVoice | null {
   const voices = window.speechSynthesis.getVoices();
@@ -79,6 +99,103 @@ function pickVoice(): SpeechSynthesisVoice | null {
 /** Speech rate by level: easy mode speaks noticeably slower. */
 const SPEECH_RATE: Record<Level, number> = { hard: 0.8, easy: 0.6 };
 let speechRate = SPEECH_RATE.hard;
+/** Server TTS (OpenAI) speed by level; 1.0 is natural. */
+const TTS_SPEED: Record<Level, number> = { hard: 1.0, easy: 0.8 };
+let useServerTts = false;
+let ttsSpeed = TTS_SPEED.hard;
+/** Whisper mode: record a clip, then upload it for transcription (no live words). */
+let useWhisper = false;
+let whisperRec: Recording | null = null;
+let whisperBusy = false;
+/** Whisper is billed per second of audio, so a single clip is capped; it auto-submits at the limit. */
+const WHISPER_MAX_SECONDS = 60;
+let whisperTimer: number | null = null;
+let whisperStartedAt = 0;
+
+/**
+ * Fetch the server voice for a clue once and keep it as an object URL on the question, so every
+ * replay is local: no request to our server and no OpenAI call. Resolves to null on failure.
+ */
+async function fetchClueAudio(qs: QuestionState, index: number, text: string): Promise<string | null> {
+  const have = qs.clueAudio?.[index];
+  if (have) return have;
+  try {
+    const res = await fetch(ttsUrl(text.replace(/^\[MOCK[^\]]*\]\s*/, ""), ttsSpeed));
+    if (!res.ok) return null;
+    const url = URL.createObjectURL(await res.blob());
+    qs.clueAudio = { ...(qs.clueAudio ?? {}), [index]: url };
+    return url;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Louder playback for clues: an <audio> element tops out at 100%, so its output is routed through
+ * a Web Audio gain node (plus a compressor against clipping). The element streams and decodes the
+ * clip itself, so nothing beyond the 150 KB mp3 is kept in memory. One shared element is reused;
+ * if Web Audio is unavailable the element simply plays at normal volume.
+ */
+const CLUE_GAIN = 1.8;
+let audioCtx: AudioContext | null = null;
+let clueElement: HTMLAudioElement | null = null;
+
+function getClueElement(): HTMLAudioElement {
+  if (clueElement) return clueElement;
+  const el = new Audio();
+  el.preload = "auto";
+  clueElement = el;
+  try {
+    const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (Ctx) {
+      audioCtx ??= new Ctx();
+      const src = audioCtx.createMediaElementSource(el); // an element can be connected only once
+      const gain = audioCtx.createGain();
+      gain.gain.value = CLUE_GAIN;
+      const comp = audioCtx.createDynamicsCompressor();
+      comp.threshold.value = -12;
+      comp.ratio.value = 6;
+      src.connect(gain).connect(comp).connect(audioCtx.destination);
+    }
+  } catch {
+    /* no Web Audio: the element still plays, just not boosted */
+  }
+  return el;
+}
+
+async function playBoosted(url: string): Promise<boolean> {
+  try {
+    const el = getClueElement();
+    if (audioCtx?.state === "suspended") await audioCtx.resume().catch(() => undefined);
+    el.pause();
+    el.src = url;
+    el.currentTime = 0;
+    currentAudio = el;
+    await el.play();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Play a clue: cached server audio when available (boosted), otherwise the browser voice. */
+async function playClue(qs: QuestionState, index: number) {
+  const text = qs.clues[index] ?? "";
+  if (!text) return;
+  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+  try { window.speechSynthesis?.cancel(); } catch { /* ignore */ }
+  const url = useServerTts ? await fetchClueAudio(qs, index, text) : null;
+  if (url) {
+    if (await playBoosted(url)) return;
+    // Routed element refused (e.g. iOS quirk): plain, unboosted playback, then browser voice.
+    const a = new Audio(url);
+    currentAudio = a;
+    a.onerror = () => { currentAudio = null; speak(text); };
+    void a.play().catch(() => speak(text));
+    return;
+  }
+  speak(text);
+}
 
 function speak(text: string) {
   if (!canSpeak) return;
@@ -156,8 +273,15 @@ function render() {
     case "start": return renderStart();
     case "loading": root.innerHTML = `<section class="card center pad"><span class="spinner"></span>${esc(screen.text)}</section>`; return;
     case "play": return renderPlay(screen.game);
-    case "summary": return renderSummary(screen.game);
+    case "summary": return renderSummary(screen.game, screen.record);
+    case "vocab": return renderVocab();
   }
+}
+
+/** 🏆 best score for a mode at the currently selected level; "—" when never played. */
+function bestBadge(mode: Mode): string {
+  const b = getBest(mode, chosenLevel);
+  return `<span class="best ${b === null ? "none" : ""}" aria-label="最高分">🏆 ${b === null ? "—" : b}</span>`;
 }
 
 function renderStart() {
@@ -172,14 +296,15 @@ function renderStart() {
     </section>
     <section class="modes" role="group" aria-label="模式">
       <button class="mode" data-mode="forward" aria-pressed="${chosenMode === "forward"}">
-        <span class="icon">🗣️</span><b>口說</b><span class="small muted">你描述，AI 猜</span>
+        <span class="icon">🗣️</span><b>口說</b><span class="small muted">你描述，AI 猜</span>${bestBadge("forward")}
       </button>
       <button class="mode" data-mode="reverse" aria-pressed="${chosenMode === "reverse"}">
-        <span class="icon">👂</span><b>聽力</b><span class="small muted">AI 描述，你猜</span>
+        <span class="icon">👂</span><b>聽力</b><span class="small muted">AI 描述，你猜</span>${bestBadge("reverse")}
       </button>
     </section>
     ${ui.error ? `<div class="alert error">${esc(ui.error)}</div>` : ""}
-    <button id="start" class="btn lg block">開始</button>`;
+    <button id="start" class="btn lg block">開始</button>
+    <button id="book" class="card bookcard"><span class="l"><span class="icon">📒</span><span><b>詞本</b><span class="small muted">左右滑動複習，記住的就消失</span></span></span><span class="cnt ${cardCount() ? "" : "zero"}">${cardCount()}</span></button>`;
   root.querySelectorAll<HTMLButtonElement>(".mode").forEach((b) =>
     b.addEventListener("click", () => { chosenMode = b.dataset.mode as Mode; render(); }),
   );
@@ -187,6 +312,7 @@ function renderStart() {
     b.addEventListener("click", () => { chosenLevel = b.dataset.level as Level; render(); }),
   );
   (root.querySelector("#start") as HTMLButtonElement).addEventListener("click", () => void startGame());
+  root.querySelector("#book")?.addEventListener("click", () => setScreen({ name: "vocab" }));
 }
 
 function violationText(v: Violation): string {
@@ -225,13 +351,13 @@ function renderPlay(game: Game) {
   } else {
     body += `<div class="tagrow">${q.tags.map((t) => `<span class="kind">${esc(t)}</span>`).join("")}${stars(q.difficulty)}</div>`;
     // While guessing, a clue is only something you can replay. Text appears after the question ends.
-    body += canSpeak
+    body += canSpeak || useServerTts
       ? `<div class="speakers">${qs.clues
           .map((c, i) => `<button class="speaker" data-i="${i}" aria-label="播放第 ${i + 1} 句">🔊<small>${i + 1}</small></button>`)
           .join("")}</div>`
-      : qs.clues.map((c, i) => `<div class="clue shown"><span class="cluetext">${i + 1}. ${esc(c)}</span></div>`).join("");
-    const confirmed: (string | null)[] = [];
-    for (const t of qs.turns) chars(t.you).forEach((ch, i) => { if (t.positions?.[i]) confirmed[i] = ch; });
+      : `<div class="alert warn small">這個瀏覽器不支援語音播放，改以文字顯示。用 Chrome 或 Safari 開啟才有聲音。</div>` +
+        qs.clues.map((c, i) => `<div class="clue plain">${i + 1}. ${esc(c)}</div>`).join("");
+    const confirmed = knownChars(qs);
     if (!qs.done) body += slots(q.length ?? 4, confirmed, ui.draft);
   }
 
@@ -262,8 +388,10 @@ function renderPlay(game: Game) {
           ${startersFor(q.tags).map((s) => `<button class="starter" data-s="${esc(s)}">${esc(s.trim())}…</button>`).join("")}
         </div>`;
       }
-      body += `<textarea id="draft" class="${listener ? "listening" : ""}" placeholder="${listener ? "Listening…" : "Describe it in simple English…"}" maxlength="${MAX_CHARS + 50}" ${ui.busy ? "disabled" : ""}>${esc(ui.draft)}${listener && micInterim ? esc((ui.draft && !/\s$/.test(ui.draft) ? " " : "") + micInterim) : ""}</textarea>
-        <div class="counter">${wordDots(countWords(ui.draft))}<span class="chars"></span></div>`;
+      body += `<div class="draftwrap"><textarea id="draft" class="${listener ? "listening" : ""}" placeholder="${listener ? "Listening…" : "Describe it in simple English…"}" maxlength="${MAX_CHARS + 50}" ${ui.busy ? "disabled" : ""}>${esc(ui.draft)}${listener && micInterim ? esc((ui.draft && !/\s$/.test(ui.draft) ? " " : "") + micInterim) : ""}</textarea>
+        ${ui.draft || micInterim ? `<button id="clear" class="clearbtn" aria-label="清除全部" ${ui.busy ? "disabled" : ""}>✕</button>` : ""}</div>
+        <div class="counter">${wordDots(countWords(ui.draft))}<span class="chars"></span></div>
+        ${listener || whisperRec || whisperBusy ? `<div id="micstatus" class="small muted micstatus">${esc(micStatus)}</div>` : ""}`;
     } else {
       body += `<input id="draft" class="guess" type="text" maxlength="20" value="${esc(ui.draft)}" ${ui.busy ? "disabled" : ""} autocomplete="off" placeholder="…" />`;
     }
@@ -272,7 +400,9 @@ function renderPlay(game: Game) {
     body += `<div class="actions">
       ${forward ? `<button id="starters" class="mic hint ${qs.showStarters ? "on" : ""}" aria-pressed="${qs.showStarters ? "true" : "false"}" aria-label="不知道怎麼開口？">💡</button>` : ""}
       <button id="submit" class="btn" ${ui.busy ? "disabled" : ""}>${ui.busy ? '<span class="spinner"></span>' : "➤"}</button>
-      ${forward ? (canListen
+      ${forward ? (useWhisper
+        ? `<button id="mic" class="mic ${whisperRec ? "on" : ""}" ${ui.busy || whisperBusy ? "disabled" : ""} aria-pressed="${whisperRec ? "true" : "false"}" aria-label="${whisperRec ? "停止錄音並辨識" : "語音輸入"}">${whisperBusy ? '<span class="spinner"></span>' : whisperRec ? "⏹" : "🎤"}</button>`
+        : canListen
         ? `<button id="mic" class="mic ${listener ? "on" : ""}" ${ui.busy ? "disabled" : ""} aria-pressed="${listener ? "true" : "false"}" aria-label="${listener ? "停止錄音" : "語音輸入"}">${listener ? "⏹" : "🎤"}</button>`
         : `<button class="mic off" disabled title="這個瀏覽器不支援語音輸入" aria-label="語音輸入（不支援）">🎤</button>`) : ""}
     </div>
@@ -286,25 +416,38 @@ function renderPlay(game: Game) {
     draft.addEventListener("input", () => {
       // While listening, interim words are shown in the box but are not yet part of the draft.
       if (!(listener && micInterim && draft.value.endsWith(micInterim))) ui.draft = draft.value;
+      const wrap = draft.parentElement;
+      if (wrap && forward) {
+        const has = draft.value.trim().length > 0;
+        const btn = wrap.querySelector("#clear");
+        if (has && !btn) {
+          const b = document.createElement("button");
+          b.id = "clear"; b.className = "clearbtn"; b.setAttribute("aria-label", "清除全部"); b.textContent = "✕";
+          b.addEventListener("click", () => clearDraft(game));
+          wrap.appendChild(b);
+        } else if (!has && btn) btn.remove();
+      }
       if (forward) {
         const n = countWords(ui.draft);
         const c = ui.draft.trim().length;
         const counter = root.querySelector(".counter");
         if (counter) counter.innerHTML = `${wordDots(n)}<span class="chars ${c > MAX_CHARS ? "bad" : ""}">${c > MAX_CHARS - 60 ? `${c}/${MAX_CHARS}` : ""}</span>`;
       } else {
-        const confirmed: (string | null)[] = [];
-        for (const t of qs.turns) chars(t.you).forEach((ch, i) => { if (t.positions?.[i]) confirmed[i] = ch; });
-        root.querySelector(".tiles.lg")?.replaceWith(fragment(slots(q.length ?? 4, confirmed, ui.draft)));
+        root.querySelector(".tiles.lg")?.replaceWith(fragment(slots(q.length ?? 4, knownChars(qs), ui.draft)));
       }
     });
     draft.addEventListener("keydown", (ev) => {
       const e = ev as KeyboardEvent;
       if (e.key === "Enter" && (!forward || e.metaKey || e.ctrlKey)) { e.preventDefault(); void submit(game); }
     });
-    if (!ui.busy) draft.focus();
+    if (!ui.busy) {
+      draft.focus();
+      const end = draft.value.length;
+      try { draft.setSelectionRange(end, end); } catch { /* inputs of some types refuse */ }
+    }
   }
   root.querySelectorAll<HTMLButtonElement>(".speak, .speaker").forEach((b) =>
-    b.addEventListener("click", () => speak(qs.clues[Number(b.dataset.i)] ?? "")),
+    b.addEventListener("click", () => void playClue(qs, Number(b.dataset.i))),
   );
   root.querySelectorAll<HTMLButtonElement>(".chip.word").forEach((b) =>
     b.addEventListener("click", () => {
@@ -327,8 +470,10 @@ function renderPlay(game: Game) {
     const texts: string[] = [];
     const ref = qs.referenceEnglish ?? qs.feedback?.reference_english;
     if (ref) texts.push(ref);
-    qs.turns.forEach((t, i) => texts.push(qs.feedback?.corrections[i]?.corrected || t.you));
-    speakAll(texts);
+    // Only forward mode has English sentences from the player; in listening mode the turns are
+    // Chinese guesses and must not be fed to the English voice.
+    if (game.mode === "forward") qs.turns.forEach((t, i) => texts.push(qs.feedback?.corrections[i]?.corrected || t.you));
+    speakAll(texts); // feedback stays on the browser voice; only clues use server TTS
   });
   root.querySelectorAll<HTMLButtonElement>(".eye2").forEach((b) =>
     b.addEventListener("click", () => {
@@ -338,6 +483,14 @@ function renderPlay(game: Game) {
     }),
   );
   root.querySelector("#details")?.addEventListener("click", () => { qs.showDetails = !qs.showDetails; render(); });
+  root.querySelector("#addbook")?.addEventListener("click", () => {
+    const f = qs.feedback;
+    if (!f) return;
+    // Saved silently: the player sees what was kept only when they open the word book later.
+    addFromFeedback(q.idiom ?? "", f.vocab, f.grammar);
+    qs.addedToBook = true;
+    render();
+  });
   root.querySelectorAll<HTMLButtonElement>(".eye").forEach((b) =>
     b.addEventListener("click", () => {
       const i = Number(b.dataset.i);
@@ -345,7 +498,8 @@ function renderPlay(game: Game) {
       render();
     }),
   );
-  root.querySelector("#mic")?.addEventListener("click", () => toggleMic(game));
+  root.querySelector("#mic")?.addEventListener("click", () => (useWhisper ? void toggleWhisper(game) : toggleMic(game)));
+  root.querySelector("#clear")?.addEventListener("click", () => clearDraft(game));
   root.querySelector("#starters")?.addEventListener("click", () => { qs.showStarters = !qs.showStarters; render(); });
   root.querySelectorAll<HTMLButtonElement>(".starter").forEach((b) =>
     b.addEventListener("click", () => {
@@ -388,6 +542,14 @@ function diffWords(before: string, after: string): string {
   return out.join(" ");
 }
 
+/** Characters the player already has in place: green from earlier guesses, plus any revealed by the last clue. */
+function knownChars(qs: QuestionState): (string | null)[] {
+  const confirmed: (string | null)[] = [];
+  for (const t of qs.turns) chars(t.you).forEach((ch, i) => { if (t.positions?.[i]) confirmed[i] = ch; });
+  for (const [i, ch] of Object.entries(qs.revealed ?? {})) confirmed[Number(i)] = ch;
+  return confirmed;
+}
+
 function fragment(html: string): Node {
   const t = document.createElement("template");
   t.innerHTML = html.trim();
@@ -417,8 +579,9 @@ function renderResult(game: Game, qs: QuestionState): string {
         .map((t, i) => {
           const c = f.corrections[i] ?? { corrected: t.you, note: "" };
           const same = normalizeForDiff(c.corrected) === normalizeForDiff(t.you);
+          // Each row is one of the player's own descriptions, in order; a tag says whether grammar needed fixing.
           return `<div class="corr">
-            <div class="orig ${same ? "ok" : ""}">${same ? "✅" : "✏️"} ${esc(t.you)}</div>
+            <div class="orig ${same ? "ok" : ""}"><span class="n">#${i + 1}</span> ${same ? "" : "✏️ "}${esc(t.you)}${same ? ` <span class="oktag">文法 OK</span>` : ""}</div>
             ${same ? "" : `<div class="fixed">${diffWords(t.you, c.corrected)}</div>`}
             ${c.note ? `<div class="note small">${esc(c.note)}</div>` : ""}
           </div>`;
@@ -435,26 +598,148 @@ function renderResult(game: Game, qs: QuestionState): string {
   const speakBtn = qs.showDetails && canSpeak && !loading
     ? `<button id="fb-speak" class="iconbtn fbspeak" aria-label="朗讀回饋">🔊</button>`
     : "";
+  const canAdd = game.mode === "forward" && qs.feedback && (qs.feedback.vocab.length > 0 || qs.feedback.grammar);
+  const addBtn = qs.showDetails && canAdd
+    ? `<button id="addbook" class="addbook ${qs.addedToBook ? "done" : ""}" ${qs.addedToBook ? "disabled" : ""}>${qs.addedToBook ? "✓ 已加入" : "＋ 詞本"}</button>`
+    : "";
   return `<section class="card result center">${head}${answer}${game.mode === "reverse" ? transcript : ""}
-    <div class="row" style="justify-content:center;margin-top:8px;gap:8px">${toggle}${speakBtn}</div>
+    <div class="row" style="justify-content:center;margin-top:8px;gap:8px">${toggle}${speakBtn}${addBtn}</div>
     ${qs.showDetails ? `<div class="details-body">${detailsHtml}</div>` : ""}
     <button id="next" class="btn lg block" style="margin-top:16px">${last ? "總結" : "下一題 →"}</button></section>`;
 }
 
-function renderSummary(game: Game) {
+/** Wordle-style share text: score, one square per question, link. */
+function shareText(game: Game, record: { previous: number | null; isNew: boolean }): string {
+  const total = game.questions.reduce((n, q) => n + q.score, 0);
+  const squares = game.questions
+    .map((q) => (q.gaveUp ? "🏳️" : !q.solved ? "⬛" : q.turns.length === 1 ? "🟩" : q.turns.length === 2 ? "🟨" : "🟧"))
+    .join("");
+  const mode = `${game.mode === "forward" ? "🗣️ 口說" : "👂 聽力"} ${game.level === "easy" ? "🌱" : "🔥"}`;
+  const solved = game.questions.filter((q) => q.solved).length;
+  const rec = record.isNew && record.previous !== null ? " 🏆 新紀錄" : "";
+  return `繞著說 ${mode}\n${total} 分${rec}　${solved}/${game.questions.length} 題\n${squares}\n${location.origin}${location.pathname}`;
+}
+
+async function share(text: string): Promise<"shared" | "copied" | "failed"> {
+  try {
+    if (navigator.share) {
+      await navigator.share({ text });
+      return "shared";
+    }
+  } catch (e) {
+    if ((e as { name?: string }).name === "AbortError") return "shared"; // user closed the sheet
+  }
+  try {
+    await navigator.clipboard.writeText(text);
+    return "copied";
+  } catch {
+    return "failed";
+  }
+}
+
+// ---------- word book ----------
+
+/** Recall within this many seconds (from showing the card to flipping it) counts as known. */
+const RECALL_LIMIT_MS = 10_000;
+const review = { flipped: false, shownAt: 0, flippedAt: 0, done: 0, dragX: 0 };
+
+function renderVocab() {
+  const cards = listCards();
+  const card = cards[0];
+  if (!card) {
+    root.innerHTML = `<section class="card center pad"><div class="big-emoji">📒</div><h2>${review.done ? "今天複習完了" : "詞本是空的"}</h2>
+      <p class="muted">${review.done ? `記住了 ${review.done} 張` : "玩口說模式，在回饋區按「＋ 詞本」就會加進來。"}</p>
+      <button id="home" class="btn lg block" style="margin-top:12px">回首頁</button></section>`;
+    root.querySelector("#home")?.addEventListener("click", () => { review.done = 0; setScreen({ name: "start" }); });
+    return;
+  }
+  if (!review.shownAt) { review.shownAt = Date.now(); review.flipped = false; review.flippedAt = 0; }
+  const seconds = Math.round(((review.flippedAt || Date.now()) - review.shownAt) / 1000);
+  const front = card.type === "word"
+    ? `${review.flipped ? `<div class="en">${esc(card.word)}</div>` : `<div class="zh">${esc(card.zh || "？")}</div>`}
+       <div class="ex">${review.flipped ? esc(card.example).replace(new RegExp(`\\b(${card.word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}[a-z']*)`, "i"), "<b>$1</b>") : esc(blankWord(card.example, card.word))}</div>`
+    : `<div class="zh gtitle">${esc(card.title)}</div>
+       ${review.flipped ? `<div class="ex fixed">${diffWords(card.wrong, card.fixed)}</div>` : `<div class="ex wrong">${esc(card.wrong)}</div>`}`;
+  root.innerHTML = `<section>
+      <div class="bookhead"><span class="muted small">卡片 ${review.done + 1} / ${review.done + cards.length}</span>
+        <span class="row" style="gap:6px"><button id="say" class="btn ghost sm" ${review.flipped ? "" : "disabled"}>🔊</button><button id="home" class="btn ghost sm">✕</button></span></div>
+      <div class="stack">
+        ${cards[2] ? `<div class="fc back2"></div>` : ""}${cards[1] ? `<div class="fc back1"></div>` : ""}
+        <div id="fc" class="fc live ${card.type}"><span class="timer">⏱ ${seconds} 秒</span><span class="from">${esc(card.source)}</span>${front}</div>
+      </div>
+      <div class="swipe"><button id="no" class="l">← 不記得</button><button id="yes" class="r">記得 →</button></div>
+    </section>`;
+  const fc = root.querySelector<HTMLElement>("#fc")!;
+  const flip = () => {
+    if (!review.flipped && !review.flippedAt) review.flippedAt = Date.now(); // first reveal sets the recall time
+    review.flipped = !review.flipped;
+    render();
+  };
+  const settle = (known: boolean) => {
+    const recallMs = (review.flippedAt || Date.now()) - review.shownAt;
+    if (known && recallMs <= RECALL_LIMIT_MS) { removeCard(card.id); review.done += 1; }
+    else keepCard(card.id);
+    review.shownAt = 0; review.flipped = false; review.flippedAt = 0; review.dragX = 0;
+    render();
+  };
+  root.querySelector("#home")?.addEventListener("click", () => { review.done = 0; review.shownAt = 0; review.flipped = false; review.flippedAt = 0; setScreen({ name: "start" }); });
+  root.querySelector("#say")?.addEventListener("click", () => speak(card.type === "word" ? `${card.word}. ${card.example}` : card.fixed));
+  root.querySelector("#yes")?.addEventListener("click", () => settle(true));
+  root.querySelector("#no")?.addEventListener("click", () => settle(false));
+  // Tap flips; a horizontal drag of 80px+ swipes.
+  let startX = 0, dragging = false, moved = false;
+  fc.addEventListener("pointerdown", (e) => { startX = e.clientX; dragging = true; moved = false; fc.setPointerCapture(e.pointerId); });
+  fc.addEventListener("pointermove", (e) => {
+    if (!dragging) return;
+    const dx = e.clientX - startX;
+    if (Math.abs(dx) > 6) moved = true;
+    review.dragX = dx;
+    fc.style.transform = `translateX(${dx}px) rotate(${dx / 20}deg)`;
+    fc.classList.toggle("swiping-right", dx > 40);
+    fc.classList.toggle("swiping-left", dx < -40);
+  });
+  const end = () => {
+    if (!dragging) return;
+    dragging = false;
+    const dx = review.dragX;
+    fc.style.transform = "";
+    fc.classList.remove("swiping-right", "swiping-left");
+    if (dx > 80) settle(true);
+    else if (dx < -80) settle(false);
+    else if (!moved) flip();
+    review.dragX = 0;
+  };
+  fc.addEventListener("pointerup", end);
+  fc.addEventListener("pointercancel", end);
+  if (!review.flippedAt) window.setTimeout(() => { if (screen.name === "vocab" && !review.flippedAt) { const t = root.querySelector(".timer"); if (t) t.textContent = `⏱ ${Math.round((Date.now() - review.shownAt) / 1000)} 秒`; } }, 1000);
+}
+
+function renderSummary(game: Game, record: { previous: number | null; isNew: boolean }) {
   const qs = game.questions;
   const total = qs.reduce((n, q) => n + q.score, 0);
   const solved = qs.filter((q) => q.solved).length;
+  const recordHtml = record.isNew
+    ? `<div class="record">🏆 ${record.previous === null ? "首次紀錄" : `新紀錄！上次 ${record.previous}`}</div>`
+    : `<div class="record prev">🏆 最高 ${record.previous}</div>`;
   const rows = qs
     .map((q) => `<li class="${q.solved ? "ok" : "no"}"><span>${esc(q.q.idiom ?? q.answer ?? "？")}</span><span class="pts ${q.score ? "" : "zero"}">${q.gaveUp ? "🏳️ " : ""}${q.bonus ? "✅ " : ""}+${q.score}</span></li>`)
     .join("");
   root.innerHTML = `<section class="card summary center">
-      <div class="big">${total}<span class="muted">/${qs.length * (maxScore(game.level) + SENTENCE_BONUS)}</span></div>
-      <div class="muted">${solved}/${qs.length} 題猜中</div>
+      <div class="small muted">${game.mode === "forward" ? "🗣️ 口說" : "👂 聽力"} ${game.level === "easy" ? "🌱" : "🔥"}</div>
+      <div class="big">${total}<small>分</small></div>
+      ${recordHtml}
+      <div class="stats"><span class="num ok" aria-label="答對">${solved}</span><span class="num no" aria-label="答錯">${qs.length - solved}</span></div>
       <ul class="list">${rows}</ul>
       <button id="again" class="btn lg block" style="margin-top:16px">再玩</button>
+      <button id="share" class="btn ghost block" style="margin-top:10px">分享成績</button>
+      <div id="sharemsg" class="small muted" style="min-height:18px;margin-top:6px"></div>
     </section>`;
   root.querySelector("#again")?.addEventListener("click", () => { ui.error = ""; setScreen({ name: "start" }); });
+  root.querySelector("#share")?.addEventListener("click", async () => {
+    const msg = root.querySelector("#sharemsg");
+    const outcome = await share(shareText(game, record));
+    if (msg) msg.textContent = outcome === "copied" ? "已複製到剪貼簿，貼到想分享的地方吧" : outcome === "failed" ? "無法分享，請截圖" : "";
+  });
 }
 
 // ---------- actions ----------
@@ -464,17 +749,23 @@ async function startGame() {
   setScreen({ name: "loading", text: "" });
   try {
     const r = await api.round(chosenMode, chosenLevel);
+    const features = r.features ?? { stt: false, tts: false };
     const game: Game = {
       mode: r.mode,
       level: chosenLevel,
+      features,
       maxGuesses: Math.min(MAX_ATTEMPTS, r.maxGuesses),
       mock: r.mock,
       questions: r.questions.map((q) => ({ q, turns: [], clues: [], done: false, solved: false, gaveUp: false, score: 0, bonus: 0 })),
       index: 0,
     };
     speechRate = SPEECH_RATE[chosenLevel];
+    ttsSpeed = TTS_SPEED[chosenLevel];
+    useServerTts = features.tts;
+    // Whisper needs a recorder; devices without MediaRecorder keep the browser recogniser.
+    useWhisper = features.stt && canRecord;
     modelBadge = r.mock ? "MOCK" : "Haiku";
-    for (const old of game.questions) old.turns.forEach((t) => t.audioUrl && URL.revokeObjectURL(t.audioUrl));
+    for (const old of game.questions) releaseQuestionAudio(old);
     resetUi();
     setScreen({ name: "play", game });
     if (game.mode === "reverse") await loadClue(game, game.questions[0]);
@@ -490,7 +781,8 @@ function joinText(a: string, b: string): string {
 
 function stopMic() {
   // Keep whatever was still interim when the player stops: it is usually the last word or two.
-  if (listener && micInterim) ui.draft = joinText(ui.draft, micInterim);
+  if (listener && micInterim) ui.draft = joinOverlap(ui.draft.trim(), micInterim);
+  micUserStopped = true;
   if (listener) listener.stop();
   listener = null;
   micInterim = "";
@@ -512,14 +804,127 @@ async function takeRecording(): Promise<string | undefined> {
   return all ? URL.createObjectURL(all) : undefined;
 }
 
+/** Give up on recording for this device; resolves once the microphone stream is released. */
+async function blockRecording(reason: string): Promise<string> {
+  const notice = `這台裝置無法在辨識時同時錄音（${reason}），已改為用語音念出你的句子。`;
+  recordBlocked = true;
+  try { localStorage.setItem(RECORD_BLOCK_KEY, "1"); } catch { /* ignore */ }
+  const rec = recording;
+  recording = null;
+  clips = [];
+  if (rec) await rec.stop();
+  return notice;
+}
+
+function clearWatchdog() {
+  if (micWatchdog !== null) { clearTimeout(micWatchdog); micWatchdog = null; }
+}
+
+function setMicStatus(text: string) {
+  micStatus = text;
+  const el = root.querySelector("#micstatus");
+  if (el) el.textContent = text;
+}
+
+/** Whisper flow: tap to record, tap again to stop; the clip is uploaded and the text appended. */
+async function toggleWhisper(game: Game) {
+  if (whisperBusy) return;
+  if (whisperRec) {
+    if (whisperTimer !== null) { clearTimeout(whisperTimer); whisperTimer = null; }
+    const rec = whisperRec;
+    whisperRec = null;
+    whisperBusy = true;
+    setMicStatus("辨識中…");
+    render();
+    try {
+      const blob = await rec.stop();
+      if (!blob || blob.size < 1000) { ui.error = "沒有錄到聲音，再試一次。"; }
+      else {
+        const text = await transcribeClip(blob);
+        if (text) {
+          ui.draft = joinText(ui.draft, text);
+          clips.push(blob); // keep the real voice for the guess row
+        } else ui.error = "沒有辨識到英文，請再說一次。";
+      }
+    } catch (e) {
+      ui.error = e instanceof ApiError ? e.message : "語音辨識失敗。";
+    }
+    whisperBusy = false;
+    micStatus = "";
+    render();
+    return;
+  }
+  ui.error = "";
+  const rec = await startRecording();
+  if (!rec) { ui.error = "無法使用麥克風，請允許權限後再試。"; render(); return; }
+  whisperRec = rec;
+  whisperStartedAt = Date.now();
+  const tick = () => {
+    if (!whisperRec) return;
+    const left = WHISPER_MAX_SECONDS - Math.floor((Date.now() - whisperStartedAt) / 1000);
+    if (left <= 0) { whisperTimer = null; void toggleWhisper(game); return; } // auto-stop and transcribe
+    setMicStatus(`錄音中，說完再按一次 ⏹（剩 ${left} 秒）`);
+    whisperTimer = window.setTimeout(tick, 1000);
+  };
+  tick();
+  render();
+}
+
 function toggleMic(game: Game) {
   if (listener) { stopMic(); render(); return; }
+  ui.error = "";
+  emptySessions = 0;
+  silentSessions = 0;
+  micUserStopped = false;
+  startMicSession(game);
+  render();
+}
+
+/**
+ * One browser recognition session. The browser ends a session after a few seconds of silence;
+ * unless the player pressed ⏹ we start the next one at once, carrying the text so far as prefix.
+ */
+function startMicSession(game: Game) {
   micPrefix = ui.draft.trim();
   micInterim = "";
-  ui.error = "";
-  const l = startListening({
+  let l: Listener | null = null;
+  let sessionHadText = false;
+  const restartWithoutRecording = async (reason: string) => {
+    if (listener) { listener.stop(); listener = null; }
+    clearWatchdog();
+    const notice = await blockRecording(reason); // wait until the mic is actually free
+    if (screen.name !== "play" || screen.game !== game) return;
+    toggleMic(game);
+    ui.error = notice;
+    render();
+  };
+  // Watchdog, re-armed at the start of every session while recording: a session that produces
+  // nothing (no result, no end) within 6 s means the recorder is starving recognition.
+  const armWatchdog = () => {
+    clearWatchdog();
+    if (recordBlocked) return;
+    micWatchdog = window.setTimeout(() => {
+      micWatchdog = null;
+      if (listener === l && listener) void restartWithoutRecording("6 秒內沒有辨識結果");
+    }, 6000);
+  };
+  l = startListening({
+    onSessionEnd({ hadResult, error }) {
+      setMicStatus(error ? `辨識段落結束（${error}）` : hadResult ? "辨識段落結束，繼續聆聽…" : "沒聽到聲音，繼續聆聽…");
+      armWatchdog();
+      if (!recording) return;
+      // Microphone-related failures while we hold the stream mean the two consumers conflict.
+      const micError = error === "audio-capture" || error === "aborted" || error === "network";
+      emptySessions = hadResult ? 0 : emptySessions + 1;
+      if (micError || emptySessions >= 2) void restartWithoutRecording(micError ? `錯誤 ${error}` : "沒有辨識到聲音");
+    },
     onText(committedText, interim) {
-      const joined = joinText(micPrefix, committedText);
+      emptySessions = 0;
+      silentSessions = 0;
+      sessionHadText = true;
+      clearWatchdog();
+      setMicStatus("辨識中…");
+      const joined = joinOverlap(micPrefix, committedText);
       ui.draft = joined;
       micInterim = interim;
       const ta = root.querySelector<HTMLTextAreaElement>("#draft");
@@ -530,12 +935,26 @@ function toggleMic(game: Game) {
       }
     },
     onEnd() {
-      // Dictation finished (player pressed stop).
-      listener = null;
+      clearWatchdog();
+      // Never lose the last interim words, whoever ended the session.
+      if (micInterim) ui.draft = joinOverlap(ui.draft.trim(), micInterim);
       micInterim = "";
-      if (screen.name === "play" && screen.game === game) render();
+      const stillHere = screen.name === "play" && screen.game === game && !game.questions[game.index].done;
+      if (!micUserStopped && stillHere && listener === l) {
+        // Browser timed out on silence: keep going until the player presses ⏹.
+        silentSessions = sessionHadText ? 0 : silentSessions + 1;
+        if (silentSessions < MAX_SILENT) {
+          listener = null;
+          startMicSession(game);
+          if (listener) { setMicStatus("繼續聆聽…"); syncDraftBox(); return; }
+        }
+        setMicStatus("太久沒有聲音，已停止");
+      }
+      listener = null;
+      if (stillHere) render();
     },
     onError(message) {
+      clearWatchdog();
       ui.error = message;
       listener = null;
       micInterim = "";
@@ -544,18 +963,47 @@ function toggleMic(game: Game) {
   });
   if (!l) { ui.error = "無法啟動語音輸入。"; render(); return; }
   listener = l;
-  // Capture the real voice too, so the guess row can replay it. Best effort: if the browser
-  // refuses a second microphone consumer, dictation still works and playback uses TTS.
-  void startRecording().then((rec) => {
-    if (!rec) return;
-    if (listener === l) recording = rec;
-    else void rec.stop().then((blob) => { if (blob) clips.push(blob); });
-  });
+  setMicStatus(recordBlocked ? "聆聽中…" : "聆聽中（含錄音）…");
+  armWatchdog();
+  // Capture the real voice too, so the guess row can replay it. Skipped on devices where this
+  // was seen to starve recognition (see recordBlocked); otherwise best effort.
+  if (!recordBlocked) {
+    void startRecording().then((rec) => {
+      if (!rec) return;
+      if (listener === l && !recordBlocked) recording = rec;
+      else void rec.stop().then((blob) => { if (blob && !recordBlocked) clips.push(blob); });
+    });
+  }
+}
+
+/** Push ui.draft into the textarea without re-rendering (keeps focus and caret at the end). */
+function syncDraftBox() {
+  const ta = root.querySelector<HTMLTextAreaElement>("#draft");
+  if (!ta) return;
+  ta.value = ui.draft;
+  ta.scrollTop = ta.scrollHeight;
+}
+
+function clearDraft(game: Game) {
+  if (whisperTimer !== null) { clearTimeout(whisperTimer); whisperTimer = null; }
+  if (whisperRec) { const r = whisperRec; whisperRec = null; void r.stop(); }
+  const wasListening = Boolean(listener);
+  if (wasListening) { micUserStopped = true; listener?.stop(); listener = null; }
+  ui.draft = "";
+  micInterim = "";
+  micPrefix = "";
+  clips = [];
+  const rec = recording; recording = null; if (rec) void rec.stop();
+  ui.violations = [];
+  if (wasListening) { micUserStopped = false; silentSessions = 0; startMicSession(game); }
   render();
 }
 
 function resetUi() {
   stopMic();
+  if (whisperTimer !== null) { clearTimeout(whisperTimer); whisperTimer = null; }
+  if (whisperRec) { const r = whisperRec; whisperRec = null; void r.stop(); }
+  whisperBusy = false;
   clips = [];
   ui.draft = "";
   ui.busy = false;
@@ -606,10 +1054,12 @@ async function loadClue(game: Game, qs: QuestionState) {
   ui.error = "";
   render();
   try {
-    const r = await api.describe(qs.q.id, qs.clues.length + 1, qs.clues);
+    const known = knownChars(qs).map((c, i) => (c ? i : -1)).filter((i) => i >= 0);
+    const r = await api.describe(qs.q.id, qs.clues.length + 1, qs.clues, known);
     qs.clues.push(r.description);
+    if (r.reveal) qs.revealed = { ...(qs.revealed ?? {}), [r.reveal.index]: r.reveal.char };
     qs.shownClue = undefined;
-    speak(r.description);
+    void playClue(qs, qs.clues.length - 1);
   } catch (e) {
     ui.error = e instanceof Error ? e.message : "無法取得描述";
   }
@@ -719,9 +1169,21 @@ async function loadFeedback(game: Game, qs: QuestionState) {
   if (screen.name === "play" && screen.game === game && game.questions[game.index] === qs) render();
 }
 
+/** Free every audio resource of a question: clue clips, their decoded PCM, and the player's recordings. */
+function releaseQuestionAudio(qs: QuestionState) {
+  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+  if (clueElement) { clueElement.pause(); clueElement.removeAttribute("src"); clueElement.load(); }
+  for (const u of Object.values(qs.clueAudio ?? {})) URL.revokeObjectURL(u);
+  qs.clueAudio = undefined;
+  for (const t of qs.turns) { if (t.audioUrl) { URL.revokeObjectURL(t.audioUrl); t.audioUrl = undefined; } }
+}
+
 async function nextQuestion(game: Game) {
+  // The finished question's audio is never played again: drop it before moving on.
+  releaseQuestionAudio(game.questions[game.index]);
   if (game.index + 1 >= game.questions.length) {
-    setScreen({ name: "summary", game });
+    const total = game.questions.reduce((n, q) => n + q.score, 0);
+    setScreen({ name: "summary", game, record: recordScore(game.mode, game.level, total) });
     return;
   }
   game.index += 1;

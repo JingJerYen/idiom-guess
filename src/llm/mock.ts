@@ -1,4 +1,6 @@
+import { config } from "../config.js";
 import { loadIdioms, type Idiom } from "../game/idioms.js";
+import { respectsConfirmed, type PreviousGuess } from "../prompts/guess.js";
 import type { GuessResult, FeedbackResult, DescribeResult } from "./types.js";
 
 const STOP = new Set(
@@ -39,9 +41,11 @@ export function mockPerfectSentence(text: string): { perfect: boolean; note: str
   return { perfect: true, note: "" };
 }
 
-export function mockGuess(descriptions: string[], previousGuesses: string[] = []): GuessResult {
-  // Like the real model, never repeat an earlier wrong guess.
-  const all = loadIdioms().filter((it) => !previousGuesses.includes(it.idiom));
+export function mockGuess(descriptions: string[], previousGuesses: string[] = [], prev: PreviousGuess[] = []): GuessResult {
+  // Like the real model, never repeat an earlier wrong guess, and keep confirmed characters in place.
+  const pool = loadIdioms().filter((it) => !previousGuesses.includes(it.idiom));
+  const constrained = pool.filter((it) => respectsConfirmed(it.idiom, prev));
+  const all = constrained.length ? constrained : pool;
   const words = keywords(descriptions.join(" "));
   const g = mockPerfectSentence(descriptions[descriptions.length - 1] ?? "");
   const grammar = { perfect_sentence: g.perfect, grammar_note: g.note };
@@ -64,8 +68,15 @@ export function mockGuess(descriptions: string[], previousGuesses: string[] = []
 }
 
 /** MOCK proofreader: capitalise the first letter, fix lowercase "i", add a final period. */
-export function mockFeedback(_idiom: Idiom, descriptions: string[]): FeedbackResult {
+export function mockFeedback(idiom: Idiom, descriptions: string[]): FeedbackResult {
+  const longWords = Array.from(new Set((idiom.reference_english.match(/[A-Za-z]{7,}/g) ?? []).map((w) => w.toLowerCase()))).slice(0, 3);
+  const vocab = longWords.map((w) => ({ word: w, zh: `[MOCK] ${w} 的中文`, example: idiom.reference_english }));
+  const first = descriptions[0] ?? "";
+  const fixedFirst = (() => { let t = first.trim().replace(/\s+/g, " ").replace(/\bi\b/g, "I"); t = t.charAt(0).toUpperCase() + t.slice(1); return /[.!?]$/.test(t) ? t : t + "."; })();
+  const grammar = fixedFirst !== first.trim() ? { title: "[MOCK] 句首大寫與句尾標點", wrong: first, fixed: fixedFirst } : null;
   return {
+    vocab,
+    grammar,
     corrections: descriptions.map((d) => {
       const notes: string[] = [];
       let t = d.trim().replace(/\s+/g, " ");
@@ -77,7 +88,13 @@ export function mockFeedback(_idiom: Idiom, descriptions: string[]): FeedbackRes
   };
 }
 
-export function mockDescribe(idiom: Idiom, attempt: number, previous: string[]): DescribeResult {
+export function mockDescribe(idiom: Idiom, attempt: number, previous: string[], literal: { position: number; category: string; english: string } | null = null): DescribeResult {
+  if (attempt >= config.maxGuesses) {
+    const fact = literal
+      ? /number/.test(literal.category) ? `It has the number ${literal.english} in it.` : `One of the characters means ${literal.english}.`
+      : "";
+    return { description: `[MOCK last clue] ${fact} ${idiom.reference_english}`.replace(/\s+/g, " ") };
+  }
   const extras = [
     `Think of a situation where ${idiom.reference_english.charAt(0).toLowerCase()}${idiom.reference_english.slice(1).replace(/\.$/, "")}. People usually say this as a warning or a comment.`,
     `[MOCK hint ${attempt}] Think about where you would hear or see this in daily life in Taiwan. Difficulty level ${idiom.difficulty}.`,
