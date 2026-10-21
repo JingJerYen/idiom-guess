@@ -264,22 +264,6 @@ async function speakWithBeeps(segments: string[]) {
   }
 }
 
-/** Read several English texts one after another (used by the feedback speaker). */
-function speakAll(texts: string[]) {
-  if (!canSpeak) return;
-  try {
-    window.speechSynthesis.cancel();
-    for (const t of texts.filter((x) => x.trim())) {
-      const u = new SpeechSynthesisUtterance(t.replace(/^\[MOCK[^\]]*\]\s*/, ""));
-      u.lang = "en-US";
-      u.rate = speechRate;
-      const v = pickVoice();
-      if (v) u.voice = v;
-      window.speechSynthesis.speak(u);
-    }
-  } catch { /* best effort */ }
-}
-
 /** Play the player's own recording when there is one, otherwise read the text aloud. */
 function playTurn(audioUrl: string | undefined, text: string) {
   if (currentAudio) { currentAudio.pause(); currentAudio = null; }
@@ -426,7 +410,9 @@ function renderPlay(game: Game) {
   } else {
     body += `<div class="tagrow">${q.tags.map((t) => `<span class="kind">${esc(t)}</span>`).join("")}${stars(q.difficulty)}</div>`;
     // While guessing, a clue is only something you can replay. Text appears after the question ends.
-    body += canSpeak || useServerTts
+    body += qs.done
+      ? ""
+      : canSpeak || useServerTts
       ? `<div class="speakers">${qs.clues
           .map((c, i) => `<button class="speaker" data-i="${i}" aria-label="播放第 ${i + 1} 句">🔊<small>${i + 1}</small></button>`)
           .join("")}</div>`
@@ -544,15 +530,17 @@ function renderPlay(game: Game) {
       if (t) playTurn(t.audioUrl, t.you);
     }),
   );
-  root.querySelector("#fb-speak")?.addEventListener("click", () => {
-    const texts: string[] = [];
+  root.querySelector("#ref-speak")?.addEventListener("click", () => {
     const ref = qs.referenceEnglish ?? qs.feedback?.reference_english;
-    if (ref) texts.push(ref);
-    // Only forward mode has English sentences from the player; in listening mode the turns are
-    // Chinese guesses and must not be fed to the English voice.
-    if (game.mode === "forward") qs.turns.forEach((t, i) => texts.push(qs.feedback?.corrections[i]?.corrected || t.you));
-    speakAll(texts); // feedback stays on the browser voice; only clues use server TTS
+    if (ref) speak(ref); // feedback stays on the browser voice; only clues use server TTS
   });
+  root.querySelectorAll<HTMLButtonElement>(".corr-speak").forEach((b) =>
+    b.addEventListener("click", () => {
+      const i = Number(b.dataset.i);
+      const t = qs.turns[i];
+      if (t) speak(qs.feedback?.corrections[i]?.corrected || t.you); // the corrected sentence, never the Chinese guesses
+    }),
+  );
   root.querySelectorAll<HTMLButtonElement>(".eye2").forEach((b) =>
     b.addEventListener("click", () => {
       const i = Number(b.dataset.i);
@@ -703,9 +691,11 @@ function renderResult(game: Game, qs: QuestionState): string {
     ? `<div class="answer">${tiles(qs.answer ?? "", chars(qs.answer ?? "").map(() => qs.solved), "lg")}<div class="tagrow">${(qs.answerTags ?? []).map((t) => `<span class="kind">${esc(t)}</span>`).join("")}</div></div>`
     : "";
   const ref = qs.referenceEnglish ?? qs.feedback?.reference_english;
-  const refHtml = ref ? `<div class="ref"><div class="lbl">📖 參考答案</div>${tappable(esc(ref), ref)}</div>` : "";
+  const refHtml = ref
+    ? `<div class="ref sayrow">${canSpeak ? `<button id="ref-speak" class="iconbtn" aria-label="朗讀參考答案">🔊</button>` : ""}<div class="txt"><div class="lbl">📖 參考答案</div>${tappable(esc(ref), ref)}</div></div>`
+    : "";
   const transcript = game.mode === "reverse" && qs.clues.length
-    ? `<div class="transcript">${qs.clues.map((c, i) => `<div class="small"><button class="iconbtn speak sm" data-i="${i}" aria-label="播放">🔊</button> ${tappable(esc(c), c)}</div>`).join("")}${lookupHintShown ? "" : `<div class="small muted">👆 點英文字可以查意思、存進詞本</div>`}</div>`
+    ? `<div class="transcript">${qs.clues.map((c, i) => `<div class="sayrow"><button class="iconbtn speak" data-i="${i}" aria-label="播放第 ${i + 1} 句">🔊</button><div class="txt">${tappable(esc(c), c)}</div></div>`).join("")}${lookupHintShown ? "" : `<div class="small muted">👆 點英文字可以查意思、存進詞本</div>`}</div>`
     : "";
 
   let fb = "";
@@ -719,10 +709,13 @@ function renderResult(game: Game, qs: QuestionState): string {
           const c = f.corrections[i] ?? { corrected: t.you, note: "" };
           const same = normalizeForDiff(c.corrected) === normalizeForDiff(t.you);
           // Each row is one of the player's own descriptions, in order; a tag says whether grammar needed fixing.
-          return `<div class="corr">
+          return `<div class="corr sayrow">
+            ${canSpeak ? `<button class="iconbtn corr-speak" data-i="${i}" aria-label="朗讀第 ${i + 1} 句">🔊</button>` : "<span></span>"}
+            <div class="txt">
             <div class="orig ${same ? "ok" : ""}"><span class="n">#${i + 1}</span> ${same ? "" : "✏️ "}${same ? tappable(esc(t.you), t.you) : esc(t.you)}${same ? ` <span class="oktag">文法 OK</span>` : ""}</div>
             ${same ? "" : `<div class="fixed">${tappable(diffWords(t.you, c.corrected), c.corrected)}</div>`}
             ${c.note ? `<div class="note small">${esc(c.note)}</div>` : ""}
+            </div>
           </div>`;
         })
         .join("")}</div>`;
@@ -734,9 +727,7 @@ function renderResult(game: Game, qs: QuestionState): string {
   const toggle = detailsHtml
     ? `<button id="details" class="btn ghost sm details ${qs.showDetails ? "open" : ""}" aria-expanded="${qs.showDetails ? "true" : "false"}">${loading ? '<span class="spinner"></span>' : qs.showDetails ? "收起 ▴" : "📖 回饋 ▾"}</button>`
     : "";
-  const speakBtn = qs.showDetails && canSpeak && !loading
-    ? `<button id="fb-speak" class="iconbtn fbspeak" aria-label="朗讀回饋">🔊</button>`
-    : "";
+  const speakBtn = "";
   const canAdd = game.mode === "forward"
     ? qs.showDetails && qs.feedback && (qs.feedback.vocab.length > 0 || qs.feedback.grammar)
     : qs.clues.length > 0; // listening: the AI's clues are the study material, fetched on demand
