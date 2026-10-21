@@ -4,10 +4,6 @@
 
 <p align="center"><img src="docs/demo.gif" width="300" alt="口說模式示範：描述、AI 猜、綠字提示、猜中加分、回饋"></p>
 
-| 首頁 | 口說：你描述，AI 猜 | 聽力：AI 描述，你猜 | 詞本複習 |
-|---|---|---|---|
-| ![首頁](docs/screenshots/home.png) | ![口說模式](docs/screenshots/speak.png) | ![聽力模式](docs/screenshots/listen.png) | ![詞本](docs/screenshots/wordbook.png) |
-
 練習英文「換句話說」(circumlocution) 的網頁小遊戲。
 看到一個中文詞（成語、日常用語、店家名、地標……），用簡單的英文把意思說清楚，讓 AI 猜出是哪個詞；
 也有反向模式：AI 用英文描述，你猜中文。介面上兩種模式分別叫「口說」(forward) 與「聽力」(reverse)。
