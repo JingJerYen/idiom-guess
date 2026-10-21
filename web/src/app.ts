@@ -454,10 +454,10 @@ function renderPlay(game: Game) {
         <div class="counter">${wordDots(countWords(ui.draft))}<span class="chars"></span></div>
         ${listener || whisperRec || whisperBusy ? `<div id="micstatus" class="small muted micstatus">${esc(micStatus)}</div>` : ""}`;
     } else {
-      // Keyboards guess "credit card" for a bare text field with a card-like maxlength (16-19) and
-      // Chrome ignores autocomplete="off"; a short maxlength, a non-standard autocomplete token and
-      // a descriptive name keep the autofill bar away.
-      body += `<input id="draft" class="guess" type="text" name="chinese-guess" maxlength="12" value="${esc(ui.draft)}" ${ui.busy ? "disabled" : ""} autocomplete="chinese-guess" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="send" placeholder="…" />`;
+      // Keyboards guess "credit card" for a bare text field with a card-like maxlength (16-19), so the
+      // cap is short. autocomplete must stay exactly "off": any other value lets Chrome remember what
+      // was typed here and offer earlier guesses above the keyboard.
+      body += `<input id="draft" class="guess" type="text" maxlength="12" value="${esc(ui.draft)}" ${ui.busy ? "disabled" : ""} autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="send" placeholder="…" />`;
     }
     if (ui.violations.length) body += `<div class="alert error">${ui.violations.map((v) => `<div>${esc(violationText(v))}</div>`).join("")}</div>`;
     if (ui.error) body += `<div class="alert warn">${esc(ui.error)}</div>`;
