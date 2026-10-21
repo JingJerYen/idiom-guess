@@ -2,6 +2,8 @@
 
 **🎮 線上玩：<https://idiom-charades.onrender.com>**（手機瀏覽器開啟最順；免費主機閒置後第一次開啟約需 30 秒喚醒）
 
+<p align="center"><img src="docs/demo.gif" width="300" alt="口說模式示範：描述、AI 猜、綠字提示、猜中加分、回饋"></p>
+
 | 首頁 | 口說：你描述，AI 猜 | 聽力：AI 描述，你猜 | 詞本複習 |
 |---|---|---|---|
 | ![首頁](docs/screenshots/home.png) | ![口說模式](docs/screenshots/speak.png) | ![聽力模式](docs/screenshots/listen.png) | ![詞本](docs/screenshots/wordbook.png) |
