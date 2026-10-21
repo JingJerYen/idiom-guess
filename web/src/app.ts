@@ -692,10 +692,10 @@ function renderResult(game: Game, qs: QuestionState): string {
     : "";
   const ref = qs.referenceEnglish ?? qs.feedback?.reference_english;
   const refHtml = ref
-    ? `<div class="ref sayrow">${canSpeak ? `<button id="ref-speak" class="iconbtn" aria-label="朗讀參考答案">🔊</button>` : ""}<div class="txt"><div class="lbl">📖 參考答案</div>${tappable(esc(ref), ref)}</div></div>`
+    ? `<div class="ref sayrow"><div class="txt"><div class="lbl">📖 參考答案</div>${tappable(esc(ref), ref)}</div>${canSpeak ? `<button id="ref-speak" class="iconbtn" aria-label="朗讀參考答案">🔊</button>` : ""}</div>`
     : "";
   const transcript = game.mode === "reverse" && qs.clues.length
-    ? `<div class="transcript">${qs.clues.map((c, i) => `<div class="sayrow"><button class="iconbtn speak" data-i="${i}" aria-label="播放第 ${i + 1} 句">🔊</button><div class="txt">${tappable(esc(c), c)}</div></div>`).join("")}${lookupHintShown ? "" : `<div class="small muted">👆 點英文字可以查意思、存進詞本</div>`}</div>`
+    ? `<div class="transcript">${qs.clues.map((c, i) => `<div class="sayrow"><div class="txt">${tappable(esc(c), c)}</div><button class="iconbtn speak" data-i="${i}" aria-label="播放第 ${i + 1} 句">🔊</button></div>`).join("")}${lookupHintShown ? "" : `<div class="small muted">👆 點英文字可以查意思、存進詞本</div>`}</div>`
     : "";
 
   let fb = "";
@@ -710,12 +710,12 @@ function renderResult(game: Game, qs: QuestionState): string {
           const same = normalizeForDiff(c.corrected) === normalizeForDiff(t.you);
           // Each row is one of the player's own descriptions, in order; a tag says whether grammar needed fixing.
           return `<div class="corr sayrow">
-            ${canSpeak ? `<button class="iconbtn corr-speak" data-i="${i}" aria-label="朗讀第 ${i + 1} 句">🔊</button>` : "<span></span>"}
             <div class="txt">
             <div class="orig ${same ? "ok" : ""}"><span class="n">#${i + 1}</span> ${same ? "" : "✏️ "}${same ? tappable(esc(t.you), t.you) : esc(t.you)}${same ? ` <span class="oktag">文法 OK</span>` : ""}</div>
             ${same ? "" : `<div class="fixed">${tappable(diffWords(t.you, c.corrected), c.corrected)}</div>`}
             ${c.note ? `<div class="note small">${esc(c.note)}</div>` : ""}
             </div>
+            ${canSpeak ? `<button class="iconbtn corr-speak" data-i="${i}" aria-label="朗讀第 ${i + 1} 句">🔊</button>` : "<span></span>"}
           </div>`;
         })
         .join("")}</div>`;

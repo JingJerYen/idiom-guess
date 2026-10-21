@@ -137,7 +137,7 @@ button, input, textarea { font: inherit; color: inherit; }
 .iconbtn.eye { width: 32px; height: 32px; font-size: 16px; background: transparent; box-shadow: none; opacity: 0.8; }
 .iconbtn.sm { width: 28px; height: 28px; font-size: 14px; box-shadow: none; vertical-align: middle; }
 .transcript { text-align: left; margin-top: 12px; display: grid; gap: 10px; color: var(--ink); }
-.sayrow { display: grid; grid-template-columns: 40px 1fr; gap: 10px; align-items: start; text-align: left; font-size: 17px; line-height: 1.55; }
+.sayrow { display: grid; grid-template-columns: 1fr 40px; gap: 10px; align-items: start; text-align: left; font-size: 17px; line-height: 1.55; }
 .sayrow .iconbtn { width: 40px; height: 40px; font-size: 20px; background: var(--chip); box-shadow: none; }
 .sayrow .txt { min-width: 0; padding-top: 6px; }
 .result .ref.sayrow .iconbtn { background: var(--card); }
