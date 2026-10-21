@@ -350,7 +350,7 @@ function renderStart() {
     b.addEventListener("click", () => { chosenLevel = b.dataset.level as Level; render(); }),
   );
   (root.querySelector("#start") as HTMLButtonElement).addEventListener("click", () => void startGame());
-  root.querySelector("#book")?.addEventListener("click", () => setScreen({ name: "vocab" }));
+  root.querySelector("#book")?.addEventListener("click", openVocab);
 }
 
 /** Start-screen card with this week's total; opens the weekly stats screen. */
@@ -791,14 +791,32 @@ async function share(text: string): Promise<"shared" | "copied" | "failed"> {
 
 /** Recall within this many seconds (from showing the card to flipping it) counts as known. */
 const RECALL_LIMIT_MS = 10_000;
-const review = { flipped: false, shownAt: 0, flippedAt: 0, done: 0, dragX: 0 };
+const review = { flipped: false, shownAt: 0, flippedAt: 0, done: 0, dragX: 0, queue: [] as string[] };
+
+/** Newest card first; the stored order (which keepCard shuffles) is not the display order. */
+function newestFirst(cards: Card[]): Card[] {
+  return [...cards].sort((a, b) => b.createdAt - a.createdAt);
+}
+
+/** Enter the word book: a fresh session that starts from the newest card, oldest last. */
+function openVocab() {
+  review.queue = newestFirst(listCards()).map((c) => c.id);
+  review.done = 0; review.shownAt = 0; review.flipped = false; review.flippedAt = 0; review.dragX = 0;
+  setScreen({ name: "vocab" });
+}
+
+/** Cards of the current review session in display order (ids missing from storage are skipped). */
+function sessionCards(): Card[] {
+  const byId = new Map(listCards().map((c) => [c.id, c]));
+  return review.queue.map((id) => byId.get(id)).filter((c): c is Card => Boolean(c));
+}
 
 /**
  * Export the word book as a .txt file. On phones the share sheet is used (it offers Google Drive,
  * Files, LINE, …); elsewhere the file is downloaded. Nothing leaves the device through our server.
  */
 async function exportVocab(): Promise<void> {
-  const cards = listCards();
+  const cards = newestFirst(listCards());
   if (!cards.length) return;
   // ASCII file name: some browsers drop a non-ASCII download name and save the file as "download".
   const name = `vocab-${dateStamp(new Date())}.txt`;
@@ -825,7 +843,7 @@ async function exportVocab(): Promise<void> {
 }
 
 function renderVocab() {
-  const cards = listCards();
+  const cards = sessionCards();
   const card = cards[0];
   if (!card) {
     root.innerHTML = `<section class="card center pad"><div class="big-emoji">📒</div><h2>${review.done ? "今天複習完了" : "詞本是空的"}</h2>
@@ -859,8 +877,8 @@ function renderVocab() {
   };
   const settle = (known: boolean) => {
     const recallMs = (review.flippedAt || Date.now()) - review.shownAt;
-    if (known && recallMs <= RECALL_LIMIT_MS) { removeCard(card.id); review.done += 1; }
-    else keepCard(card.id);
+    if (known && recallMs <= RECALL_LIMIT_MS) { removeCard(card.id); review.done += 1; review.queue = review.queue.filter((id) => id !== card.id); }
+    else { keepCard(card.id); review.queue = [...review.queue.filter((id) => id !== card.id), card.id]; } // to the back of this session
     review.shownAt = 0; review.flipped = false; review.flippedAt = 0; review.dragX = 0;
     render();
   };
