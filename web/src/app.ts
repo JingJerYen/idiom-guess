@@ -341,8 +341,17 @@ function renderStart() {
     ${ui.error ? `<div class="alert error">${esc(ui.error)}</div>` : ""}
     <button id="start" class="btn lg block">開始</button>
     <button id="book" class="card bookcard"><span class="l"><span class="icon">📒</span><span><b>詞本</b><span class="small muted">左右滑動複習，記住的就消失</span></span></span><span class="cnt ${cardCount() ? "" : "zero"}">${cardCount()}</span></button>
-    ${weekCard()}`;
+    ${weekCard()}
+    ${installCard()}`;
   root.querySelector("#stats")?.addEventListener("click", () => setScreen({ name: "stats" }));
+  root.querySelector("#install")?.addEventListener("click", async () => {
+    if (installPrompt) {
+      const p = installPrompt;
+      installPrompt = null;
+      await p.prompt().catch(() => undefined);
+      render();
+    } else { iosHintOpen = !iosHintOpen; render(); }
+  });
   root.querySelectorAll<HTMLButtonElement>(".mode").forEach((b) =>
     b.addEventListener("click", () => { chosenMode = b.dataset.mode as Mode; render(); }),
   );
@@ -351,6 +360,33 @@ function renderStart() {
   );
   (root.querySelector("#start") as HTMLButtonElement).addEventListener("click", () => void startGame());
   root.querySelector("#book")?.addEventListener("click", openVocab);
+}
+
+// ---------- install (PWA) ----------
+
+/** Chrome/Edge/Android fire beforeinstallprompt when the site is installable; we keep it for our own button. */
+let installPrompt: (Event & { prompt: () => Promise<void> }) | null = null;
+const isStandalone = () => matchMedia("(display-mode: standalone)").matches || (navigator as { standalone?: boolean }).standalone === true;
+const isIos = () => /iphone|ipad|ipod/i.test(navigator.userAgent) && !(window as { MSStream?: unknown }).MSStream;
+let iosHintOpen = false;
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  installPrompt = e as typeof installPrompt;
+  if (screen.name === "start") render();
+});
+window.addEventListener("appinstalled", () => { installPrompt = null; if (screen.name === "start") render(); });
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => { navigator.serviceWorker.register("./sw.js").catch(() => undefined); });
+}
+
+/** Start-screen install row: a real prompt where the browser offers one, a short how-to on iOS. */
+function installCard(): string {
+  if (isStandalone()) return "";
+  if (installPrompt) return `<button id="install" class="btn ghost block install">⬇️ 安裝到主畫面</button>`;
+  if (isIos()) {
+    return `<button id="install" class="btn ghost block install">⬇️ 安裝到主畫面</button>${iosHintOpen ? `<div class="small muted center" style="margin-top:6px">Safari 下方的「分享」⎙ → 「加入主畫面」</div>` : ""}`;
+  }
+  return "";
 }
 
 /** Start-screen card with this week's total; opens the weekly stats screen. */
