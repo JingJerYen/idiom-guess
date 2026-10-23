@@ -76,7 +76,7 @@ npm run build && npm start  # 正式版建置與啟動（dist/ 與 public/）
 1. Cloudflare Dashboard → Workers & Pages → Create → Import a repository，選這個 repo 與分支。
 2. Build command 填 `npm ci && npm run build:web`，Deploy command 填 `npx wrangler deploy`。
 3. 建好後到 Worker 的 Settings → Variables and Secrets 加 `GAME_ANTHROPIC_KEY`（Secret），要語音再加 `GAME_OPENAI_KEY`。
-4. 之後每次 push 都會自動重新部署；網址是 `https://idiom-charades.<你的子網域>.workers.dev`，也可綁自己的網域。
+4. 之後每次 push 都會自動重新部署；網址是 `https://idiom-guess.<你的子網域>.workers.dev`，也可綁自己的網域。
 
 **方法 B：本機用 wrangler**
 
