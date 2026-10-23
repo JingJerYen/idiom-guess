@@ -522,6 +522,7 @@ function renderPlay(game: Game) {
       const zh = qs.flipped.has(i) && w?.zh;
       b.textContent = zh ? w.zh : (w?.en ?? "");
       b.classList.toggle("zh", Boolean(zh));
+      if (w?.en) speak(w.en); // browser voice only: the English word is read on every tap, whichever side shows
     }),
   );
   root.querySelectorAll<HTMLButtonElement>(".say").forEach((b) =>
