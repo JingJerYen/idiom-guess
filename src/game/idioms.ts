@@ -1,7 +1,7 @@
-import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-import { dirname, resolve } from "node:path";
 import { z } from "zod";
+// The bank ships inside the bundle (works on Node and on Workers, which have no filesystem).
+import idiomsJson from "../../data/idioms.json" with { type: "json" };
+import glossaryJson from "../../data/glossary.json" with { type: "json" };
 import { normalizeIdiom } from "./match.js";
 
 const IdiomSchema = z.object({
@@ -37,18 +37,12 @@ export interface PublicQuestion {
 export type GameMode = "forward" | "reverse";
 export type GameLevel = "easy" | "hard";
 
-const here = dirname(fileURLToPath(import.meta.url));
-const DATA_PATH = resolve(here, "../../data/idioms.json");
-const GLOSSARY_PATH = resolve(here, "../../data/glossary.json");
-
 let glossaryCache: Record<string, string> | null = null;
 
 /** English taboo word -> Traditional Chinese gloss, shown when the player flips a word card. */
-export function loadGlossary(path: string = GLOSSARY_PATH): Record<string, string> {
-  if (glossaryCache && path === GLOSSARY_PATH) return glossaryCache;
-  const g = z.record(z.string(), z.string().min(1)).parse(JSON.parse(readFileSync(path, "utf8")));
-  if (path === GLOSSARY_PATH) glossaryCache = g;
-  return g;
+export function loadGlossary(): Record<string, string> {
+  glossaryCache ??= z.record(z.string(), z.string().min(1)).parse(glossaryJson);
+  return glossaryCache;
 }
 
 export interface TabooWord {
@@ -58,16 +52,15 @@ export interface TabooWord {
 
 let cache: Idiom[] | null = null;
 
-export function loadIdioms(path: string = DATA_PATH): Idiom[] {
-  if (cache && path === DATA_PATH) return cache;
-  const raw = JSON.parse(readFileSync(path, "utf8"));
-  const list = z.array(IdiomSchema).min(1).parse(raw);
+export function loadIdioms(): Idiom[] {
+  if (cache) return cache;
+  const list = z.array(IdiomSchema).min(1).parse(idiomsJson);
   const ids = new Set<string>();
   for (const it of list) {
     if (ids.has(it.id)) throw new Error(`Duplicate idiom id: ${it.id}`);
     ids.add(it.id);
   }
-  if (path === DATA_PATH) cache = list;
+  cache = list;
   return list;
 }
 

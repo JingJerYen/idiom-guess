@@ -21,4 +21,4 @@ COPY --from=build /app/public ./public
 COPY data ./data
 EXPOSE 3000
 # GAME_ANTHROPIC_KEY is supplied at runtime; never bake it into the image.
-CMD ["node", "dist/server.js"]
+CMD ["node", "dist/src/server.js"]

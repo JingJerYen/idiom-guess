@@ -22,7 +22,7 @@
 - 💡 提示按鈕：不知道怎麼開口時，依題目類型給三個英文開頭句型，點一下填進輸入框。
 - 每題結束給你回饋：題庫的參考說法，加上你每一句描述的修正版英文（只修文法、拼字、用字，改動的字會標示），
   以及一到兩句繁體中文說明改了什麼、為什麼；句子正確就不說明。
-- 後端 Node.js + TypeScript + Express；前端純 HTML/CSS/TypeScript；模型 `claude-haiku-5-5`。
+- 後端 TypeScript + Hono（同一份程式可跑在 Node.js 或 Cloudflare Workers）；前端純 HTML/CSS/TypeScript；模型 `claude-haiku-5-5`。
 
 ## 本機執行
 
@@ -66,14 +66,40 @@ npm run build && npm start  # 正式版建置與啟動（dist/ 與 public/）
 
 ## 部署
 
-### Render（push 即部署，推薦）
+### Cloudflare Workers（免費、不休眠、無冷啟動，推薦）
+
+後端用 Hono 寫成，`src/worker.ts` 是 Workers 入口；`wrangler.toml` 把 `public/` 當靜態資產，只有 `/api/*` 會進 Worker。
+題庫打包進程式，不需要檔案系統；每個 IP 的限流在記憶體裡（每個節點各自計數）。
+
+**方法 A：連 GitHub 自動部署（Workers Builds）**
+
+1. Cloudflare Dashboard → Workers & Pages → Create → Import a repository，選這個 repo 與分支。
+2. Build command 填 `npm ci && npm run build:web`，Deploy command 填 `npx wrangler deploy`。
+3. 建好後到 Worker 的 Settings → Variables and Secrets 加 `GAME_ANTHROPIC_KEY`（Secret），要語音再加 `GAME_OPENAI_KEY`。
+4. 之後每次 push 都會自動重新部署；網址是 `https://idiom-charades.<你的子網域>.workers.dev`，也可綁自己的網域。
+
+**方法 B：本機用 wrangler**
+
+```bash
+npx wrangler login
+npx wrangler secret put GAME_ANTHROPIC_KEY
+npx wrangler secret put GAME_OPENAI_KEY      # 選用
+npm run cf:deploy                            # build:web + wrangler deploy
+npm run cf:dev                               # 本機用 Workers runtime 跑 MOCK 模式
+```
+
+免費額度每天 10 萬次請求；等待模型回應的時間不算 CPU 時間，所以每次請求 10 ms CPU 的限制不會卡到。
+
+### Render（Node.js）
+
+同一份程式也能當一般 Node 伺服器跑（`src/server.ts`），所以 Render 仍然可用：
 
 1. 到 <https://dashboard.render.com/blueprints>，New Blueprint Instance，選這個 repo 與分支。
    `render.yaml` 已定義 build/start 指令、健康檢查與 `TRUST_PROXY=1`。
 2. 匯入時會要求填 `GAME_ANTHROPIC_KEY`（標示為 `sync: false`，不會寫進 repo）。
 3. 之後每次 push 到該分支都會自動重新部署。免費方案閒置 15 分鐘後休眠，喚醒約需 30~60 秒。
 
-GitHub Pages 只能放靜態檔，無法保護金鑰也跑不了後端，因此不適用。
+`render` 分支保留了改用 Hono 之前的 Express 版本。GitHub Pages 只能放靜態檔，無法保護金鑰也跑不了後端，因此不適用。
 
 ### Docker
 
@@ -164,8 +190,10 @@ API 無狀態：前端持有這一輪的題目與每題的描述歷史，伺服�
 
 ```
 src/
-  server.ts            Express 啟動、靜態檔、錯誤處理
-  config.ts            環境變數
+  app.ts               Hono app：/api 路由掛載、錯誤處理（Node 與 Workers 共用）
+  server.ts            Node 入口：靜態檔 + 監聽埠
+  worker.ts            Cloudflare Workers 入口
+  config.ts            環境變數（Node 啟動時讀 process.env；Workers 每個請求讀 bindings）
   routes/api.ts        所有 /api 端點
   routes/schemas.ts    請求 body 驗證
   game/idioms.ts       題庫載入、抽題、對前端裁切
@@ -176,9 +204,10 @@ src/
   llm/mock.ts          MOCK 規則
   llm/index.ts         real / mock 分派
   prompts/             guess.ts（猜謎）、feedback.ts、describe.ts
-  middleware/          限流
+  middleware/          限流（記憶體內固定視窗）
 web/                   前端原始碼（esbuild 打包到 public/）
-data/idioms.json       題庫
+data/idioms.json       題庫（打包進後端）
+wrangler.toml          Cloudflare Workers 設定
 tests/                 node:test
 ```
 

@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 
 mkdirSync("public", { recursive: true });
 copyFileSync("web/styles.css", "public/styles.css");
+copyFileSync("web/_headers", "public/_headers"); // Cloudflare static-asset cache headers
 const v = createHash("sha1")
   .update(readFileSync("public/app.js"))
   .update(readFileSync("public/styles.css"))
